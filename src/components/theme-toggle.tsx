@@ -28,7 +28,7 @@ export function ThemeToggle() {
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
       aria-label={theme === "light" ? "Cambiar a modo oscuro" : "Cambiar a modo claro"}
       role="switch"
-      aria-pressed={theme === "dark"}
+      aria-checked={theme === "dark"}
     >
       <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
       <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />

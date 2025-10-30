@@ -12,10 +12,26 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: "LEGASSI – Extranjería, Nacionalidad y Asilo",
+  title: "LEGASSI – Trámites de Extranjerí, Asilo y Nacionalidad Española",
   description:
     "Tu trámite de Extranjería, Nacionalidad o Asilo, bien hecho desde el principio. Combinamos normativa vigente, criterio jurídico y herramientas de IA para preparar expedientes sólidos.",
   generator: "v0.app",
+  openGraph: {
+    title: "LEGASSI – Extranjería, Nacionalidad y Asilo",
+    description: "Tu trámite de Extranjería, Nacionalidad o Asilo, bien hecho desde el principio. Combinamos normativa vigente, criterio jurídico y herramientas de IA para preparar expedientes sólidos.",
+    url: "https://legassi.es",
+    siteName: "LEGASSI – Trámites de Extranjería, Asilo y Nacionalidad Española",
+    images: [
+      {
+        url: "https://legassi.es/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Tu imagen de previsualización",
+      },
+    ],
+    locale: "es_ES",
+    type: "website",
+  }
 }
 
 export default function RootLayout({
