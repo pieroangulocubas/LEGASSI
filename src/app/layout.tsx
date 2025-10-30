@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Manrope } from "next/font/google"
+import Script from "next/script"
 import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
 import { Suspense } from "react"
@@ -16,6 +17,9 @@ export const metadata: Metadata = {
   description:
     "Tu trámite de Extranjería, Nacionalidad o Asilo, bien hecho desde el principio. Combinamos normativa vigente, criterio jurídico y herramientas de IA para preparar expedientes sólidos.",
   generator: "v0.app",
+  icons: {
+    icon: "/favicon.ico",
+  },
   openGraph: {
     title: "LEGASSI – Extranjería, Nacionalidad y Asilo",
     description: "Tu trámite de Extranjería, Nacionalidad o Asilo, bien hecho desde el principio. Combinamos normativa vigente, criterio jurídico y herramientas de IA para preparar expedientes sólidos.",
@@ -39,6 +43,21 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "LEGASSI",
+    url: "https://legassi.es",
+    logo: "https://legassi.es/logo-legassi.png",
+    sameAs: ["https://www.instagram.com/legassioficial"],
+    contactPoint: {
+      "@type": "ContactPoint",
+      telephone: "+34 672 297 468",
+      contactType: "customer service",
+      areaServed: "ES",
+    },
+  };
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={`font-sans ${manrope.variable}`}>
@@ -47,6 +66,11 @@ export default function RootLayout({
             {children}
           </ThemeProvider>
         </Suspense>
+        <Script
+          id="org-schema"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
       </body>
     </html>
   )
