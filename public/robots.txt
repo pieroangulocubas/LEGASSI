@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://legassi.es
+
+# Sitemaps
+Sitemap: https://legassi.es/sitemap.xml

@@ -13,7 +13,7 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: "LEGASSI – Trámites de Extranjerí, Asilo y Nacionalidad Española",
+  title: "LEGASSI – Trámites de Extranjería, Asilo y Nacionalidad Española",
   description:
     "Tu trámite de Extranjería, Nacionalidad o Asilo, bien hecho desde el principio. Combinamos normativa vigente, criterio jurídico y herramientas de IA para preparar expedientes sólidos.",
   generator: "v0.app",
