@@ -9,7 +9,7 @@ export function Footer() {
           {/* Logo and description */}
           <div className="md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <Image src="/imagotipo.svg" alt="LEGASSI" className="h-8 w-auto" width={20} height={20} />
+              <Image src="/logo-legassi.svg" alt="Logo de LEGASSI" className="h-8 w-auto" width={20} height={20} />
               <span className="text-xl font-bold text-primary">LEGASSI</span>
             </div>
             <p className="text-muted-foreground mb-4 text-pretty">

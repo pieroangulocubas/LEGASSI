@@ -36,8 +36,8 @@ export function Navbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-2">
               <Image
-                src="/imagotipo.svg"
-                alt="LEGASSI — LegalTech de Extranjería"
+                src="/logo-legassi.svg"
+                alt="Logo de LEGASSI"
                 width={40}
                 height={40}
                 className="h-10 w-auto"
