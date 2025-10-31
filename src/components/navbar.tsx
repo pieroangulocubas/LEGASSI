@@ -64,7 +64,7 @@ export function Navbar() {
               <ThemeToggle />
               <Button asChild className="hover:bg-primary/90 font-semibold">
                 <Link
-                  href="https://app.bookitit.com/es/hosteds/widgetdefault/26decc853aa1cd84555728af0588da93e#datetime"
+                  href="https://wa.me/34672297468?text=Hola,%20quisiera%20agendar%20una%20consulta%20completa%20para%20el%20tr%C3%A1mite%20de%20"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Habla con un asesor por WhatsApp"

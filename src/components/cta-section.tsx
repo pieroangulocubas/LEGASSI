@@ -56,7 +56,7 @@ export function CTASection() {
             </Button> 
             <Button size="lg" className="text-lg px-8 py-6 group font-semibold " asChild>
               <Link 
-                href="https://app.bookitit.com/es/hosteds/widgetdefault/26decc853aa1cd84555728af0588da93e#datetime"
+                href="https://wa.me/34672297468?text=Hola,%20quisiera%20agendar%20una%20consulta%20completa%20para%20el%20tr%C3%A1mite%20de%20"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Habla con un asesor por WhatsApp">
