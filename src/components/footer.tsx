@@ -1,4 +1,4 @@
-import { Scale, Mail, Phone, MapPin } from "lucide-react"
+import { Scale, Mail, Phone, MapPin, CalendarClock } from "lucide-react"
 import Image from "next/image"
 
 export function Footer() {
@@ -58,6 +58,14 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Contacto</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <CalendarClock className="h-4 w-4 text-primary mt-0.5" />
+                <span>
+                  Lunes a viernes: 10:00 – 15:00 y 17:00 – 21:00  
+                  <br />
+                  Domingo: 10:00 – 14:00
+                </span>
+              </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-primary" />
                 <span>+34 672 29 74 68</span>

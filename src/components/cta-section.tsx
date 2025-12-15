@@ -22,7 +22,7 @@ export function CTASection() {
               <CardContent className="p-6">
                 <Phone className="h-8 w-8 text-primary mx-auto mb-4" />
                 <h3 className="font-semibold mb-2">Llámanos</h3>
-                <p className="text-sm text-muted-foreground">Atención inmediata</p>
+                <p className="text-sm text-muted-foreground">Solo en horario de atención</p>
               </CardContent>
             </Card>
 
@@ -38,7 +38,7 @@ export function CTASection() {
               <CardContent className="p-6">
                 <Mail className="h-8 w-8 text-primary mx-auto mb-4" />
                 <h3 className="font-semibold mb-2">Email</h3>
-                <p className="text-sm text-muted-foreground">Consulta detallada</p>
+                <p className="text-sm text-muted-foreground">Hasta 24H en responder</p>
               </CardContent>
             </Card>
           </div>
