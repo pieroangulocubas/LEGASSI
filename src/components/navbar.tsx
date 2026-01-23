@@ -89,7 +89,7 @@ export function Navbar() {
                   <nav className="flex flex-col space-y-4 mt-8 gap-y-2">
                     <Link href="/" className="flex items-center  space-x-2 mb-10">
                       <Image
-                        src="/Imagotipo.svg"
+                        src="/logo-legassi.svg"
                         alt="LEGASSI — LegalTech de Extranjería"
                         width={40}
                         height={40}
