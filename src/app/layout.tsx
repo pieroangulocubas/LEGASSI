@@ -1,4 +1,6 @@
 import { ThemeProvider } from "@/components/theme-provider"
+import { CookieBanner } from "@/components/cookie-banner"
+import { AnnouncementBar } from "@/components/announcement-bar"
 import type { Metadata } from "next"
 import { Manrope } from "next/font/google"
 import type React from "react"
@@ -46,7 +48,9 @@ export default function RootLayout({
       <body className={`font-sans ${manrope.variable}`}>
         <Suspense fallback={<div>Loading...</div>}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <AnnouncementBar />
             {children}
+            <CookieBanner />
           </ThemeProvider>
         </Suspense>
       </body>

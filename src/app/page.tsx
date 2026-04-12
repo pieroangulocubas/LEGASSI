@@ -2,6 +2,7 @@ import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 import { BenefitsSection } from "@/components/benefits-section"
 import { ServicesSection } from "@/components/services-section"
+import { ToolsSection } from "@/components/tools-section"
 import { HowWeWorkSection } from "@/components/how-we-work-section"
 import { WhyChooseUsSection } from "@/components/why-choose-us-section"
 import { TestimonialsSection } from "@/components/testimonials-section"
@@ -19,6 +20,7 @@ export default function HomePage() {
         <HeroSection />
         <BenefitsSection />
         <ServicesSection />
+        <ToolsSection />
         <HowWeWorkSection />
         <WhyChooseUsSection />
         <TestimonialsSection />

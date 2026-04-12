@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Scale, Brain, Users } from "lucide-react"
+import { ArrowRight, Scale, Brain, Users, FileSearch, CheckCircle, Sparkles } from "lucide-react"
 import Link from "next/link"
 
 export function HeroSection() {
@@ -59,6 +59,40 @@ export function HeroSection() {
                 Conoce nuestros servicios
               </Link>
             </Button>
+          </div>
+
+          {/* ── Featured tool card ── */}
+          <div className="mt-10 max-w-2xl mx-auto">
+            <Link
+              href="/herramientas/clasificador-documentos"
+              className="group block rounded-2xl border-2 border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 transition-all duration-200 p-5 text-left shadow-sm hover:shadow-md"
+            >
+              <div className="flex items-start gap-4">
+                <div className="shrink-0 w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center">
+                  <FileSearch className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" /> Herramienta IA — disponible ahora
+                    </span>
+                  </div>
+                  <p className="font-semibold text-foreground text-base leading-snug">
+                    ¿Tienes los documentos para la regularización extraordinaria?
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    Sube tus archivos y la IA verifica si acreditas los 5 meses de permanencia,
+                    detecta meses sin cobertura y genera tu expediente en PDF.
+                  </p>
+                  <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    <li className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-primary" /> 1 análisis gratis</li>
+                    <li className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-primary" /> Resultado en segundos</li>
+                    <li className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-primary" /> Expediente PDF incluido</li>
+                  </ul>
+                </div>
+                <ArrowRight className="shrink-0 h-5 w-5 text-primary mt-1 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
           </div>
 
           {/* Trust indicators */}

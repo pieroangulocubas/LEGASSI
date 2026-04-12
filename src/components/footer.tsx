@@ -90,13 +90,13 @@ export function Footer() {
         <div className="border-t mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} LEGASSI. Todos los derechos reservados.</p>
           <div className="flex gap-6 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-primary transition-colors">
+            <a href="/privacidad" className="hover:text-primary transition-colors">
               Política de Privacidad
             </a>
-            <a href="#" className="hover:text-primary transition-colors">
+            <a href="/terminos" className="hover:text-primary transition-colors">
               Términos de Servicio
             </a>
-            <a href="#" className="hover:text-primary transition-colors">
+            <a href="/aviso-legal" className="hover:text-primary transition-colors">
               Aviso Legal
             </a>
           </div>
