@@ -112,22 +112,25 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const { data: newCredits, error: rpcError } = await supabase.rpc("use_clasificador_credit", {
-    p_token: token,
-  })
+  // Validate credit exists — do NOT deduct yet.
+  // Deduction happens only on successful Inngest completion (inside the function).
+  // For auto-issued freemium tokens we just inserted credits:1, so they always pass.
+  if (!autoIssuedToken) {
+    const { data: tokenRow } = await supabase
+      .from("clasificador_tokens")
+      .select("credits")
+      .eq("token", token)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle()
 
-  if (rpcError || newCredits === null || newCredits < 0) {
-    return NextResponse.json({ error: "PAYMENT_REQUIRED", creditsRemaining: 0 }, { status: 402 })
+    if (!tokenRow || tokenRow.credits <= 0) {
+      return NextResponse.json({ error: "PAYMENT_REQUIRED", creditsRemaining: 0 }, { status: 402 })
+    }
   }
 
   // ── Validate files ────────────────────────────────────────────────────────
   const fileEntries = formData.getAll("files") as File[]
   if (!fileEntries || fileEntries.length === 0) {
-    // Refund immediately — no Inngest job created
-    await supabase
-      .from("clasificador_tokens")
-      .update({ credits: newCredits + 1 })
-      .eq("token", token)
     return NextResponse.json({ error: "No se recibieron archivos." }, { status: 400 })
   }
 
@@ -157,10 +160,7 @@ export async function POST(req: NextRequest) {
 
       if (uploadErr) {
         console.error("[upload] failed:", uploadErr)
-        await supabase
-          .from("clasificador_tokens")
-          .update({ credits: newCredits + 1 })
-          .eq("token", token)
+        // No refund needed — credit was never deducted
         return NextResponse.json(
           { error: "Error al subir archivos. Inténtalo de nuevo." },
           { status: 500 }
@@ -178,27 +178,24 @@ export async function POST(req: NextRequest) {
 
   // ── Create job record ─────────────────────────────────────────────────────
   const { error: jobInsertErr } = await supabase.from("clasificador_jobs").insert({
-    id:              jobId,
-    status:          "pending",
-    step:            1,
+    id:               jobId,
+    status:           "pending",
+    step:             1,
     token,
     nombre,
     email,
     telefono,
     mes_presentation: mesPresentation,
     auto_issued_token: autoIssuedToken,
-    new_credits:     newCredits,
-    file_meta:       fileMeta,
-    all_file_names:  allFileNames,
+    file_meta:        fileMeta,
+    all_file_names:   allFileNames,
+    // new_credits is intentionally null — set by Inngest only on successful completion
   })
 
   if (jobInsertErr) {
     console.error("[job] insert error:", jobInsertErr)
-    // Cleanup storage + refund
-    await Promise.all([
-      supabase.storage.from("clasificador-temp").remove(fileMeta.map((m) => m.storageKey)),
-      supabase.from("clasificador_tokens").update({ credits: newCredits + 1 }).eq("token", token),
-    ])
+    // No refund needed — credit was never deducted. Just clean up storage.
+    await supabase.storage.from("clasificador-temp").remove(fileMeta.map((m) => m.storageKey))
     return NextResponse.json({ error: "Error interno. Inténtalo de nuevo." }, { status: 500 })
   }
 
@@ -207,7 +204,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     jobId,
-    creditsRemaining: newCredits,
     ...(autoIssuedToken ? { autoIssuedToken } : {}),
   })
 }

@@ -285,7 +285,7 @@ export default function ClasificadorPage() {
   async function pollForResult(
     jobId: string,
     signal: AbortSignal,
-  ): Promise<{ results?: DocumentResult[]; error?: string }> {
+  ): Promise<{ results?: DocumentResult[]; creditsRemaining?: number; error?: string }> {
     const MAX_POLLS = 90 // 3 minutes
     for (let i = 0; i < MAX_POLLS; i++) {
       await new Promise((r) => setTimeout(r, 2000))
@@ -301,7 +301,7 @@ export default function ClasificadorPage() {
           setLoadingStep((prev) => Math.max(prev, data.step))
         }
 
-        if (data.status === "done") return { results: data.result }
+        if (data.status === "done") return { results: data.result, creditsRemaining: data.creditsRemaining ?? undefined }
         if (data.status === "error") {
           return { error: data.error ?? "Error al procesar el análisis. Inténtalo de nuevo." }
         }
@@ -354,13 +354,15 @@ export default function ClasificadorPage() {
       if (res.status === 402) {
         if (data.reason === "email_required") {
           setErrorMsg("Introduce tu correo electrónico para usar el análisis gratuito.")
-          setPageState("error")
+          setPageState("form")
+          setLoadingStep(0)
           return
         }
 
         if (data.reason === "email_invalid") {
           setErrorMsg("El correo electrónico no es válido. Usa un correo real para continuar.")
-          setPageState("error")
+          setPageState("form")
+          setLoadingStep(0)
           return
         }
 
@@ -413,7 +415,8 @@ export default function ClasificadorPage() {
 
       if (abort.signal.aborted) return
       if (pollResult.error) {
-        // Analysis failed — undo any auto-issued token so the user returns to a clean slate
+        // Analysis failed — credit was never deducted, so nothing to refund.
+        // For auto-issued freemium tokens, delete the token so user gets a clean retry.
         if (sessionAutoToken) {
           localStorage.removeItem("clasificador_token")
           localStorage.removeItem("clasificador_is_freemium")
@@ -421,9 +424,9 @@ export default function ClasificadorPage() {
           setIsFreemium(false)
           setCreditsRemaining(null)
         }
-        setErrorMsg("")
+        setErrorMsg("El análisis no pudo completarse. Tus archivos siguen aquí — pulsa Reintentar para volver a intentarlo.")
         setLoadingStep(0)
-        setPageState("form")
+        setPageState("error")
         return
       }
 
@@ -431,6 +434,12 @@ export default function ClasificadorPage() {
       const analysisResult = runRulesEngine(geminiResults, mesPresentation as PresentationMonth)
       setRawResults(geminiResults)
       setResult(analysisResult)
+
+      // Update credits now that results are confirmed (deducted server-side by Inngest)
+      if (typeof pollResult.creditsRemaining === "number") {
+        setCreditsRemaining(pollResult.creditsRemaining)
+        localStorage.setItem("clasificador_credits", String(pollResult.creditsRemaining))
+      }
 
       // Send analysis summary email in background (non-blocking)
       const notifyToken = data.autoIssuedToken ?? localStorage.getItem("clasificador_token") ?? ""
@@ -475,7 +484,7 @@ export default function ClasificadorPage() {
     } catch (err) {
       if (abort.signal.aborted) return
       console.error(err)
-      // Undo auto-issued token on unexpected failure
+      // Undo auto-issued token on unexpected failure (credit never deducted)
       if (sessionAutoToken) {
         localStorage.removeItem("clasificador_token")
         localStorage.removeItem("clasificador_is_freemium")
@@ -483,9 +492,9 @@ export default function ClasificadorPage() {
         setIsFreemium(false)
         setCreditsRemaining(null)
       }
-      setErrorMsg("")
+      setErrorMsg("Ocurrió un problema de conexión. Tus archivos siguen aquí — puedes reintentar el análisis.")
       setLoadingStep(0)
-      setPageState("form")
+      setPageState("error")
     }
   }
 
@@ -753,34 +762,69 @@ export default function ClasificadorPage() {
 
         {/* ── Error ── */}
         {pageState === "error" && (
-          <div className="space-y-4">
-            <div className="flex items-start gap-4 rounded-xl border-2 border-destructive bg-destructive/5 p-5">
-              <XCircle className="h-6 w-6 text-destructive mt-0.5 shrink-0" />
-              <div>
-                <p className="font-semibold text-foreground">Ha ocurrido un error</p>
-                <p className="mt-1 text-sm text-muted-foreground">{errorMsg}</p>
+          <div className="max-w-xl mx-auto py-10 space-y-6">
+            {/* Icon */}
+            <div className="flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-destructive/10 border border-destructive/20 flex items-center justify-center">
+                <AlertCircle className="h-8 w-8 text-destructive" />
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button onClick={() => handleReset()} variant="outline">
+
+            {/* Message card */}
+            <div className="rounded-2xl border border-border bg-card p-6 space-y-3 text-center">
+              <h2 className="text-lg font-semibold text-foreground">
+                {errorMsg.includes("conexión")
+                  ? "Problema de conexión"
+                  : errorMsg.includes("email")
+                  ? "Correo no válido"
+                  : "El análisis no pudo completarse"}
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">{errorMsg}</p>
+
+              {/* Credit restored notice */}
+              {!errorMsg.includes("email") && (
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary mx-auto">
+                  <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+                  Tu crédito no ha sido descontado
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                onClick={() => handleReset()}
+                className="gap-2 bg-gradient-to-r from-primary to-secondary text-white hover:brightness-110 font-semibold"
+              >
                 <ArrowLeft className="h-4 w-4" />
-                Volver al formulario
+                Reintentar análisis
               </Button>
-              {/* Show pay option when the error is email conflict — let them pay directly */}
-              {errorMsg.includes("ya fue usado") && (
+
+              <a
+                href="https://wa.me/34672297468?text=Hola%2C%20tuve%20un%20error%20en%20el%20clasificador%20de%20documentos%20y%20necesito%20ayuda."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground hover:border-primary/40 hover:text-foreground transition-all"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Contactar soporte
+              </a>
+            </div>
+
+            {/* Pay option when email conflict */}
+            {errorMsg.includes("ya fue usado") && (
+              <div className="text-center">
                 <button
                   type="button"
                   onClick={() => { handleReset(); setPaymentModal({ open: true, reason: "first_time" }) }}
-                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-white
-                             bg-gradient-to-r from-amber-500 to-yellow-500
-                             hover:from-amber-600 hover:to-yellow-600
-                             shadow-sm transition-all duration-200"
+                  className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white
+                             bg-gradient-to-r from-primary to-secondary shadow-sm hover:brightness-110 transition-all"
                 >
                   <CreditCard className="h-4 w-4" />
                   Conseguir 7 análisis · 7,90 €
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 

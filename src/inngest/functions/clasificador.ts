@@ -15,13 +15,14 @@ export const analizarClasificador = inngest.createFunction(
   {
     id: "clasificador-analyze",
     retries: 1,
-    // Refund credit + mark job as error when all retries are exhausted
+    // Mark job as error when all retries are exhausted.
+    // No credit refund needed — credit is only deducted on successful completion.
     onFailure: async ({ event }) => {
       const { jobId } = event.data.event.data as { jobId: string }
       const supabase = createServerClient()
       const { data: job } = await supabase
         .from("clasificador_jobs")
-        .select("token, new_credits, file_meta")
+        .select("file_meta")
         .eq("id", jobId)
         .single()
 
@@ -29,21 +30,13 @@ export const analizarClasificador = inngest.createFunction(
         .from("clasificador_jobs")
         .update({
           status: "error",
-          error_msg: "Error al procesar el análisis. El crédito ha sido restaurado.",
-          credit_refunded: true,
+          error_msg: "El análisis no pudo completarse. Tu crédito no ha sido descontado.",
           updated_at: new Date().toISOString(),
         })
         .eq("id", jobId)
 
+      // Clean up temp files from storage
       if (job) {
-        // Refund credit — conditional to prevent double-refund if status route already did it
-        await supabase
-          .from("clasificador_tokens")
-          .update({ credits: (job.new_credits ?? 0) + 1 })
-          .eq("token", job.token)
-          .eq("credits", job.new_credits ?? 0)
-
-        // Clean up temp files from storage
         const paths = ((job.file_meta ?? []) as { storageKey: string }[]).map((m) => m.storageKey)
         if (paths.length > 0) {
           await supabase.storage.from("clasificador-temp").remove(paths)
@@ -126,11 +119,22 @@ export const analizarClasificador = inngest.createFunction(
       const enriched = enrichGeminiResults(parsed, job.nombre ?? "", allFileNames)
 
       // ── Step 4: "Generando resultado del expediente"
-      //   Save result + cleanup storage ────────────────────────────────────────
+      //   Deduct credit + save result + cleanup storage ───────────────────────
       await supabase
         .from("clasificador_jobs")
         .update({ step: 4, updated_at: new Date().toISOString() })
         .eq("id", jobId)
+
+      // Deduct credit now that results are ready (idempotent: only if not already done)
+      let creditsAfterDeduction = 0
+      if (job.credits_remaining === null) {
+        const { data: deducted } = await supabase.rpc("use_clasificador_credit", {
+          p_token: job.token,
+        })
+        creditsAfterDeduction = deducted ?? 0
+      } else {
+        creditsAfterDeduction = job.credits_remaining as number
+      }
 
       await supabase
         .from("clasificador_jobs")
@@ -138,7 +142,7 @@ export const analizarClasificador = inngest.createFunction(
           status: "done",
           step: 5,
           result: enriched,
-          credits_remaining: job.new_credits,
+          credits_remaining: creditsAfterDeduction,
           updated_at: new Date().toISOString(),
         })
         .eq("id", jobId)
