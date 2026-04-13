@@ -127,7 +127,7 @@ export function HeroSection() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-1 mb-0.5">
-                    <Sparkles className="h-2.5 w-2.5" /> Herramienta IA disponible
+                    <Sparkles className="h-2.5 w-2.5" /> Herramienta Tech disponible
                   </span>
                   <p className="font-semibold text-foreground text-sm leading-snug">
                     Verifica tus pruebas de permanencia

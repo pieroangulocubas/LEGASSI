@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(mkdir -p \"c:\\\\Users\\\\piero\\\\Desktop\\\\ZOMBIE PROJECTS\\\\legassi-web\\\\src\\\\app\\\\herramientas\\\\clasificador-documentos\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\piero\\\\Desktop\\\\ZOMBIE PROJECTS\\\\legassi-web\\\\src\\\\app\\\\api\\\\clasificador\")",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(npx next:*)",
+      "Bash(node_modules/.bin/tsc --noEmit --skipLibCheck)",
+      "Bash(mkdir -p \"/c/Users/piero/Desktop/ZOMBIE PROJECTS/legassi-web/src/app/herramientas/antecedentes-penales-peru/components\")",
+      "Bash(mkdir -p \"/c/Users/piero/Desktop/ZOMBIE PROJECTS/legassi-web/src/app/herramientas/antecedentes-penales-peru/seguimiento\")",
+      "Bash(mkdir -p \"/c/Users/piero/Desktop/ZOMBIE PROJECTS/legassi-web/src/app/api/antecedentes/submit\")",
+      "Bash(mkdir -p \"/c/Users/piero/Desktop/ZOMBIE PROJECTS/legassi-web/src/app/api/antecedentes/status\")",
+      "Bash(mkdir -p \"/c/Users/piero/Desktop/ZOMBIE PROJECTS/legassi-web/src/app/api/antecedentes/webhook\")",
+      "WebFetch(domain:jimp-dev.github.io)"
+    ]
+  }
+}

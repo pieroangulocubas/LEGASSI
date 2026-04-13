@@ -1,12 +1,11 @@
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
-import { BenefitsSection } from "@/components/benefits-section"
+import { RegularizacionBanner } from "@/components/regularizacion-banner"
 import { ServicesSection } from "@/components/services-section"
 import { ToolsSection } from "@/components/tools-section"
-import { HowWeWorkSection } from "@/components/how-we-work-section"
-import { WhyChooseUsSection } from "@/components/why-choose-us-section"
+import { ResolucionesFavorablesSection } from "@/components/resoluciones-section"
 import { TestimonialsSection } from "@/components/testimonials-section"
-import { MissionSection } from "@/components/mission-section"
+import { HowWeWorkSection } from "@/components/how-we-work-section"
 import { FAQSection } from "@/components/faq-section"
 import { CTASection } from "@/components/cta-section"
 import { Footer } from "@/components/footer"
@@ -18,13 +17,12 @@ export default function HomePage() {
       <Navbar />
       <main id="main-content" className="min-h-screen">
         <HeroSection />
-        <BenefitsSection />
+        <RegularizacionBanner />
+        <ResolucionesFavorablesSection />
         <ServicesSection />
         <ToolsSection />
-        <HowWeWorkSection />
-        <WhyChooseUsSection />
         <TestimonialsSection />
-        <MissionSection />
+        <HowWeWorkSection />
         <FAQSection />
         <CTASection />
       </main>

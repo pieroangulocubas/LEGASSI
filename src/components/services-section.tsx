@@ -1,119 +1,291 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileText, Shield, Globe, Clock, Zap, HeartHandshake } from "lucide-react"
+"use client"
+
+import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
+import { FileText, Shield, Globe, MoreHorizontal, Clock, Users, HeartHandshake, ArrowRight, Flame, CalendarClock, CheckCircle, Expand, X } from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
 
 const services = [
   {
     icon: FileText,
+    label: "Residencia legal en España",
     title: "Extranjería",
     description:
-      "Trámites de residencia, renovaciones, reagrupación familiar y más. Expedientes diseñados con IA según la normativa vigente.",
+      "Nuestros asesores expertos gestionan todos los trámites de residencia y trabajo según la normativa vigente y la jurisprudencia más reciente.",
+    items: [
+      "Arraigos (sociolaboral, socioformativo, social, familiar, segunda oportunidad)",
+      "Residencia por Reagrupación Familiar",
+      "Residencia por Familiar de Ciudadano Español",
+      "Residencia de Larga Duración",
+      "Modificación de Residencia",
+      "Renovaciones de TIE",
+      "Autorización Inicial de Trabajo",
+      "Estancia por Estudios",
+      "Visa de Nómada Digital",
+      "Residencia No Lucrativa",
+      "Regularización Extraordinaria",
+    ],
   },
   {
     icon: Shield,
-    title: "Nacionalidad",
+    label: "Pasaporte europeo",
+    title: "Nacionalidad Española",
     description:
-      "Proceso completo de nacionalización española. Te acompañamos desde la preparación hasta la obtención.",
+      "Te acompañamos en todo el proceso de nacionalización. Abogados colegiados y asesores experimentados desde la preparación del expediente hasta la jura.",
+    items: [
+      "Nacionalidad por Residencia",
+      "Nacionalidad por Simple Presunción",
+      "Nacionalidad por Carta de Naturaleza",
+      "Nacionalidad por Opción",
+      "Preparación CCSE y DELE A2",
+      "Jura o Promesa ante el Registro Civil",
+      "Seguimiento del expediente",
+    ],
   },
   {
     icon: Globe,
-    title: "Protección Internacional (Asilo)",
+    label: "Protección humanitaria",
+    title: "Asilo y Protección Internacional",
     description:
-      "Asesoramiento especializado en solicitudes de asilo y protección internacional con enfoque humanitario.",
+      "Asesoramiento especializado y humano. Nuestro equipo te ayuda a preparar tu relato, entrevista y toda la documentación necesaria.",
+    items: [
+      "Solicitud de Asilo",
+      "Protección Subsidiaria",
+      "Razones Humanitarias",
+      "Cita en Comisaría u OAR",
+      "Preparación de entrevista",
+      "Seguimiento del expediente",
+    ],
+  },
+  {
+    icon: MoreHorizontal,
+    label: "Trámites adicionales",
+    title: "Otros servicios",
+    description:
+      "Más allá de la residencia, te ayudamos con todos los procedimientos que necesitas para construir tu vida en España.",
+    items: [
+      "Homologación / Equivalencia de estudios",
+      "Declaración de la Renta",
+      "Canje y Homologación de Licencia de Conducir",
+      "Cancelación de Antecedentes Penales y Policiales",
+      "Solicitud de Pareja de Hecho",
+      "Expediente de Matrimonio",
+      "Carta de Invitación",
+      "Autorización de Regreso",
+    ],
   },
 ]
 
 const differentiators = [
   {
-    icon: Clock,
-    title: "Siempre Actualizados",
-    description:
-      "Normativa y jurisprudencia al día. Nuestros sistemas se actualizan constantemente con los últimos cambios legales.",
+    icon: Users,
+    title: "Abogados y asesores expertos",
+    description: "Equipo de abogados colegiados y asesores especializados en extranjería con años de experiencia resolviendo casos reales.",
   },
   {
-    icon: Zap,
-    title: "Tecnología + IA",
-    description:
-      "Expedientes diseñados con inteligencia artificial según instrucciones específicas y jurisprudencia actualizada.",
+    icon: Clock,
+    title: "Siempre actualizados",
+    description: "Normativa y jurisprudencia al día. Nuestro equipo se forma continuamente para ofrecerte la mejor estrategia.",
   },
   {
     icon: HeartHandshake,
-    title: "Atención Integral",
-    description:
-      "No solo requisitos. Te ayudamos con citas en consulados, policía, ayuntamientos, SEPE y más. Somos tu centro de confianza.",
+    title: "Atención integral",
+    description: "Citas en consulados, policía, ayuntamientos, SEPE y más. Somos tu centro de confianza para cualquier trámite.",
   },
 ]
 
 export function ServicesSection() {
+  const [imgOpen, setImgOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  const modal = mounted && imgOpen ? createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6"
+      onClick={() => setImgOpen(false)}
+    >
+      <div className="relative max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={() => setImgOpen(false)}
+          className="absolute -top-9 right-0 text-white/70 hover:text-white flex items-center gap-1.5 text-sm"
+          aria-label="Cerrar"
+        >
+          <X className="h-4 w-4" /> Cerrar
+        </button>
+        <Image
+          src="/oferta-reg2026.png"
+          alt="Oferta Regularización Extraordinaria 2026"
+          width={1200}
+          height={800}
+          className="w-full max-h-[65vh] object-contain rounded-2xl shadow-2xl"
+        />
+      </div>
+    </div>,
+    document.body
+  ) : null
+
   return (
     <section
       id="servicios"
       className="relative py-24 overflow-hidden bg-gradient-to-b from-background via-muted/15 to-background"
     >
-      {/* Ambient blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute top-20 -left-32 w-[400px] h-[400px] bg-primary/6 rounded-full blur-[110px]" />
-        <div className="absolute bottom-20 -right-32 w-[400px] h-[400px] bg-secondary/6 rounded-full blur-[110px]" />
+        <div className="absolute top-20 -left-32 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-20 -right-32 w-[400px] h-[400px] bg-secondary/5 rounded-full blur-[120px]" />
       </div>
 
-      <div className="container relative z-10 mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-playfair font-bold mb-4 tracking-tight">
-            Nuestros <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Servicios</span>
+      <div className="container relative z-10 mx-auto px-6 sm:px-10 lg:px-16">
+
+        {/* Header */}
+        <div className="mb-14">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Qué hacemos</p>
+          <h2 className="text-3xl md:text-4xl font-playfair font-bold tracking-tight">
+            Servicios especializados en{" "}
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              extranjería
+            </span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            Servicios especializados en extranjería con tecnología avanzada y atención personalizada
-          </p>
         </div>
 
-        {/* Main services */}
-        <div className="grid md:grid-cols-3 gap-7 mb-24">
-          {services.map((service, index) => (
-            <Card
-              key={index}
-              className="group text-center border-border/60 bg-gradient-to-b from-card to-card/80 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/6 transition-all duration-300"
+        {/* Regularización Extraordinaria 2026 — featured offer */}
+        <div className="relative rounded-2xl overflow-hidden border border-primary/30 bg-gradient-to-r from-primary/10 via-card to-secondary/8 mb-8">
+          {/* Stripe accent left */}
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-secondary rounded-l-2xl" />
+
+          <div className="flex flex-col sm:flex-row sm:items-stretch">
+            {/* Image — left edge, flush, clickable */}
+            <button
+              onClick={() => setImgOpen(true)}
+              className="group relative shrink-0 w-full sm:w-48 h-48 sm:h-auto rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none overflow-hidden border-b sm:border-b-0 sm:border-r border-primary/20"
+              aria-label="Ver imagen completa"
             >
-              <CardHeader>
-                <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 rounded-2xl flex items-center justify-center group-hover:from-primary/25 transition-colors">
-                  <service.icon className="h-8 w-8 text-primary" />
+              <Image src="/oferta-reg2026.png" alt="Oferta Regularización 2026" fill className="object-cover" />
+              <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Expand className="h-5 w-5 text-white" />
+              </div>
+            </button>
+
+            {/* Content */}
+            <div className="px-7 py-6 flex flex-col sm:flex-row sm:items-center gap-5 flex-1">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md shadow-primary/20">
+                  <Flame className="h-5 w-5 text-white" />
                 </div>
-                <CardTitle className="text-xl font-playfair">{service.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base leading-relaxed">{service.description}</CardDescription>
-              </CardContent>
-            </Card>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-primary/15 text-primary border border-primary/25 rounded px-2 py-0.5">
+                      Oferta vigente
+                    </span>
+                    <span className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
+                      <CalendarClock className="h-3 w-3" /> Hasta el 30 de junio de 2026
+                    </span>
+                  </div>
+                  <h3 className="font-playfair font-bold text-lg leading-tight mb-1">
+                    Regularización Extraordinaria 2026
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
+                    Si llevas tiempo en España sin documentación, esta normativa excepcional te permite regularizar tu situación. Nuestros asesores expertos preparan y presentan tu expediente completo.
+                  </p>
+                  <div className="flex flex-wrap gap-3 mt-3">
+                    {["Análisis de elegibilidad", "Preparación del expediente", "Clasificador de documentos incluido"].map((item) => (
+                      <span key={item} className="inline-flex items-center gap-1.5 text-xs text-foreground/70">
+                        <CheckCircle className="h-3.5 w-3.5 text-primary shrink-0" />
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="shrink-0 flex flex-col sm:items-end gap-2">
+                <Link
+                  href="/herramientas/clasificador-documentos"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/20 hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] transition-all duration-200"
+                >
+                  Verificar mis documentos
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="https://wa.me/34672297468?text=Hola,%20quiero%20información%20sobre%20la%20Regularización%20Extraordinaria%202026"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline justify-center sm:justify-end"
+                >
+                  Hablar con un asesor
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {modal}
+
+        {/* Service panels — 2 cols on md, 4 on xl */}
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5 mb-20">
+          {services.map((service, i) => (
+            <div
+              key={i}
+              className="group relative rounded-2xl border border-border/50 bg-card p-6 flex flex-col gap-5 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+            >
+              <div>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/15 flex items-center justify-center mb-4 group-hover:from-primary/25 transition-colors">
+                  <service.icon className="h-4 w-4 text-primary" />
+                </div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  {service.label}
+                </p>
+                <h3 className="text-lg font-playfair font-bold mb-2">{service.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{service.description}</p>
+              </div>
+
+              <div className="h-px bg-gradient-to-r from-primary/20 to-transparent" />
+
+              <ul className="flex flex-col gap-1.5 flex-1">
+                {service.items.map((item, j) => (
+                  <li key={j} className="flex items-start gap-2 text-sm text-foreground/80">
+                    <ArrowRight className="h-3 w-3 shrink-0 text-primary/60 mt-0.5" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="pt-2">
+                <Link
+                  href="https://wa.me/34672297468?text=Hola,%20quisiera%20información%20sobre%20"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                >
+                  Consultar
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
           ))}
         </div>
 
-        {/* Divider with label */}
-        <div className="relative flex items-center gap-6 mb-16">
-          <div className="flex-1 h-px bg-gradient-to-r from-transparent to-border/50" />
-          <h3 className="text-2xl md:text-3xl font-playfair font-bold text-center shrink-0">
-            ¿Por qué{" "}
-            <span className="text-secondary">elegirnos</span>?
-          </h3>
-          <div className="flex-1 h-px bg-gradient-to-l from-transparent to-border/50" />
+        {/* Why choose us */}
+        <div id="por-que-elegirnos" className="rounded-2xl border border-border/40 bg-muted/30 px-8 py-8">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">Por qué elegirnos</p>
+          <h3 className="text-xl font-playfair font-bold mb-8">Lo que nos diferencia</h3>
+
+          <div className="grid sm:grid-cols-3 gap-8">
+            {differentiators.map((d, i) => (
+              <div key={i} className="flex gap-4">
+                <div className="shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/15 flex items-center justify-center">
+                  <d.icon className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm mb-1">{d.title}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{d.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Differentiators */}
-        <div className="grid md:grid-cols-3 gap-7">
-          {differentiators.map((item, index) => (
-            <Card
-              key={index}
-              className="group text-center border-border/60 border-l-4 border-l-primary/60 bg-gradient-to-b from-card to-card/80 hover:border-l-primary hover:shadow-xl hover:shadow-secondary/6 transition-all duration-300"
-            >
-              <CardHeader>
-                <div className="mx-auto mb-4 w-16 h-16 bg-gradient-to-br from-secondary/15 to-secondary/5 border border-secondary/20 rounded-2xl flex items-center justify-center group-hover:from-secondary/25 transition-colors">
-                  <item.icon className="h-8 w-8 text-secondary" />
-                </div>
-                <CardTitle className="text-xl font-playfair">{item.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base leading-relaxed">{item.description}</CardDescription>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
       </div>
     </section>
   )

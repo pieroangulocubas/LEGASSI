@@ -1,16 +1,17 @@
+"use client"
+
+import { useRef } from "react"
 import Link from "next/link"
-import { FileSearch, FileSpreadsheet, Users, FileCheck, ClipboardList, ArrowRight, Lock, ShieldCheck } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { FileSearch, CalendarClock, FileSpreadsheet, Building2, ScrollText, MapPin, ShieldCheck, ArrowRight, Lock, Cpu, ChevronLeft, ChevronRight } from "lucide-react"
 
 const availableTools = [
   {
     icon: FileSearch,
-    title: "Verifica tus pruebas de permanencia para la regularización extraordinaria",
+    tag: "Regularización Extraordinaria",
+    title: "Clasificador de documentos de permanencia",
     description:
-      "Sube tus documentos de permanencia, la IA los clasifica por meses, detecta los válidos y genera tu expediente en PDF listo para presentar.",
+      "Sube tus documentos, los analizamos y los clasificamos por meses. Detecta cuáles son válidos y genera tu expediente en PDF listo para presentar.",
     href: "/herramientas/clasificador-documentos",
-    badge: "Disponible",
   },
 ]
 
@@ -19,116 +20,169 @@ const comingSoonTools = [
     icon: ShieldCheck,
     title: "Antecedentes Penales de Perú con Apostilla",
     description:
-      "Nuestro sistema RPA tramita automáticamente tu Certificado de Antecedentes Penales y su apostilla en los portales oficiales del gobierno peruano.",
+      "Sistema RPA que tramita automáticamente tu certificado y su apostilla en los portales oficiales del gobierno peruano.",
+  },
+  {
+    icon: CalendarClock,
+    title: "Citas en el Consulado del Perú",
+    description:
+      "Agiliza tu cita para renovar pasaporte, obtener certificados, autorización de viaje y más trámites consulares.",
   },
   {
     icon: FileSpreadsheet,
-    title: "Rellena Modelo EX17 y TASA 790 en segundos",
+    title: "Cumplimentación de Modelo EX17 y Tasa 790 012 Automático",
     description:
-      "Completa automáticamente los formularios oficiales EX17 y la tasa 790 a partir de tus datos. Sin errores, sin perder tiempo.",
+      "Rellena automáticamente el Modelo EX17 y la Tasa 790 012 a partir de tus datos personales. Sin errores, en segundos.",
   },
   {
-    icon: Users,
-    title: "Simulador de arraigo social",
+    icon: Building2,
+    title: "Citas en entidades de España",
     description:
-      "Calcula si cumples los requisitos de arraigo social según tu situación: tiempo en España, vínculos familiares e integración.",
+      "Extranjería, Policía, Registro Civil, Ayuntamiento, Registros, SEPE y Seguridad Social. Gestiona tus citas desde un solo lugar.",
   },
   {
-    icon: FileCheck,
-    title: "Verificador de requisitos por permiso",
+    icon: ScrollText,
+    title: "Relato de asilo optimizado",
     description:
-      "Indica qué permiso deseas solicitar y te decimos exactamente qué documentos necesitas según la normativa vigente.",
+      "Evaluación de tu condición y construcción de un relato coherente y sólido para tu solicitud de protección internacional.",
   },
   {
-    icon: ClipboardList,
-    title: "Generador de carta de motivación",
+    icon: MapPin,
+    title: "Mejor vía de regularización",
     description:
-      "Crea una carta de motivación personalizada para acompañar tu solicitud de residencia o nacionalidad con IA.",
+      "Analiza tus datos y te indica cuál es la vía más rápida y viable para regularizar tu situación en España.",
   },
 ]
 
 export function ToolsSection() {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const scroll = (dir: "left" | "right") => {
+    scrollRef.current?.scrollBy({ left: dir === "left" ? -280 : 280, behavior: "smooth" })
+  }
+
   return (
-    <section id="herramientas" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
+    <section id="herramientas" className="relative py-24 overflow-hidden">
+      {/* Dark gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.03] via-primary/5 to-secondary/5" aria-hidden="true" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute -top-20 right-0 w-[500px] h-[500px] bg-primary/6 rounded-full blur-[140px]" />
+        <div className="absolute bottom-0 -left-20 w-[400px] h-[400px] bg-secondary/6 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="container relative z-10 mx-auto px-6 sm:px-10 lg:px-16">
+
         {/* Header */}
-        <div className="text-center mb-14">
-          <Badge variant="outline" className="mb-4 text-primary border-primary/40 bg-primary/5">
-            Herramientas IA
-          </Badge>
-          <h2 className="text-3xl md:text-4xl font-playfair font-bold mb-4">
-            Haz tus trámites{" "}
-            <span className="text-primary">más rápido</span>
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            Herramientas inteligentes para simplificar los procesos de extranjería. Algunas ya están disponibles,
-            otras están en camino.
-          </p>
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-14">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-3 py-1">
+                <Cpu className="h-3 w-3 text-primary" />
+                <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Equipo LegalTech</span>
+              </div>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-playfair font-bold tracking-tight">
+              Herramientas que{" "}
+              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                desarrollamos internamente
+              </span>
+            </h2>
+            <p className="mt-3 text-muted-foreground max-w-xl text-pretty">
+              Nuestro equipo LegalTech construye herramientas para hacer más eficiente el trabajo de nuestro equipo interno.
+              Las que creemos convenientes las liberamos para que puedas usarlas directamente.{" "}
+              <span className="font-semibold text-foreground">Todas tienen capa gratuita</span>.
+            </p>
+          </div>
+          <div className="shrink-0 text-right hidden lg:block">
+            <p className="text-4xl font-black text-primary">1</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">herramienta activa</p>
+            <p className="text-4xl font-black text-muted-foreground/30 mt-2">7+</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">en desarrollo</p>
+          </div>
         </div>
 
-        {/* Available tools */}
+        {/* Featured available tool */}
         <div className="mb-10">
           {availableTools.map((tool) => (
             <Link
               key={tool.title}
               href={tool.href}
-              className="group block max-w-2xl mx-auto rounded-2xl border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/60 transition-all duration-200 p-6 shadow-sm hover:shadow-md"
+              className="group relative block rounded-2xl border border-primary/25 bg-gradient-to-r from-primary/8 via-card to-secondary/5 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 overflow-hidden"
             >
-              <div className="flex items-start gap-5">
-                <div className="shrink-0 w-14 h-14 rounded-xl bg-primary/15 flex items-center justify-center">
-                  <tool.icon className="h-7 w-7 text-primary" />
+              {/* Shine effect */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/3 to-transparent" />
+
+              <div className="relative p-7 flex items-start gap-6">
+                <div className="shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
+                  <tool.icon className="h-7 w-7 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <p className="font-semibold text-foreground text-lg leading-snug">{tool.title}</p>
-                    <Badge className="bg-primary text-primary-foreground text-xs shrink-0">{tool.badge}</Badge>
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span className="text-[10px] font-bold uppercase tracking-widest bg-primary/15 text-primary border border-primary/20 rounded px-2 py-0.5">
+                      {tool.tag}
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded px-2 py-0.5">
+                      Disponible · Capa gratuita
+                    </span>
                   </div>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{tool.description}</p>
+                  <h3 className="font-bold text-lg leading-snug mb-2">{tool.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed max-w-lg">{tool.description}</p>
                 </div>
-                <ArrowRight className="shrink-0 h-5 w-5 text-primary mt-1 group-hover:translate-x-1 transition-transform" />
+                <div className="shrink-0 self-center">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary group-hover:border-primary transition-colors duration-200">
+                    <ArrowRight className="h-4 w-4 text-primary group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                  </div>
+                </div>
               </div>
             </Link>
           ))}
         </div>
 
-        {/* Coming soon grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Coming soon — carousel */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">En desarrollo</p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => scroll("left")}
+              className="w-8 h-8 rounded-full border border-border/70 bg-background flex items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+              aria-label="Anterior"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => scroll("right")}
+              className="w-8 h-8 rounded-full border border-border/70 bg-background flex items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+              aria-label="Siguiente"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+
+        <div
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           {comingSoonTools.map((tool) => (
             <div
               key={tool.title}
-              className="relative rounded-2xl border border-border bg-muted/30 p-5 overflow-hidden select-none"
+              className="snap-start shrink-0 w-64 relative rounded-xl border border-border/40 bg-muted/20 p-5 overflow-hidden select-none"
             >
-              {/* Blur overlay */}
-              <div className="absolute inset-0 z-10 backdrop-blur-[2px] bg-background/30 flex flex-col items-center justify-center gap-2 rounded-2xl">
-                <div className="flex items-center gap-1.5 rounded-full bg-muted border border-border px-3 py-1.5 shadow-sm">
-                  <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">Próximamente</span>
+              <div className="absolute inset-0 z-10 backdrop-blur-[2px] bg-background/40 flex items-end justify-start p-4 rounded-xl">
+                <div className="flex items-center gap-1.5 rounded-full bg-muted/80 border border-border/60 px-2.5 py-1 shadow-sm">
+                  <Lock className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[10px] font-semibold text-muted-foreground">Próximamente</span>
                 </div>
               </div>
-
-              {/* Card content (blurred behind overlay) */}
-              <div className="flex items-start gap-4 mb-3">
-                <div className="shrink-0 w-11 h-11 rounded-xl bg-muted flex items-center justify-center">
-                  <tool.icon className="h-5 w-5 text-muted-foreground" />
-                </div>
+              <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center mb-3">
+                <tool.icon className="h-4 w-4 text-muted-foreground/60" />
               </div>
-              <p className="font-semibold text-foreground text-sm leading-snug mb-2">{tool.title}</p>
-              <p className="text-muted-foreground text-xs leading-relaxed">{tool.description}</p>
+              <p className="font-semibold text-sm leading-snug mb-1.5 text-foreground/70">{tool.title}</p>
+              <p className="text-muted-foreground/60 text-xs leading-relaxed">{tool.description}</p>
             </div>
           ))}
         </div>
 
-        {/* CTA */}
-        <div className="text-center mt-12">
-          <p className="text-sm text-muted-foreground mb-4">
-            ¿Quieres que desarrollemos una herramienta específica? Cuéntanos.
-          </p>
-          <Button variant="outline" asChild>
-            <Link href="https://wa.me/34640049993" target="_blank" rel="noopener noreferrer">
-              Contactar por WhatsApp
-            </Link>
-          </Button>
-        </div>
       </div>
     </section>
   )
