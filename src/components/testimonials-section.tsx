@@ -1,8 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Star, Quote } from "lucide-react"
 
 const testimonials = [
@@ -39,82 +37,89 @@ const testimonials = [
 export function TestimonialsSection() {
   const [currentIndex, setCurrentIndex] = useState(0)
 
-  const nextTestimonial = () => {
-    setCurrentIndex((prev) => (prev + 1) % testimonials.length)
-  }
+  const nextTestimonial = () => setCurrentIndex((prev) => (prev + 1) % testimonials.length)
+  const prevTestimonial = () => setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length)
 
-  const prevTestimonial = () => {
-    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length)
-  }
-
-  const currentTestimonial = testimonials[currentIndex]
+  const current = testimonials[currentIndex]
 
   return (
-    <section id="testimonios" className="py-20 bg-background">
-      <div className="container mx-auto px-4">
+    <section
+      id="testimonios"
+      className="relative py-24 overflow-hidden bg-gradient-to-b from-background via-muted/10 to-background"
+    >
+      {/* Ambient blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute top-10 left-1/3 w-96 h-96 bg-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-10 right-1/3 w-80 h-80 bg-secondary/5 rounded-full blur-[100px]" />
+      </div>
+
+      <div className="container relative z-10 mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-playfair font-bold mb-4">
-            Lo que dicen nuestros <span className="text-primary">clientes</span>
+          <h2 className="text-3xl md:text-4xl font-playfair font-bold mb-4 tracking-tight">
+            Lo que dicen nuestros{" "}
+            <span className="bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent">
+              clientes
+            </span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
             Miles de inmigrantes han confiado en nosotros para hacer realidad sus sueños
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto relative">
-          <Card className="relative overflow-hidden">
-            <CardContent className="p-8 md:p-12">
-              <Quote className="h-12 w-12 text-primary/20 mb-6" />
+        <div className="max-w-4xl mx-auto">
+          {/* Card */}
+          <div className="relative rounded-2xl border border-primary/20 bg-gradient-to-br from-card via-card to-primary/3 shadow-xl shadow-primary/5 p-8 md:p-12">
+            {/* Decorative quote mark */}
+            <Quote className="absolute top-6 right-8 h-16 w-16 text-primary/8 rotate-180" aria-hidden="true" />
 
-              <div className="mb-6">
-                <div className="flex items-center gap-1 mb-4">
-                  {[...Array(currentTestimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 fill-primary text-primary" />
-                  ))}
-                </div>
+            {/* Stars */}
+            <div className="flex items-center gap-1 mb-6">
+              {[...Array(current.rating)].map((_, i) => (
+                <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+              ))}
+            </div>
 
-                <blockquote className="text-lg md:text-xl leading-relaxed text-pretty mb-6">
-                  &quot;{currentTestimonial.text}&quot;
-                </blockquote>
+            <blockquote className="text-lg md:text-xl leading-relaxed text-pretty mb-8 text-foreground/90">
+              &quot;{current.text}&quot;
+            </blockquote>
+
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <div className="font-semibold text-lg">{current.name}</div>
+                <div className="text-muted-foreground text-sm">{current.country}</div>
+                <div className="text-sm font-semibold text-primary mt-1">{current.service}</div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-semibold text-lg">{currentTestimonial.name}</div>
-                  <div className="text-muted-foreground">{currentTestimonial.country}</div>
-                  <div className="text-sm text-primary font-medium">{currentTestimonial.service}</div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={prevTestimonial}
-                    className="rounded-full bg-transparent"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={nextTestimonial}
-                    className="rounded-full bg-transparent"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={prevTestimonial}
+                  className="w-9 h-9 rounded-full border border-border/70 bg-background/80 flex items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                  aria-label="Testimonio anterior"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={nextTestimonial}
+                  className="w-9 h-9 rounded-full border border-border/70 bg-background/80 flex items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                  aria-label="Testimonio siguiente"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Testimonial indicators */}
+          {/* Dot indicators */}
           <div className="flex justify-center gap-2 mt-6">
             {testimonials.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  index === currentIndex ? "bg-primary" : "bg-muted"
+                aria-label={`Ver testimonio ${index + 1}`}
+                className={`rounded-full transition-all duration-200 ${
+                  index === currentIndex
+                    ? "w-6 h-2.5 bg-primary"
+                    : "w-2.5 h-2.5 bg-border hover:bg-primary/40"
                 }`}
               />
             ))}
