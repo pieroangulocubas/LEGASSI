@@ -179,27 +179,27 @@ export function FileDropzone({
       <button
         type="button"
         onClick={() => setShowCamera(true)}
-        className="group relative w-full flex items-center gap-3 rounded-xl border-2 border-amber-400/50 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 hover:bg-amber-100 dark:hover:bg-amber-900/30 hover:border-amber-500/80 transition-all duration-200 overflow-hidden"
+        className="group relative w-full flex items-center gap-3 rounded-xl bg-[#1a1a2e] px-4 py-3 hover:bg-[#1a1a2e]/90 transition-all duration-200 overflow-hidden shadow-md shadow-[#1a1a2e]/20"
       >
         {/* Subtle sweep on hover */}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-amber-300/10 to-transparent"
+          className="pointer-events-none absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent"
         />
-        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-400/20 dark:bg-amber-400/10 ring-2 ring-amber-400/30 group-hover:bg-amber-400/30 group-hover:ring-amber-500/40 transition-all">
-          <Camera className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 ring-2 ring-white/20 group-hover:bg-white/15 transition-all">
+          <Camera className="h-5 w-5 text-white" />
         </span>
         <span className="relative text-left">
-          <span className="block text-sm font-semibold text-amber-800 dark:text-amber-300">
+          <span className="block text-sm font-semibold text-white">
             Escanear con la cámara
           </span>
-          <span className="block text-xs text-amber-700/60 dark:text-amber-400/50 mt-0.5">
+          <span className="block text-xs text-white/50 mt-0.5">
             Saca una foto al documento directamente
           </span>
         </span>
         <svg
           aria-hidden="true"
-          className="relative ml-auto h-4 w-4 text-amber-500/50 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all shrink-0"
+          className="relative ml-auto h-4 w-4 text-white/40 group-hover:text-white/70 group-hover:translate-x-0.5 transition-all shrink-0"
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

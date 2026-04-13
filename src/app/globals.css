@@ -4,27 +4,27 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated to LEGASSI brand colors: gold primary #FDB525, bronze secondary #885D07 */
+  /* LEGASSI brand colors: amber #B8941F (deep) as primary, bronze #885D07 secondary */
   --background: oklch(1 0 0);
   --foreground: oklch(0.15 0.02 258); /* slate-900 equivalent */
   --card: oklch(0.99 0 0);
   --card-foreground: oklch(0.15 0.02 258);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0.02 258);
-  --primary: oklch(0.75 0.12 85); /* #FDB525 gold */
-  --primary-foreground: oklch(0.15 0.02 258); /* dark text on gold */
+  --primary: oklch(0.63 0.115 78); /* #B8941F deep amber — same brand, less alarming */
+  --primary-foreground: oklch(0.12 0.02 258); /* dark text on amber */
   --secondary: oklch(0.45 0.08 65); /* #885D07 bronze */
   --secondary-foreground: oklch(1 0 0); /* white text on bronze */
   --muted: oklch(0.98 0 0);
   --muted-foreground: oklch(0.55 0.02 258); /* slate-500 */
-  --accent: oklch(0.75 0.12 85); /* gold accent */
-  --accent-foreground: oklch(0.15 0.02 258);
+  --accent: oklch(0.63 0.115 78); /* amber accent */
+  --accent-foreground: oklch(0.12 0.02 258);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.92 0 0);
   --input: oklch(0.98 0 0);
-  --ring: oklch(0.75 0.12 85 / 0.5); /* gold ring */
-  --chart-1: oklch(0.75 0.12 85); /* gold */
+  --ring: oklch(0.63 0.115 78 / 0.4); /* amber ring */
+  --chart-1: oklch(0.63 0.115 78); /* amber */
   --chart-2: oklch(0.45 0.08 65); /* bronze */
   --chart-3: oklch(0.98 0 0);
   --chart-4: oklch(0.15 0.02 258);
@@ -55,13 +55,13 @@
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.08 0 0);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.75 0.12 85); /* Keep gold primary in dark mode */
-  --primary-foreground: oklch(0.08 0 0); /* dark text on gold */
+  --primary: oklch(0.68 0.115 78); /* slightly lighter amber for dark bg */
+  --primary-foreground: oklch(0.08 0 0); /* dark text on amber */
   --secondary: oklch(0.45 0.08 65); /* bronze secondary */
   --secondary-foreground: oklch(1 0 0);
   --muted: oklch(0.15 0 0);
   --muted-foreground: oklch(0.7 0 0);
-  --accent: oklch(0.75 0.12 85); /* gold accent */
+  --accent: oklch(0.68 0.115 78); /* amber accent */
   --accent-foreground: oklch(0.08 0 0);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.98 0 0);

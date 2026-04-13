@@ -51,6 +51,19 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // Nombre completo must include at least nombre + apellido (2+ words)
+  const nameParts = nombre_completo.trim().split(/\s+/).filter(Boolean)
+  if (nameParts.length < 2) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "El nombre completo debe incluir nombre y apellidos (ej: Juan García López). No se aceptan solo nombres de pila.",
+      },
+      { status: 400 }
+    )
+  }
+
   const supabase = createServerClient()
 
   // ── Check if DNI already exists ────────────────────────────────────────────

@@ -30,16 +30,18 @@ export const analizarClasificador = inngest.createFunction(
         .update({
           status: "error",
           error_msg: "Error al procesar el análisis. El crédito ha sido restaurado.",
+          credit_refunded: true,
           updated_at: new Date().toISOString(),
         })
         .eq("id", jobId)
 
       if (job) {
-        // Refund credit
+        // Refund credit — conditional to prevent double-refund if status route already did it
         await supabase
           .from("clasificador_tokens")
           .update({ credits: (job.new_credits ?? 0) + 1 })
           .eq("token", job.token)
+          .eq("credits", job.new_credits ?? 0)
 
         // Clean up temp files from storage
         const paths = ((job.file_meta ?? []) as { storageKey: string }[]).map((m) => m.storageKey)

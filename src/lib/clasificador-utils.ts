@@ -51,19 +51,31 @@ function levenshtein(a: string, b: string): number {
 
 // ─── Fuzzy person identity check ─────────────────────────────────────────────
 // Returns true if name1 and name2 likely refer to the same person.
+//
+// Rule: ALL tokens of the shorter name must be found (within edit distance 1)
+// in the longer name, and there must be at least 2 such matches.
+//
+// Examples:
+//   "Juana García"           vs "Juana García Vera"      → 2/2 → true  (same, 2nd apellido omitted)
+//   "Juana García Vera"      vs "Juana García Rodríguez" → 2/3 → false (different people)
+//   "Juan García"            vs "Juan López"             → 1/2 → false (different apellido)
+//   "JHONNY García"          vs "JHONY García"           → 2/2 → true  (typo tolerance)
 export function isSamePerson(name1: string, name2: string): boolean {
   const t1 = tokenizeName(name1)
   const t2 = tokenizeName(name2)
   if (t1.length === 0 || t2.length === 0) return false
 
+  // Use the shorter name as the reference — every one of its tokens must match
+  const [shorter, longer] = t1.length <= t2.length ? [t1, t2] : [t2, t1]
+
   let matches = 0
-  for (const a of t1) {
-    for (const b of t2) {
+  for (const a of shorter) {
+    for (const b of longer) {
       if (levenshtein(a, b) <= 1) { matches++; break }
     }
   }
-  // Same person: at least 2 tokens match, or 1 match when names are short (1 token each)
-  return matches >= 2 || (Math.min(t1.length, t2.length) === 1 && matches >= 1)
+
+  return matches === shorter.length && matches >= 2
 }
 
 // ─── Gemini prompt ────────────────────────────────────────────────────────────

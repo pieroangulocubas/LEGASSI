@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import NextImage from "next/image"
 import { Button } from "@/components/ui/button"
 import { Navbar } from "@/components/navbar"
 import {
@@ -12,6 +13,7 @@ import {
   ArrowLeft,
   ShieldCheck,
   CreditCard,
+  KeyRound,
   MessageCircle,
   Gift,
 } from "lucide-react"
@@ -33,7 +35,10 @@ type PageState = "verifying_payment" | "form" | "loading" | "results" | "error"
 
 export default function ClasificadorPage() {
   // Form state
-  const [nombre, setNombre] = useState("")
+  const [nombres, setNombres] = useState("")
+  const [apellidos, setApellidos] = useState("")
+  // Derived: full name sent to the API — always nombres + apellidos combined
+  const nombre = [nombres.trim(), apellidos.trim()].filter(Boolean).join(" ")
   const [email, setEmail] = useState("")
   const [telefono, setTelefono] = useState("")
   const [mesPresentation, setMesPresentation] = useState<PresentationMonth | "">("")
@@ -69,6 +74,13 @@ export default function ClasificadorPage() {
   // Auto-submit after payment
   const [pendingAutoSubmit, setPendingAutoSubmit] = useState(false)
 
+  // Splits a full name (from storage/API) into nombres + apellidos state
+  function setNombreFromFull(full: string) {
+    const parts = (full ?? "").trim().split(/\s+/).filter(Boolean)
+    setNombres(parts[0] ?? "")
+    setApellidos(parts.slice(1).join(" "))
+  }
+
   // On mount: check for Stripe redirect (session_id) or existing localStorage token
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -80,7 +92,7 @@ export default function ClasificadorPage() {
         const saved = sessionStorage.getItem("clasificador_pending_form")
         if (!saved) return
         const parsed = JSON.parse(saved) as Record<string, string>
-        if (parsed.nombre) setNombre(parsed.nombre)
+        if (parsed.nombre) setNombreFromFull(parsed.nombre)
         if (parsed.email) setEmail(parsed.email)
         if (parsed.telefono) setTelefono(parsed.telefono)
         if (parsed.mesPresentation)
@@ -147,7 +159,7 @@ export default function ClasificadorPage() {
       fetch(`/api/clasificador/profile?token=${recoverToken}`)
         .then((r) => r.json())
         .then((data) => {
-          if (data.nombre)   { localStorage.setItem("clasificador_nombre",   data.nombre);   setNombre(data.nombre); setAccount((prev) => ({ ...prev, nombre: data.nombre })) }
+          if (data.nombre)   { localStorage.setItem("clasificador_nombre",   data.nombre);   setNombreFromFull(data.nombre); setAccount((prev) => ({ ...prev, nombre: data.nombre })) }
           if (data.email)    { localStorage.setItem("clasificador_email",    data.email);    setEmail(data.email) }
           if (data.telefono) { localStorage.setItem("clasificador_telefono", data.telefono); setTelefono(data.telefono) }
           if (data.credits != null) {
@@ -167,7 +179,7 @@ export default function ClasificadorPage() {
     const storedEmail    = localStorage.getItem("clasificador_email")
     const storedTelefono = localStorage.getItem("clasificador_telefono")
     const storedMes      = localStorage.getItem("clasificador_mes")
-    if (storedNombre)   setNombre(storedNombre)
+    if (storedNombre)   setNombreFromFull(storedNombre)
     if (storedEmail)    setEmail(storedEmail)
     if (storedTelefono) setTelefono(storedTelefono)
     if (storedMes)      setMesPresentation(storedMes as PresentationMonth)
@@ -312,6 +324,9 @@ export default function ClasificadorPage() {
     const abort = new AbortController()
     pollAbortRef.current = abort
 
+    // Tracks any auto-issued freemium token for this session — accessible in catch for cleanup
+    let sessionAutoToken: string | null = null
+
     try {
       // Compress image files before upload — max 3 concurrent to avoid saturating the canvas API
       const CONCURRENCY = 3
@@ -370,7 +385,8 @@ export default function ClasificadorPage() {
 
       if (!res.ok) {
         setErrorMsg(data.error ?? "Error inesperado. Inténtalo de nuevo.")
-        setPageState("error")
+        setPageState("form")
+        setLoadingStep(0)
         return
       }
 
@@ -379,6 +395,7 @@ export default function ClasificadorPage() {
 
       // Persist auto-issued freemium token (first analysis, no prior token)
       if (data.autoIssuedToken) {
+        sessionAutoToken = data.autoIssuedToken
         localStorage.setItem("clasificador_token", data.autoIssuedToken)
         localStorage.setItem("clasificador_is_freemium", "true")
         setIsFreemium(true)
@@ -396,8 +413,17 @@ export default function ClasificadorPage() {
 
       if (abort.signal.aborted) return
       if (pollResult.error) {
-        setErrorMsg(pollResult.error)
-        setPageState("error")
+        // Analysis failed — undo any auto-issued token so the user returns to a clean slate
+        if (sessionAutoToken) {
+          localStorage.removeItem("clasificador_token")
+          localStorage.removeItem("clasificador_is_freemium")
+          localStorage.removeItem("clasificador_credits")
+          setIsFreemium(false)
+          setCreditsRemaining(null)
+        }
+        setErrorMsg("")
+        setLoadingStep(0)
+        setPageState("form")
         return
       }
 
@@ -449,8 +475,17 @@ export default function ClasificadorPage() {
     } catch (err) {
       if (abort.signal.aborted) return
       console.error(err)
-      setErrorMsg("Error de conexión. Comprueba tu conexión a internet e inténtalo de nuevo.")
-      setPageState("error")
+      // Undo auto-issued token on unexpected failure
+      if (sessionAutoToken) {
+        localStorage.removeItem("clasificador_token")
+        localStorage.removeItem("clasificador_is_freemium")
+        localStorage.removeItem("clasificador_credits")
+        setIsFreemium(false)
+        setCreditsRemaining(null)
+      }
+      setErrorMsg("")
+      setLoadingStep(0)
+      setPageState("form")
     }
   }
 
@@ -464,6 +499,18 @@ export default function ClasificadorPage() {
     if (files.length === 0) {
       setErrorMsg("Debes subir al menos un archivo.")
       return
+    }
+
+    // Validate full name — freemium users have a locked nombre so skip split check
+    if (!isFreemium) {
+      if (!nombres.trim()) {
+        setErrorMsg("Introduce el nombre de la persona.")
+        return
+      }
+      if (!apellidos.trim()) {
+        setErrorMsg("Introduce los apellidos. El nombre completo debe incluir nombre y apellidos.")
+        return
+      }
     }
 
     // Freemium users must provide a valid email so we can deduplicate across sessions
@@ -524,7 +571,8 @@ export default function ClasificadorPage() {
   function handleFullReset() {
     localStorage.removeItem("clasificador_nombre")
     localStorage.removeItem("clasificador_mes")
-    setNombre("")
+    setNombres("")
+    setApellidos("")
     setEmail(localStorage.getItem("clasificador_email") ?? "")
     setTelefono(localStorage.getItem("clasificador_telefono") ?? "")
     setMesPresentation("")
@@ -547,7 +595,8 @@ export default function ClasificadorPage() {
     setIsFreemium(false)
     setCreditsRemaining(null)
     setAccount({ nombre: "", email: "", telefono: "" })
-    setNombre("")
+    setNombres("")
+    setApellidos("")
     setEmail("")
     setTelefono("")
     setMesPresentation("")
@@ -704,7 +753,7 @@ export default function ClasificadorPage() {
 
         {/* ── Error ── */}
         {pageState === "error" && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="flex items-start gap-4 rounded-xl border-2 border-destructive bg-destructive/5 p-5">
               <XCircle className="h-6 w-6 text-destructive mt-0.5 shrink-0" />
               <div>
@@ -752,23 +801,7 @@ export default function ClasificadorPage() {
                         {creditsRemaining} análisis disponible{creditsRemaining !== 1 ? "s" : ""}
                       </span>
                     )}
-                    {/* Direct pay button for freemium-exhausted users */}
-                    {isFreemium && creditsRemaining === 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setPaymentModal({ open: true, reason: "first_time" })}
-                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-white
-                                   bg-gradient-to-r from-amber-500 to-yellow-500
-                                   hover:from-amber-600 hover:to-yellow-600
-                                   shadow-sm hover:shadow-amber-300/40 transition-all duration-200"
-                      >
-                        <CreditCard className="h-3 w-3" />
-                        Conseguir 7 análisis · 7,90 €
-                      </button>
-                    )}
-                    {/* Only show sign-out for paid users — freemium exhausted users
-                        should not be able to "reset" to get another free analysis */}
-                    {!(isFreemium && creditsRemaining === 0) && (
+                    {creditsRemaining > 0 && (
                       <button
                         type="button"
                         onClick={handleSignOut}
@@ -829,6 +862,87 @@ export default function ClasificadorPage() {
               )}
             </div>
 
+            {/* ── CTAs de acción prominentes ── */}
+
+            {/* Créditos agotados (freemium o pago) → pago como acción principal */}
+            {creditsRemaining === 0 && (
+              <div className="rounded-2xl bg-card border border-border p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  <p className="font-semibold text-foreground">
+                    {isFreemium ? "Ya usaste tu análisis gratuito" : "Has agotado tus análisis"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    7 análisis por 7,90 € — úsalos para ti o cualquier familiar, sin caducidad.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => setPaymentModal({ open: true, reason: isFreemium ? "first_time" : "exhausted" })}
+                  className="shrink-0 w-full sm:w-auto"
+                >
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Conseguir 7 análisis · 7,90 €
+                </Button>
+              </div>
+            )}
+
+            {/* Nuevo usuario → recuperar acceso como bloque clickable único */}
+            {creditsRemaining === null && (
+              <button
+                type="button"
+                onClick={() => setShowRecoverModal(true)}
+                className="w-full flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm hover:bg-muted transition-colors group"
+              >
+                <span className="text-muted-foreground">¿Se te agotó tu prueba gratuita o ya pagaste?</span>
+                <span className="font-medium text-green-600 dark:text-green-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform shrink-0">
+                  Recuperar acceso
+                  <KeyRound className="h-3.5 w-3.5" />
+                </span>
+              </button>
+            )}
+
+            {/* Trust banner — only for new users */}
+            {creditsRemaining === null && (
+              <div className="overflow-hidden rounded-2xl border border-border bg-card flex items-stretch">
+                <div className="flex-1 p-5 sm:p-6 flex flex-col justify-center gap-3">
+                  <p className="text-base font-semibold text-foreground leading-snug">
+                    ¿Tienes todo lo que necesitas para la regularización?
+                  </p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Sube tus documentos y nuestra herramienta te dice en segundos cuáles son válidos o
+                    inválidos, que meses te falta cubrir, cómo ordenar tu expediente y te entrega un PDF listo para presentar. Sin registros, sin complicaciones, sin sorpresas.
+                  </p>
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-y-1.5 gap-x-4">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                      Resultado en menos de 1 minuto
+                    </span>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                      Sin crear cuenta
+                    </span>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                      1 análisis completamente gratuito
+                    </span>
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                      PDF ordenado listo para presentar
+                    </span>
+                  </div>
+                </div>
+                <div className="hidden sm:block w-48 shrink-0 relative">
+                  <NextImage
+                    src="/person-young.png"
+                    alt="Asesor revisando documentos de inmigración"
+                    fill
+                    className="object-cover object-center"
+                    sizes="192px"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Payment success notice */}
             {paymentSuccess && (
               <div className="flex items-start gap-3 rounded-xl border border-green-300 bg-green-50 dark:bg-green-950/20 dark:border-green-800 px-5 py-4">
@@ -851,71 +965,48 @@ export default function ClasificadorPage() {
                   Tus datos
                 </h2>
 
-                {creditsRemaining !== null && creditsRemaining > 0 ? (
-                  /* ── Usuario activo: aviso sobre el nombre ── */
-                  <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 px-4 py-3">
-                    <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                    <p className="text-sm text-amber-800 dark:text-amber-300">
-                      <strong>Importante:</strong> escribe el nombre exactamente como aparece en
-                      los documentos del solicitante. La IA lo usará para validar cada archivo.
-                    </p>
-                  </div>
-                ) : isFreemium && creditsRemaining === 0 ? (
-                  /* ── Freemium agotado: CTA a pago ── */
-                  <div className="rounded-xl border-2 border-primary/30 bg-primary/5 px-5 py-4 space-y-3">
-                    <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <Gift className="h-4 w-4 text-primary shrink-0" />
-                      Tu análisis gratuito ya fue usado
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Para seguir verificando documentos, recarga el servicio. Introduce tu correo
-                      y teléfono para gestionar tu acceso.
-                    </p>
-                  </div>
-                ) : (
-                  /* ── Nuevo usuario: explicación del análisis gratuito ── */
-                  <div className="rounded-xl border-2 border-primary/30 bg-primary/5 px-5 py-4 space-y-3">
-                    <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <Gift className="h-4 w-4 text-primary shrink-0" />
-                      Tienes 1 análisis gratuito
-                    </p>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li className="flex items-start gap-2">
-                        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                        <span>
-                          <strong className="text-foreground">El análisis gratuito está vinculado a tu nombre completo.</strong>{" "}
-                          Escríbelo exactamente como aparece en tus documentos — la IA lo usará
-                          para validar cada archivo.
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                        <span>
-                          <strong className="text-foreground">El correo es obligatorio</strong> — te enviamos el resultado completo del análisis para que puedas consultarlo siempre, y te permite recuperar tu acceso desde cualquier dispositivo.
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
+                {creditsRemaining === null && (
+                  /* ── Nuevo usuario: badge sutil ── */
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Gift className="h-3.5 w-3.5 text-primary shrink-0" />
+                    Tienes <strong className="text-foreground">1 análisis gratuito</strong> — vinculado a tu nombre y correo
+                  </p>
                 )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <InputField
-                    label="Nombre completo"
-                    id="nombre"
-                    value={nombre}
-                    onChange={setNombre}
-                    required
-                    placeholder="María García López"
-                    autoComplete="name"
-                    readOnly={isFreemium}
-                    helperText={
-                      isFreemium
-                        ? "Vinculado a tu cuenta gratuita — un análisis por nombre"
-                        : creditsRemaining !== null && creditsRemaining > 0
-                        ? "Escribe el nombre de quien deseas analizar: puede ser un familiar o amigo."
-                        : "Escríbelo exactamente como aparece en tus documentos — la IA lo usa para validar cada archivo."
-                    }
-                  />
+                  {isFreemium ? (
+                    /* Freemium: nombre ya bloqueado — mostrar campo único readOnly */
+                    <InputField
+                      label="Nombre completo"
+                      id="nombre"
+                      value={nombre}
+                      onChange={() => {}}
+                      readOnly
+                      helperText="Vinculado a tu cuenta gratuita — un análisis por nombre"
+                    />
+                  ) : (
+                    <>
+                      <InputField
+                        label="Nombre(s)"
+                        id="nombres"
+                        value={nombres}
+                        onChange={setNombres}
+                        required
+                        placeholder="María José"
+                        autoComplete="given-name"
+                        helperText="Tal como aparece en tus documentos."
+                      />
+                      <InputField
+                        label="Apellido(s)"
+                        id="apellidos"
+                        value={apellidos}
+                        onChange={setApellidos}
+                        required
+                        placeholder="García López"
+                        autoComplete="family-name"
+                      />
+                    </>
+                  )}
                   {creditsRemaining === null && (
                     <>
                       <InputField
@@ -927,7 +1018,7 @@ export default function ClasificadorPage() {
                         required
                         placeholder="maria@ejemplo.com"
                         autoComplete="email"
-                        helperText="Te enviamos el resultado completo del análisis por correo — guárdalo para consultarlo cuando necesites. También sirve para recuperar tu acceso desde otro dispositivo."
+                        helperText="Para recibir los resultados y recuperar tu acceso."
                       />
                       <InputField
                         label="Teléfono"
@@ -938,7 +1029,6 @@ export default function ClasificadorPage() {
                         required
                         placeholder="+34 600 000 000"
                         autoComplete="tel"
-                        helperText="Para contactarte si detectamos algún problema con tu expediente."
                       />
                     </>
                   )}
@@ -1007,7 +1097,7 @@ export default function ClasificadorPage() {
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full font-semibold"
+                  className="w-full font-bold text-base py-6 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-700/25 hover:shadow-green-700/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
                   disabled={
                     !nombre.trim() ||
                     (creditsRemaining === null ? !email.trim() || !telefono.trim() : false) ||
@@ -1015,59 +1105,15 @@ export default function ClasificadorPage() {
                     files.length === 0
                   }
                 >
-                  Analizar documentos con IA
+                  Analizar mis pruebas de permanencia
                 </Button>
-                {creditsRemaining === null ? (
-                  /* ── Nuevo usuario: análisis gratuito ── */
-                  <div className="flex flex-col items-center gap-1.5">
-                    <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
-                      <Gift className="h-3 w-3 text-primary" />
-                      <span>1 análisis <strong>gratuito</strong> — vinculado al nombre que escribas arriba</span>
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setShowRecoverModal(true)}
-                      className="text-xs text-primary underline underline-offset-2 hover:opacity-80 transition-opacity"
-                    >
-                      ¿Ya usaste el gratuito o pagaste antes? Recupera tu acceso
-                    </button>
-                  </div>
-                ) : creditsRemaining === 0 && isFreemium ? (
-                  /* ── Freemium agotado: upgrade ── */
-                  <div className="flex flex-col items-center gap-1.5">
-                    <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
-                      <CreditCard className="h-3 w-3" />
-                      Has usado tu análisis gratuito
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentModal({ open: true, reason: "first_time" })}
-                      className="text-xs font-semibold text-primary underline underline-offset-2 hover:opacity-80 transition-opacity"
-                    >
-                      Continuar con 7 análisis por 7,90 €
-                    </button>
-                  </div>
-                ) : creditsRemaining === 0 ? (
-                  /* ── Pago agotado: recargar ── */
-                  <div className="flex flex-col items-center gap-1.5">
-                    <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
-                      <CreditCard className="h-3 w-3" />
-                      Has agotado tus análisis disponibles
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentModal({ open: true, reason: "exhausted" })}
-                      className="text-xs font-semibold text-primary underline underline-offset-2 hover:opacity-80 transition-opacity"
-                    >
-                      Recargar 7 análisis por 7,90 €
-                    </button>
-                  </div>
-                ) : null}
+                {creditsRemaining === null && (
+                  <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+                    <Gift className="h-3 w-3 text-primary" />
+                    1 análisis <strong>gratuito</strong> — vinculado al nombre que escribas arriba
+                  </p>
+                )}
               </div>
-
-              <p className="text-center text-xs text-muted-foreground">
-                Tus archivos se procesan de forma segura y no se almacenan en nuestros servidores.
-              </p>
 
               {/* ── FAQ ── */}
               <ToolFAQ />

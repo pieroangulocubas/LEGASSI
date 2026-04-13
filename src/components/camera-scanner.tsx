@@ -13,6 +13,7 @@ export function CameraScanner({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const viewportRef = useRef<HTMLDivElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
   const [status, setStatus] = useState<"loading" | "ready" | "captured" | "error">("loading")
@@ -57,14 +58,36 @@ export function CameraScanner({
   const capture = useCallback(() => {
     const video = videoRef.current
     const canvas = canvasRef.current
-    if (!video || !canvas) return
+    const viewport = viewportRef.current
+    if (!video || !canvas || !viewport) return
 
-    const w = video.videoWidth || 1280
-    const h = video.videoHeight || 720
-    canvas.width = w
-    canvas.height = h
+    const vw = video.videoWidth || 1280
+    const vh = video.videoHeight || 720
+    const containerW = viewport.clientWidth
+    const containerH = viewport.clientHeight
+    const videoRatio = vw / vh
+    const containerRatio = containerW / containerH
+
+    // object-cover: scale the video to fill the container
+    const scale = videoRatio > containerRatio
+      ? containerH / vh   // landscape video: fit by height, crop sides
+      : containerW / vw   // portrait video:  fit by width,  crop top/bottom
+
+    // How many video pixels are hidden (cropped) on each side
+    const cropX = (vw - containerW / scale) / 2
+    const cropY = (vh - containerH / scale) / 2
+
+    // Guide rectangle inset is 8% of the container on each side
+    const INSET = 0.08
+    const srcX = cropX + (containerW * INSET) / scale
+    const srcY = cropY + (containerH * INSET) / scale
+    const srcW = (containerW * (1 - 2 * INSET)) / scale
+    const srcH = (containerH * (1 - 2 * INSET)) / scale
+
+    canvas.width  = Math.round(srcW)
+    canvas.height = Math.round(srcH)
     const ctx = canvas.getContext("2d")!
-    ctx.drawImage(video, 0, 0, w, h)
+    ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height)
     setCapturedDataUrl(canvas.toDataURL("image/jpeg", 0.93))
     setStatus("captured")
   }, [])
@@ -106,7 +129,7 @@ export function CameraScanner({
         </div>
 
         {/* Camera viewport */}
-        <div className="relative bg-black w-full" style={{ aspectRatio: "4/3" }}>
+        <div ref={viewportRef} className="relative bg-black w-full" style={{ aspectRatio: "4/3" }}>
 
           {status === "loading" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white">
