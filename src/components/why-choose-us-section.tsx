@@ -85,7 +85,7 @@ export function WhyChooseUsSection() {
             href="https://wa.me/34672297468?text=Hola%2C%20me%20gustar%C3%ADa%20saber%20m%C3%A1s%20sobre%20sus%20servicios."
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 px-8 py-4 text-base font-bold text-amber-950 shadow-lg shadow-amber-400/30 hover:shadow-amber-400/50 hover:scale-[1.02] hover:brightness-105 active:scale-[0.99] transition-all duration-200"
+            className="group inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary/20 hover:shadow-primary/35 hover:scale-[1.02] hover:brightness-110 active:scale-[0.99] transition-all duration-200"
           >
             Habla con un Asesor Ahora
             <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />

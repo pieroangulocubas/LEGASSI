@@ -22,7 +22,7 @@ export function CTASection() {
 
           <h2 className="text-3xl md:text-5xl font-playfair font-bold mb-6 tracking-tight">
             ¿Listo para comenzar tu{" "}
-            <span className="bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               nueva vida
             </span>
             ?
@@ -100,7 +100,7 @@ export function CTASection() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Habla con un asesor por WhatsApp"
-              className="group inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 px-8 py-4 text-base font-bold text-amber-950 shadow-lg shadow-amber-400/30 hover:shadow-amber-400/50 hover:scale-[1.02] hover:brightness-105 active:scale-[0.99] transition-all duration-200"
+              className="group inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary/20 hover:shadow-primary/35 hover:scale-[1.02] hover:brightness-110 active:scale-[0.99] transition-all duration-200"
             >
               Solicitar asesoría completa
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />

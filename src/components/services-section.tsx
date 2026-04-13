@@ -58,7 +58,7 @@ export function ServicesSection() {
       <div className="container relative z-10 mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-playfair font-bold mb-4 tracking-tight">
-            Nuestros <span className="bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent">Servicios</span>
+            Nuestros <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Servicios</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
             Servicios especializados en extranjería con tecnología avanzada y atención personalizada

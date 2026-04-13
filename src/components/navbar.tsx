@@ -62,17 +62,16 @@ export function Navbar() {
             {/* Desktop CTA and Theme Toggle */}
             <div className="hidden md:flex items-center space-x-4">
               <ThemeToggle />
-              <Button asChild className="hover:bg-primary/90 font-semibold">
-                <Link
-                  href="https://wa.me/34672297468?text=Hola,%20quisiera%20agendar%20una%20consulta%20completa%20para%20el%20tr%C3%A1mite%20de%20"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Habla con un asesor por WhatsApp"
-                >
-                  <CalendarArrowUpIcon className="mr-1 h-4 w-4" />
-                  Agenda una asesoría
-                </Link>
-              </Button>
+              <Link
+                href="https://wa.me/34672297468?text=Hola,%20quisiera%20agendar%20una%20consulta%20completa%20para%20el%20tr%C3%A1mite%20de%20"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Habla con un asesor por WhatsApp"
+                className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-4 py-2 text-sm font-bold text-white shadow-md shadow-primary/20 hover:shadow-primary/35 hover:scale-[1.03] hover:brightness-110 active:scale-[0.98] transition-all duration-200"
+              >
+                <CalendarArrowUpIcon className="h-4 w-4 shrink-0" />
+                Agenda una asesoría
+              </Link>
             </div>
 
             {/* Mobile Menu */}
@@ -108,17 +107,16 @@ export function Navbar() {
                         {item.label}
                       </Link>
                     ))}
-                    <Button asChild className="mt-6 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
-                      <Link
-                        href="https://wa.me/34672297468?text=Hola,%20quisiera%20agendar%20una%20consulta%20completa%20para%20el%20tr%C3%A1mite%20de%20"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <CalendarArrowUpIcon className="mr-2 h-4 w-4" />
-                        Agenda una asesoría
-                      </Link>
-                    </Button>
+                    <Link
+                      href="https://wa.me/34672297468?text=Hola,%20quisiera%20agendar%20una%20consulta%20completa%20para%20el%20tr%C3%A1mite%20de%20"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsOpen(false)}
+                      className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-5 py-3 text-base font-bold text-white shadow-md shadow-primary/20 hover:brightness-110 transition-all duration-200"
+                    >
+                      <CalendarArrowUpIcon className="h-4 w-4 shrink-0" />
+                      Agenda una asesoría
+                    </Link>
                   </nav>
                 </SheetContent>
               </Sheet>

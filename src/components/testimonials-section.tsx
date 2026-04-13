@@ -57,7 +57,7 @@ export function TestimonialsSection() {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-playfair font-bold mb-4 tracking-tight">
             Lo que dicen nuestros{" "}
-            <span className="bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               clientes
             </span>
           </h2>
@@ -75,7 +75,7 @@ export function TestimonialsSection() {
             {/* Stars */}
             <div className="flex items-center gap-1 mb-6">
               {[...Array(current.rating)].map((_, i) => (
-                <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                <Star key={i} className="h-5 w-5 fill-primary text-primary" />
               ))}
             </div>
 

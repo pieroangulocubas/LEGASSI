@@ -59,7 +59,7 @@ export function HowWeWorkSection() {
               <div className="relative rounded-2xl border border-border/60 bg-gradient-to-b from-card to-card/80 p-6 text-center group-hover:border-primary/30 group-hover:shadow-xl group-hover:shadow-primary/5 transition-all duration-300">
                 {/* Step badge */}
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-                  <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-yellow-400 text-amber-950 rounded-full flex items-center justify-center text-xs font-black shadow-md shadow-amber-400/30">
+                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary text-white rounded-full flex items-center justify-center text-xs font-black shadow-md shadow-primary/20">
                     {step.step}
                   </div>
                 </div>
