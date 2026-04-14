@@ -146,12 +146,12 @@ export function TestimonialsSection() {
               </div>
             </div>
           ) : (
-            <div className="relative rounded-2xl border border-primary/15 bg-gradient-to-br from-card via-card to-primary/3 shadow-xl shadow-primary/5 p-8 md:p-12">
+            <div className="relative rounded-2xl border border-primary/15 bg-gradient-to-br from-card via-card to-primary/3 shadow-xl shadow-primary/5 p-5 sm:p-8 md:p-12">
               <Quote className="absolute top-6 right-8 h-14 w-14 text-primary/8 rotate-180" aria-hidden="true" />
 
               <Stars count={item.rating} />
 
-              <div className="mt-4 mb-8 flex items-start gap-4">
+              <div className="mt-4 mb-5 sm:mb-8 flex items-start gap-4">
                 {item.photo ? (
                   <div className="relative shrink-0 w-14 h-14 rounded-full overflow-hidden border-2 border-primary/20">
                     <Image src={item.photo} alt={item.name} fill className="object-cover" />
@@ -168,7 +168,7 @@ export function TestimonialsSection() {
                 </div>
               </div>
 
-              <blockquote className="text-lg leading-relaxed text-pretty text-foreground/85">
+              <blockquote className="text-base sm:text-lg leading-relaxed text-pretty text-foreground/85">
                 &quot;{item.text}&quot;
               </blockquote>
             </div>

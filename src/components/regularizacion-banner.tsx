@@ -14,47 +14,58 @@ export function RegularizacionBanner() {
         aria-hidden="true"
       />
 
-      <div className="container relative mx-auto px-6 sm:px-10 lg:px-16 py-5 sm:py-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="container relative mx-auto px-5 sm:px-10 lg:px-16 py-4 sm:py-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
 
-          {/* Left */}
-          <div className="flex items-start sm:items-center gap-3">
-            <div className="shrink-0 mt-0.5 sm:mt-0 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-              <Flame className="h-4 w-4 text-white" />
+          {/* Left: icon + text */}
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="shrink-0 mt-0.5 sm:mt-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center">
+              <Flame className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
             </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                <span className="text-[10px] font-black uppercase tracking-widest bg-white/25 text-white rounded px-2 py-0.5">
-                  Activo hasta el 30 de junio
+            <div className="min-w-0">
+              {/* Badge + date — una sola línea */}
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <span className="text-[10px] font-black uppercase tracking-widest bg-white/25 text-white rounded px-2 py-0.5 whitespace-nowrap">
+                  Oferta vigente
+                </span>
+                <span className="text-white/70 text-[10px] flex items-center gap-1 whitespace-nowrap">
+                  <CalendarClock className="h-3 w-3 shrink-0" />
+                  Hasta el 30 de junio de 2026
                 </span>
               </div>
-              <p className="text-white font-bold text-sm md:text-base leading-tight">
-                Regularización Extraordinaria 2026 — Si llevas tiempo en España sin papeles,{" "}
-                <span className="underline underline-offset-2 decoration-white/60">esta es tu oportunidad</span>
+
+              {/* Título principal */}
+              <p className="text-white font-bold text-sm sm:text-base leading-snug">
+                Regularización Extraordinaria 2026
+                <span className="hidden sm:inline text-white/80 font-normal">
+                  {" "}— Si llevas tiempo en España sin papeles,{" "}
+                  <span className="text-white underline underline-offset-2 decoration-white/50">esta es tu oportunidad</span>
+                </span>
               </p>
-              <p className="text-white/75 text-xs mt-1 flex items-center gap-1.5">
-                <CalendarClock className="h-3 w-3 shrink-0" />
-                Plazo legal hasta el <strong className="text-white">30 de junio de 2026</strong> · Solo 3 meses
+
+              {/* Subtítulo — solo mobile */}
+              <p className="sm:hidden text-white/80 text-xs mt-0.5 leading-snug">
+                Si llevas tiempo sin papeles, <span className="text-white font-semibold">esta es tu oportunidad</span>
               </p>
             </div>
           </div>
 
           {/* CTAs */}
-          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <div className="flex items-center gap-2 shrink-0 pl-10 sm:pl-0">
             <Link
               href="/herramientas/clasificador-documentos"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-xs font-bold text-primary shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 sm:px-4 py-2 text-xs font-bold text-primary shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 whitespace-nowrap"
             >
               Verificar documentos
-              <ArrowRight className="h-3.5 w-3.5" />
+              <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             </Link>
             <Link
               href="https://wa.me/34672297468?text=Hola,%20quiero%20información%20sobre%20la%20Regularización%20Extraordinaria%202026"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xl bg-white/15 border border-white/30 px-4 py-2 text-xs font-bold text-white hover:bg-white/25 active:scale-[0.98] transition-all duration-200"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-white/15 border border-white/30 px-4 py-2 text-xs font-bold text-white hover:bg-white/25 active:scale-[0.98] transition-all duration-200 whitespace-nowrap"
             >
-              Hablar con un asesor
+              Hablar con asesor
             </Link>
           </div>
 

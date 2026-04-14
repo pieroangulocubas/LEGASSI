@@ -113,8 +113,7 @@ export function ResolucionesFavorablesSection() {
             <button
               key={i}
               onClick={() => setSelected(res)}
-              className="group snap-start shrink-0 rounded-xl overflow-hidden border border-border/60 bg-card shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-left"
-              style={{ width: "calc(25% - 12px)", minWidth: 130 }}
+              className="group snap-start shrink-0 w-[75%] sm:w-[calc(33.333%-11px)] lg:w-[calc(25%-12px)] rounded-xl overflow-hidden border border-border/60 bg-card shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-left"
             >
               <div className="relative aspect-[3/4] overflow-hidden">
                 <Image

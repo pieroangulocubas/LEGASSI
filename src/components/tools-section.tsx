@@ -111,7 +111,7 @@ export function ToolsSection() {
               {/* Shine effect */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/3 to-transparent" />
 
-              <div className="relative p-7 flex items-start gap-6">
+              <div className="relative p-4 sm:p-6 md:p-7 flex items-start gap-4 sm:gap-6">
                 <div className="shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
                   <tool.icon className="h-7 w-7 text-white" />
                 </div>
@@ -166,7 +166,7 @@ export function ToolsSection() {
           {comingSoonTools.map((tool) => (
             <div
               key={tool.title}
-              className="snap-start shrink-0 w-64 relative rounded-xl border border-border/40 bg-muted/20 p-5 overflow-hidden select-none"
+              className="snap-start shrink-0 w-[78%] sm:w-64 relative rounded-xl border border-border/40 bg-muted/20 p-4 sm:p-5 overflow-hidden select-none"
             >
               <div className="absolute inset-0 z-10 backdrop-blur-[2px] bg-background/40 flex items-end justify-start p-4 rounded-xl">
                 <div className="flex items-center gap-1.5 rounded-full bg-muted/80 border border-border/60 px-2.5 py-1 shadow-sm">

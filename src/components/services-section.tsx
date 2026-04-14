@@ -153,11 +153,12 @@ export function ServicesSection() {
           {/* Stripe accent left */}
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-secondary rounded-l-2xl" />
 
-          <div className="flex flex-col sm:flex-row sm:items-stretch">
-            {/* Image — left edge, flush, clickable */}
+          <div className="flex flex-col min-[854px]:flex-row min-[854px]:items-stretch">
+
+            {/* Image — fila 1 en ≤853px, columna izquierda en >853px */}
             <button
               onClick={() => setImgOpen(true)}
-              className="group relative shrink-0 w-full sm:w-48 h-48 sm:h-auto rounded-t-2xl sm:rounded-l-2xl sm:rounded-tr-none overflow-hidden border-b sm:border-b-0 sm:border-r border-primary/20"
+              className="group relative shrink-0 w-full min-[854px]:w-44 lg:w-48 h-52 min-[854px]:h-auto min-[854px]:self-stretch rounded-t-2xl min-[854px]:rounded-l-2xl min-[854px]:rounded-tr-none overflow-hidden border-b min-[854px]:border-b-0 min-[854px]:border-r border-primary/20 bg-muted/40"
               aria-label="Ver imagen completa"
             >
               <Image src="/oferta-reg2026.png" alt="Oferta Regularización 2026" fill className="object-cover" />
@@ -166,29 +167,29 @@ export function ServicesSection() {
               </div>
             </button>
 
-            {/* Content */}
-            <div className="px-7 py-6 flex flex-col sm:flex-row sm:items-center gap-5 flex-1">
-              <div className="flex items-start gap-4 flex-1">
-                <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md shadow-primary/20">
-                  <Flame className="h-5 w-5 text-white" />
+            {/* Content — fila 2 en ≤853px, columna derecha en >853px */}
+            <div className="px-4 sm:px-6 min-[854px]:px-7 py-5 min-[854px]:py-6 flex flex-col min-[854px]:flex-row min-[854px]:items-center gap-4 min-[854px]:gap-5 flex-1 min-w-0">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="shrink-0 w-9 h-9 min-[854px]:w-10 min-[854px]:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md shadow-primary/20">
+                  <Flame className="h-4 w-4 text-white" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="text-[10px] font-black uppercase tracking-widest bg-primary/15 text-primary border border-primary/25 rounded px-2 py-0.5">
                       Oferta vigente
                     </span>
                     <span className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
-                      <CalendarClock className="h-3 w-3" /> Hasta el 30 de junio de 2026
+                      <CalendarClock className="h-3 w-3 shrink-0" /> Hasta el 30 de junio de 2026
                     </span>
                   </div>
-                  <h3 className="font-playfair font-bold text-lg leading-tight mb-1">
+                  <h3 className="font-playfair font-bold text-base min-[854px]:text-lg leading-tight mb-1">
                     Regularización Extraordinaria 2026
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
                     Si llevas tiempo en España sin documentación, esta normativa excepcional te permite regularizar tu situación. Nuestros asesores expertos preparan y presentan tu expediente completo.
                   </p>
                   <div className="flex flex-wrap gap-3 mt-3">
-                    {["Análisis de elegibilidad", "Preparación del expediente", "Clasificador de documentos incluido"].map((item) => (
+                    {["Análisis de elegibilidad", "Preparación del expediente", "Clasificador incluido"].map((item) => (
                       <span key={item} className="inline-flex items-center gap-1.5 text-xs text-foreground/70">
                         <CheckCircle className="h-3.5 w-3.5 text-primary shrink-0" />
                         {item}
@@ -198,21 +199,21 @@ export function ServicesSection() {
                 </div>
               </div>
 
-              <div className="shrink-0 flex flex-col sm:items-end gap-2">
+              <div className="shrink-0 flex flex-row min-[854px]:flex-col min-[854px]:items-end gap-2">
                 <Link
                   href="/herramientas/clasificador-documentos"
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/20 hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] transition-all duration-200"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-4 min-[854px]:px-5 py-2 min-[854px]:py-2.5 text-xs min-[854px]:text-sm font-bold text-white shadow-md shadow-primary/20 hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] transition-all duration-200 whitespace-nowrap"
                 >
-                  Verificar mis documentos
-                  <ArrowRight className="h-4 w-4" />
+                  Verificar documentos
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
                 <Link
                   href="https://wa.me/34672297468?text=Hola,%20quiero%20información%20sobre%20la%20Regularización%20Extraordinaria%202026"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline justify-center sm:justify-end"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline whitespace-nowrap"
                 >
-                  Hablar con un asesor
+                  Hablar con asesor
                   <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
@@ -267,7 +268,7 @@ export function ServicesSection() {
         </div>
 
         {/* Why choose us */}
-        <div id="por-que-elegirnos" className="rounded-2xl border border-border/40 bg-muted/30 px-8 py-8">
+        <div id="por-que-elegirnos" className="rounded-2xl border border-border/40 bg-muted/30 px-5 sm:px-8 py-6 sm:py-8">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">Por qué elegirnos</p>
           <h3 className="text-xl font-playfair font-bold mb-8">Lo que nos diferencia</h3>
 

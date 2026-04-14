@@ -15,7 +15,7 @@ export function HeroSection() {
         <div className="grid lg:grid-cols-2 gap-16 xl:gap-24 items-center">
 
           {/* ── Left: text ── */}
-          <div className="flex flex-col items-start max-w-xl">
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-left max-w-xl mx-auto lg:mx-0">
 
             {/* Trust badge */}
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/8 px-4 py-1.5 text-sm font-semibold text-primary mb-7 shadow-sm shadow-primary/10">
@@ -43,7 +43,7 @@ export function HeroSection() {
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-9 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-3 mb-9 w-full sm:w-auto items-center lg:items-start">
               <Link
                 href="https://wa.me/34672297468?text=Hola,%20quisiera%20agendar%20una%20consulta%20completa%20para%20el%20tr%C3%A1mite%20de%20"
                 target="_blank"
@@ -81,7 +81,7 @@ export function HeroSection() {
             </div>
 
             {/* Trust stats */}
-            <div className="flex items-center gap-8 pt-2 border-t border-border/40 w-full">
+            <div className="flex items-center justify-center lg:justify-start gap-8 pt-2 border-t border-border/40 w-full">
               {[
                 { value: "2000+", label: "Casos exitosos" },
                 { value: "98%", label: "Tasa de éxito" },

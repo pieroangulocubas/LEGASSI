@@ -49,9 +49,9 @@ export function HowWeWorkSection() {
                   className={`relative flex items-center gap-6 md:gap-10 ${isLeft ? "md:flex-row" : "md:flex-row-reverse"}`}
                 >
                   {/* Text */}
-                  <div className={`flex-1 ${isLeft ? "md:text-right" : "md:text-left"}`}>
+                  <div className={`flex-1 text-center md:text-left ${isLeft ? "md:text-right" : "md:text-left"}`}>
                     <h3 className="font-semibold text-lg mb-1">{step.title}</h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed max-w-xs ml-auto mr-0 md:mx-auto">
+                    <p className="text-muted-foreground text-sm leading-relaxed md:max-w-xs md:ml-auto md:mr-0 md:mx-auto">
                       {step.description}
                     </p>
                   </div>
