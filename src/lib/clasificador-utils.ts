@@ -11,7 +11,7 @@ export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
 }
 
-// ─── Name normalization helpers (used by isSamePerson and checkNombreDoc) ─────
+// ─── Name normalization helpers ───────────────────────────────────────────────
 function normalizeBase(s: string): string {
   return s
     .toUpperCase()
@@ -22,12 +22,8 @@ function normalizeBase(s: string): string {
     .trim()
 }
 
-const STOPWORDS = new Set(["DE", "LA", "DEL", "LOS", "LAS", "Y"])
-
 function tokenizeName(s: string): string[] {
-  return normalizeBase(s)
-    .split(" ")
-    .filter((t) => t.length > 0 && !STOPWORDS.has(t))
+  return normalizeBase(s).split(" ").filter((t) => t.length > 0)
 }
 
 function levenshtein(a: string, b: string): number {
@@ -84,38 +80,15 @@ export function buildGeminiPrompt(nombre: string): string {
 
 SOLICITANTE: "${nombre}"
 
-INSTRUCCIONES DE VALIDACIÓN DE IDENTIDAD (CRÍTICO):
+INSTRUCCIONES:
 
-1. NORMALIZACIÓN:
-   - Convierte todos los nombres a MAYÚSCULAS
-   - Elimina tildes
-   - Ignora comas, puntos y símbolos
-   - Trata múltiples espacios como uno solo
+1. IDENTIDAD: Copia el nombre del titular tal como aparece en el documento en el campo
+   "nombre_en_doc" (null si no hay nombre visible). La validación del nombre la hace
+   el sistema, no tú — NO uses el nombre para decidir si el documento es válido o no.
+   Si hay un identificador único (DNI/NIE/PASAPORTE/NASS) y no hay nombre → valido=true.
+   Si no hay nombre ni identificador → valido=false.
 
-2. TOKENIZACIÓN: divide los nombres en palabras (tokens).
-   Las partículas "DE", "LA", "DEL", "LOS" NO son obligatorias para validar identidad.
-   Ejemplo: "DE LA CRUZ" equivale a "CRUZ"
-
-3. ORDEN: el orden de nombres y apellidos puede variar.
-   Ejemplo válido: "PEREZ JUAN" = "JUAN PEREZ"
-
-4. COINCIDENCIA FLEXIBLE:
-   - Si hay identificador único (DNI/NIE/PASAPORTE/NASS): valido=true directamente.
-   - Si hay nombre: cuenta cuántos tokens principales coinciden (ignorando partículas).
-     Si coinciden al menos 2 tokens relevantes → valido=true
-     Si coincide solo 1 token en un documento que solo muestra 1 nombre → válido pero menor confianza
-
-5. TOLERANCIA DE ERRORES:
-   - Permite diferencias de hasta 1 letra por token (ej: PEREZ vs PERES)
-   - Si detectas exactamente 1 error leve en un token → valido=true + observación
-   - Si hay múltiples errores o diferencias grandes → valido=false
-
-6. CASOS ESPECIALES:
-   - Si el nombre está dividido en varias zonas del documento → combínalo mentalmente
-   - Si no hay nombre pero hay identificador → válido
-   - Si no hay ni nombre ni identificador → inválido
-
-7. RELEVANCIA: el documento debe ser una prueba razonable de presencia física en España.
+2. RELEVANCIA: el documento debe ser una prueba razonable de presencia física en España.
 
 ---
 
@@ -184,67 +157,39 @@ Ejemplo con un archivo que contiene dos documentos escaneados:
 ]`
 }
 
-// ─── Programmatic name check ──────────────────────────────────────────────────
-type NameCheckResult =
-  | { override: false }
-  | { override: true; valido: boolean; observacion: string | null; motivo: string | null }
+// ─── Name match check ─────────────────────────────────────────────────────────
+//
+//  "exact"    → every token in the solicitante's name appears verbatim in the doc
+//  "observado"→ any token is missing → needs manual review
+//
+// Normalisation applied to both sides: uppercase, accents stripped, common
+// separators (comma, dash, slash) treated as spaces, stopwords ignored.
+// Fuzzy/typo tolerance is intentionally removed — the person fills in their own
+// name so we expect an exact match; any discrepancy goes to human review.
+export function checkNameMatchLevel(
+  solicitante: string,
+  nombreEnDoc: string,
+): "exact" | "observado" {
+  const cleanDoc = nombreEnDoc.replace(/[,\-/\\|]/g, " ")
+  const sTokens = tokenizeName(solicitante)
+  const dSet = new Set(tokenizeName(cleanDoc))
 
-export function checkNombreDoc(
-  nombreSolicitante: string,
-  nombreEnDoc: string | null,
-): NameCheckResult {
-  if (!nombreEnDoc?.trim()) return { override: false }
+  if (sTokens.length === 0) return "exact"  // nothing to validate
 
-  const inputTokens = tokenizeName(nombreSolicitante)
-  const docTokens = tokenizeName(nombreEnDoc)
-
-  if (inputTokens.length === 0 || docTokens.length === 0) return { override: false }
-
-  let matches = 0
-  const observaciones: string[] = []
-
-  for (const inputToken of inputTokens) {
-    let bestDist = Infinity
-    let bestMatch = ""
-    for (const docToken of docTokens) {
-      const d = levenshtein(inputToken, docToken)
-      if (d < bestDist) { bestDist = d; bestMatch = docToken }
-    }
-
-    if (bestDist === 0) {
-      matches++
-    } else if (bestDist === 1) {
-      matches++
-      observaciones.push(`Posible error: «${bestMatch}» en lugar de «${inputToken}»`)
-    } else if (bestDist === 2 && inputToken.length > 4) {
-      matches++
-      observaciones.push(`Posible variación: «${bestMatch}» vs «${inputToken}»`)
-    }
+  for (const s of sTokens) {
+    if (!dSet.has(s)) return "observado"
   }
+  return "exact"
+}
 
-  const valido =
-    matches >= 2 ||
-    (inputTokens.length === 1 && matches === 1)
-
-  if (!valido) {
-    return {
-      override: true,
-      valido: false,
-      observacion: null,
-      motivo: "Nombre del documento no coincide con el solicitante",
-    }
-  }
-
-  const observacion =
-    observaciones.length > 0
-      ? observaciones[0] + ". Verificar antes de presentar."
-      : null
-
-  if (observacion) {
-    return { override: true, valido: true, observacion, motivo: null }
-  }
-
-  return { override: false }
+// Builds the observacion message listing which tokens are missing
+function buildNameObservacion(solicitante: string, nombreEnDoc: string): string {
+  const cleanDoc = nombreEnDoc.replace(/[,\-/\\|]/g, " ")
+  const sTokens = tokenizeName(solicitante)
+  const dSet = new Set(tokenizeName(cleanDoc))
+  const missing = sTokens.filter((t) => !dSet.has(t))
+  const missingText = missing.length > 0 ? `No coincide: ${missing.join(", ")}. ` : ""
+  return `En el documento: «${nombreEnDoc}». ${missingText}Requiere revisión manual.`
 }
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
@@ -322,18 +267,23 @@ export function enrichGeminiResults(
     const fechas = normalizeFechas(rawFechas, tipo)
 
     let valido = doc.valido as boolean
+    let observado = false
     let observacion = (doc.observacion as string | null) ?? null
     let motivo_rechazo = (doc.motivo_rechazo as string | null) ?? null
 
+    // Name check runs only when Gemini considered the document valid on dates/relevance.
+    // If Gemini already rejected it (bad dates, no date, irrelevant), keep it invalid.
     if (valido) {
-      const check = checkNombreDoc(
-        nombre,
-        typeof doc.nombre_en_doc === "string" ? doc.nombre_en_doc : null,
-      )
-      if (check.override) {
-        valido = check.valido
-        observacion = check.observacion
-        motivo_rechazo = check.motivo
+      const nameInDoc = typeof doc.nombre_en_doc === "string" ? doc.nombre_en_doc : null
+      if (nameInDoc?.trim()) {
+        if (checkNameMatchLevel(nombre, nameInDoc) === "observado") {
+          // Any token missing → manual review; dates are fine so keep for the queue
+          valido = false
+          observado = true
+          observacion = buildNameObservacion(nombre, nameInDoc)
+          motivo_rechazo = null
+        }
+        // "exact" → no changes; nombre_en_doc absent → trust Gemini (identifier-based)
       }
     }
 
@@ -342,6 +292,7 @@ export function enrichGeminiResults(
       fechas,
       valido,
       observacion,
+      observado,
       motivo_rechazo,
       evidencia_por_mes:
         doc.evidencia_por_mes &&

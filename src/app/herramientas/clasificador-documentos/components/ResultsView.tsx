@@ -18,6 +18,7 @@ import { PreviewModal } from "./PreviewModal"
 import { VeredictoBanner } from "./VeredictoBanner"
 import { MonthCard } from "./MonthCard"
 import { DocIssueList } from "./DocIssueList"
+import { ObservadoList } from "./ObservadoList"
 import { ValidDocsList } from "./ValidDocsList"
 import { FuerzaLegend } from "./FuerzaLegend"
 
@@ -209,6 +210,13 @@ export function ResultsView({
           ))}
         </div>
       </div>
+
+      {/* Documentos pendientes de revisión (nombre con discrepancia) */}
+      <ObservadoList
+        docs={result.observadoDocs}
+        files={files}
+        onPreview={handlePreview}
+      />
 
       {/* Documentos inválidos */}
       <DocIssueList

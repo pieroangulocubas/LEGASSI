@@ -73,9 +73,16 @@ export function runRulesEngine(
     monthsMap.set(m, [])
   }
 
+  const observadoDocs: DocumentResult[] = []
   const invalidDocs: DocumentResult[] = []
 
   for (const doc of geminiResults) {
+    if (doc.observado) {
+      // Partial name match — shown separately, not counted in coverage until reviewed
+      observadoDocs.push(doc)
+      continue
+    }
+
     if (!doc.valido) {
       invalidDocs.push(doc)
       continue
@@ -128,5 +135,5 @@ export function runRulesEngine(
     .flatMap((m) => m.docs)
     .sort((a, b) => (a.fechas[0] ?? "").localeCompare(b.fechas[0] ?? ""))
 
-  return { veredicto, months, invalidDocs, validDocs }
+  return { veredicto, months, observadoDocs, invalidDocs, validDocs }
 }

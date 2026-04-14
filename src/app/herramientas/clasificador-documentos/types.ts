@@ -7,6 +7,7 @@ export interface DocumentResult {
   tipo: string
   fechas: string[] // YYYY-MM — uno o más meses cubiertos
   valido: boolean
+  observado: boolean  // true → nombre parcialmente reconocible, requiere revisión manual
   fuerza: DocFuerza
   motivo_rechazo: string | null
   observacion: string | null
@@ -30,8 +31,9 @@ export interface MonthCoverage {
 export interface AnalysisResult {
   veredicto: Veredicto
   months: MonthCoverage[]
-  invalidDocs: DocumentResult[]  // descartados: valido:false o fuera de la ventana temporal
-  validDocs: DocumentResult[]    // valido:true y dentro de la ventana temporal
+  observadoDocs: DocumentResult[] // nombre reconocible pero con discrepancia — requiere revisión
+  invalidDocs: DocumentResult[]   // descartados: sin nombre, fecha inválida o fuera de ventana
+  validDocs: DocumentResult[]     // valido:true y dentro de la ventana temporal
 }
 
 export interface ClasificadorFormData {
