@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, ChevronUp, FileText, AlertTriangle } from "lucide-react"
+import { ChevronDown, ChevronUp, FileText, AlertTriangle, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatFechasRange } from "../logic"
 import type { DocumentResult } from "../types"
@@ -10,10 +10,12 @@ export function ObservadoList({
   docs,
   files,
   onPreview,
+  onAprobar,
 }: {
   docs: DocumentResult[]
   files?: File[]
   onPreview?: (doc: DocumentResult) => void
+  onAprobar?: (doc: DocumentResult) => void
 }) {
   const [open, setOpen] = useState(true)
   if (docs.length === 0) return null
@@ -51,18 +53,9 @@ export function ObservadoList({
         <div className="divide-y divide-amber-100 dark:divide-amber-900/40 border-t border-amber-200 dark:border-amber-800">
           {docs.map((doc, i) => {
             const canPreview = !!onPreview && !!files?.[doc.fileIndex]
-            const CardTag = canPreview ? "button" : "div"
             return (
-              <CardTag
-                key={i}
-                {...(canPreview
-                  ? { type: "button" as const, onClick: () => onPreview!(doc) }
-                  : {})}
-                className={cn(
-                  "w-full px-5 py-4 space-y-2 transition-colors text-left",
-                  canPreview ? "hover:bg-amber-50/40 dark:hover:bg-amber-950/30 cursor-pointer" : ""
-                )}
-              >
+              <div key={i} className="px-5 py-4 space-y-3">
+                {/* File info row */}
                 <div className="flex items-start gap-2 min-w-0">
                   <FileText className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
                   <div className="min-w-0 flex-1">
@@ -73,23 +66,47 @@ export function ObservadoList({
                       {doc.tipo}
                       {doc.fechas.length > 0 && <> · {formatFechasRange(doc.fechas)}</>}
                       {doc.nombre_en_doc && (
-                        <> · <span className="italic">En doc: {doc.nombre_en_doc}</span></>
+                        <> · <span className="italic">En doc: «{doc.nombre_en_doc}»</span></>
                       )}
                     </p>
                   </div>
                   {canPreview && (
-                    <span className="shrink-0 rounded-md bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+                    <button
+                      type="button"
+                      onClick={() => onPreview!(doc)}
+                      className="shrink-0 rounded-md bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors"
+                    >
                       Ver
-                    </span>
+                    </button>
                   )}
                 </div>
+
+                {/* Observacion note */}
                 {doc.observacion && (
                   <div className="flex items-start gap-2 rounded-lg px-3 py-2 text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800">
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                     <span className="break-words min-w-0">{doc.observacion}</span>
                   </div>
                 )}
-              </CardTag>
+
+                {/* Approve action */}
+                {onAprobar && (
+                  <button
+                    type="button"
+                    onClick={() => onAprobar(doc)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
+                      "bg-green-50 text-green-700 border border-green-200",
+                      "hover:bg-green-100 hover:border-green-300",
+                      "dark:bg-green-950/30 dark:text-green-300 dark:border-green-800",
+                      "dark:hover:bg-green-950/50"
+                    )}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    Integrar como prueba de permanencia
+                  </button>
+                )}
+              </div>
             )
           })}
         </div>

@@ -23,7 +23,7 @@ import { ValidDocsList } from "./ValidDocsList"
 import { FuerzaLegend } from "./FuerzaLegend"
 
 export function ResultsView({
-  result: initialResult,
+  result: _initialResult,
   rawResults,
   formData,
   files,
@@ -38,14 +38,24 @@ export function ResultsView({
   onReset: () => void
 }) {
   const [activeMonth, setActiveMonth] = useState<PresentationMonth>(formData.mesPresentation)
-  const [result, setResult] = useState<AnalysisResult>(initialResult)
+  // Indices into rawResults that the user has manually approved from the observados queue
+  const [approvedIndices, setApprovedIndices] = useState<Set<number>>(new Set())
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfError, setPdfError] = useState<string | null>(null)
   const [previewDoc, setPreviewDoc] = useState<DocumentResult | null>(null)
 
-  function handleMonthChange(month: PresentationMonth) {
-    setActiveMonth(month)
-    setResult(runRulesEngine(rawResults, month))
+  // Derive result on every render — no stale state
+  const effectiveResults = rawResults.map((doc, i) =>
+    doc.observado && approvedIndices.has(i)
+      ? { ...doc, valido: true, observado: false }
+      : doc
+  )
+  const result = runRulesEngine(effectiveResults, activeMonth)
+
+  function handleAprobarObservado(doc: DocumentResult) {
+    const idx = rawResults.indexOf(doc)
+    if (idx === -1) return
+    setApprovedIndices((prev) => new Set([...prev, idx]))
   }
 
   function handlePreview(doc: DocumentResult) {
@@ -180,7 +190,7 @@ export function ResultsView({
                 <button
                   key={month}
                   type="button"
-                  onClick={() => handleMonthChange(month)}
+                  onClick={() => setActiveMonth(month)}
                   className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                     activeMonth === month
                       ? "bg-primary text-primary-foreground"
@@ -216,6 +226,7 @@ export function ResultsView({
         docs={result.observadoDocs}
         files={files}
         onPreview={handlePreview}
+        onAprobar={handleAprobarObservado}
       />
 
       {/* Documentos inválidos */}
