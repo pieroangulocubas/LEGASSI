@@ -370,36 +370,38 @@ export default function ClasificadorPage() {
         results.forEach((f, j) => { processedFiles[i + j] = f })
       }
 
-      const fd = new FormData()
-      fd.append("nombre", nombre)
-      fd.append("email", email)
-      fd.append("telefono", telefono)
-      fd.append("mesPresentation", mesPresentation)
-      fd.append("token", localStorage.getItem("clasificador_token") ?? "")
-      for (const f of processedFiles) {
-        fd.append("files", f)
-      }
+      // ── Step 1: prepare-job — validate + create job + get signed upload URLs ──
+      // No file bytes sent to Vercel (avoids 4.5 MB hard limit)
+      const prepRes = await fetch("/api/clasificador/prepare-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre,
+          email,
+          telefono,
+          mesPresentation,
+          token: localStorage.getItem("clasificador_token") ?? "",
+          files: processedFiles.map((f) => ({ name: f.name, size: f.size, mimeType: f.type })),
+        }),
+      })
+      const prepData = await prepRes.json()
 
-      // POST uploads files to Supabase Storage + triggers Inngest, returns jobId immediately
-      const res = await fetch("/api/clasificador", { method: "POST", body: fd })
-      const data = await res.json()
-
-      if (res.status === 402) {
-        if (data.reason === "email_required") {
+      if (prepRes.status === 402) {
+        if (prepData.reason === "email_required") {
           setErrorMsg("Introduce tu correo electrónico para usar el análisis gratuito.")
           setPageState("form")
           setLoadingStep(0)
           return
         }
 
-        if (data.reason === "email_invalid") {
+        if (prepData.reason === "email_invalid") {
           setErrorMsg("El correo electrónico no es válido. Usa un correo real para continuar.")
           setPageState("form")
           setLoadingStep(0)
           return
         }
 
-        if (data.reason === "freemium_exhausted") {
+        if (prepData.reason === "freemium_exhausted") {
           // This IS their account and they exhausted their free credit.
           localStorage.setItem("clasificador_credits", "0")
           localStorage.setItem("clasificador_is_freemium", "true")
@@ -418,34 +420,62 @@ export default function ClasificadorPage() {
         return
       }
 
-      if (!res.ok) {
-        setErrorMsg(data.error ?? "Error inesperado. Inténtalo de nuevo.")
+      if (!prepRes.ok) {
+        setErrorMsg(prepData.error ?? "Error inesperado. Inténtalo de nuevo.")
         setPageState("form")
         setLoadingStep(0)
         return
       }
 
-      // Files uploaded — step 1 done, now IA is reading
+      const { jobId, uploadSlots, autoIssuedToken } = prepData as {
+        jobId: string
+        uploadSlots: Array<{ index: number; storageKey: string; signedUrl: string }>
+        autoIssuedToken?: string
+      }
+
+      // ── Step 2: upload files directly to Supabase using signed URLs ──
       setLoadingStep(2)
+      for (const slot of uploadSlots) {
+        const file = processedFiles[slot.index]
+        const uploadRes = await fetch(slot.signedUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        })
+        if (!uploadRes.ok) {
+          setErrorMsg("Error al subir los archivos. Inténtalo de nuevo.")
+          setPageState("form")
+          setLoadingStep(0)
+          return
+        }
+      }
+
+      // ── Step 3: trigger Inngest analysis ──
+      const triggerRes = await fetch("/api/clasificador", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId }),
+      })
+      if (!triggerRes.ok) {
+        const triggerData = await triggerRes.json()
+        setErrorMsg(triggerData.error ?? "Error al iniciar el análisis. Inténtalo de nuevo.")
+        setPageState("form")
+        setLoadingStep(0)
+        return
+      }
 
       // Persist auto-issued freemium token (first analysis, no prior token)
-      if (data.autoIssuedToken) {
-        sessionAutoToken = data.autoIssuedToken
-        localStorage.setItem("clasificador_token", data.autoIssuedToken)
+      if (autoIssuedToken) {
+        sessionAutoToken = autoIssuedToken
+        localStorage.setItem("clasificador_token", autoIssuedToken)
         localStorage.setItem("clasificador_is_freemium", "true")
         setIsFreemium(true)
         if (!account.nombre && nombre) setAccount((prev) => ({ ...prev, nombre }))
       }
 
-      // Update credits from response (deducted before Inngest runs)
-      if (typeof data.creditsRemaining === "number") {
-        setCreditsRemaining(data.creditsRemaining)
-        localStorage.setItem("clasificador_credits", String(data.creditsRemaining))
-      }
-
       // Poll until Inngest finishes — persist jobId so a reload can resume
-      sessionStorage.setItem("clasificador_pending_job", data.jobId)
-      const pollResult = await pollForResult(data.jobId, abort.signal)
+      sessionStorage.setItem("clasificador_pending_job", jobId)
+      const pollResult = await pollForResult(jobId, abort.signal)
       sessionStorage.removeItem("clasificador_pending_job")
 
       if (abort.signal.aborted) return
@@ -477,7 +507,7 @@ export default function ClasificadorPage() {
       }
 
       // Send analysis summary email in background (non-blocking)
-      const notifyToken = data.autoIssuedToken ?? localStorage.getItem("clasificador_token") ?? ""
+      const notifyToken = autoIssuedToken ?? localStorage.getItem("clasificador_token") ?? ""
       if (notifyToken) {
         ;(async () => {
           try {
@@ -487,7 +517,7 @@ export default function ClasificadorPage() {
               body: JSON.stringify({
                 token: notifyToken,
                 veredicto: analysisResult.veredicto,
-                creditsRemaining: data.creditsRemaining ?? 0,
+                creditsRemaining: pollResult.creditsRemaining ?? 0,
                 months: analysisResult.months.map((m) => ({
                   label: m.label,
                   status: m.status,
