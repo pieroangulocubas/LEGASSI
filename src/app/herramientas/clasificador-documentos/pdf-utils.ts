@@ -563,9 +563,12 @@ async function addCompactDocDivider(
 
 // ─── Month divider page ───────────────────────────────────────────────────────
 // One big page per month: dark header with large month name + list of docs below.
+// docAlreadyShownIn: map from doc key → label of the first month where it was embedded.
+// When a doc appears in multiple months but is only embedded once, a note is shown.
 async function addMonthDividerPage(
   doc: PDFDocument,
   month: MonthCoverage,
+  docAlreadyShownIn: Map<string, string> = new Map(),
 ): Promise<void> {
   const [helveticaBold, helvetica] = await Promise.all([
     doc.embedFont(StandardFonts.HelveticaBold),
@@ -629,6 +632,8 @@ async function addMonthDividerPage(
   for (const d of month.docs) {
     if (y < margin + 30) break
 
+    const alreadyIn = docAlreadyShownIn.get(getDocKey(d)) ?? null
+
     // Bullet square
     page.drawRectangle({ x: margin, y: y + 2, width: 5, height: 5, color: rgb(0.78, 0.71, 0.42) })
 
@@ -662,7 +667,18 @@ async function addMonthDividerPage(
       size: 7.5, font: helvetica, color: rgb(...fc),
     })
 
-    y -= descH + 12 + 12
+    // Cross-month note: document is physically embedded in a different section
+    let extraH = 0
+    if (alreadyIn) {
+      const noteText = safe(`-> Documento incluido en la seccion de ${alreadyIn}`)
+      page.drawText(noteText, {
+        x: margin + 14, y: y - descH - 12,
+        size: 7.5, font: helvetica, color: rgb(0.35, 0.45, 0.75),
+      })
+      extraH = 14
+    }
+
+    y -= descH + 12 + 12 + extraH
 
     page.drawLine({
       start: { x: margin, y }, end: { x: width - margin, y },
@@ -728,10 +744,34 @@ export async function generatePDF(
     }
   } else {
     // ── Full month-grouped layout ──
+    // Pre-compute which month label each doc is first embedded in, so subsequent
+    // month divider pages can show a cross-reference note instead of re-embedding.
+    const keyToFirstMonthLabel = new Map<string, string>()
+    for (const month of result.months) {
+      for (const docResult of month.docs) {
+        const key = getDocKey(docResult)
+        if (!keyToFirstMonthLabel.has(key)) {
+          keyToFirstMonthLabel.set(key, month.label)
+        }
+      }
+    }
+
     const embeddedKeys = new Set<string>()
     for (const month of result.months) {
       if (month.docs.length === 0) continue
-      await addMonthDividerPage(doc, month)
+
+      // Build the cross-reference map for this month's divider page:
+      // for each doc that was already embedded in a prior month, include its first-month label.
+      const alreadyShownIn = new Map<string, string>()
+      for (const docResult of month.docs) {
+        const key = getDocKey(docResult)
+        const firstMonth = keyToFirstMonthLabel.get(key)
+        if (firstMonth && firstMonth !== month.label) {
+          alreadyShownIn.set(key, firstMonth)
+        }
+      }
+
+      await addMonthDividerPage(doc, month, alreadyShownIn)
       for (const docResult of month.docs) {
         const key = getDocKey(docResult)
         if (embeddedKeys.has(key)) continue
