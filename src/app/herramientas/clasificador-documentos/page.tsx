@@ -606,8 +606,9 @@ export default function ClasificadorPage() {
     setResult(null)
     setErrorMsg("")
     setPageState("form")
-    // Show upgrade modal when freemium user returns after using their only credit
-    if (isFreemium && creditsRemaining === 0) {
+    // Show upgrade modal when freemium user returns after exhausting credits.
+    // Use <= 0 (not === 0) to handle edge case where DB returned -1.
+    if (isFreemium && creditsRemaining !== null && creditsRemaining <= 0) {
       setShowUpgradeModal(true)
     }
   }

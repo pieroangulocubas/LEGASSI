@@ -162,15 +162,16 @@ export const analizarClasificador = inngest.createFunction(
         .update({ step: 4, updated_at: new Date().toISOString() })
         .eq("id", jobId)
 
-      // Deduct credit (idempotent: only if not already done)
+      // Deduct credit (idempotent: only if not already done).
+      // Floor at 0 — the RPC may return a negative number if called concurrently.
       let creditsAfterDeduction = 0
       if (creditsRemaining === null) {
         const { data: deducted } = await supabase.rpc("use_clasificador_credit", {
           p_token: token,
         })
-        creditsAfterDeduction = deducted ?? 0
+        creditsAfterDeduction = Math.max(0, deducted ?? 0)
       } else {
-        creditsAfterDeduction = creditsRemaining
+        creditsAfterDeduction = Math.max(0, creditsRemaining)
       }
 
       await supabase

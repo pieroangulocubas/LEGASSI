@@ -54,10 +54,23 @@ export function ResultsView({
   )
   const result = runRulesEngine(effectiveResults, activeMonth)
 
+  // All docs that Gemini flagged as observado (constant — derived from rawResults)
+  const allObservadoDocs = rawResults.filter((d) => d.observado)
+
   function handleAprobarObservado(doc: DocumentResult) {
     const idx = rawResults.indexOf(doc)
     if (idx === -1) return
     setApprovedIndices((prev) => new Set([...prev, idx]))
+  }
+
+  function handleDesaprobarObservado(doc: DocumentResult) {
+    const idx = rawResults.indexOf(doc)
+    if (idx === -1) return
+    setApprovedIndices((prev) => {
+      const next = new Set(prev)
+      next.delete(idx)
+      return next
+    })
   }
 
   function handlePreview(doc: DocumentResult) {
@@ -226,10 +239,13 @@ export function ResultsView({
 
       {/* Documentos pendientes de revisión (nombre con discrepancia) */}
       <ObservadoList
-        docs={result.observadoDocs}
+        allObservadoDocs={allObservadoDocs}
+        approvedIndices={approvedIndices}
+        rawResults={rawResults}
         files={files}
         onPreview={handlePreview}
         onAprobar={handleAprobarObservado}
+        onDesaprobar={handleDesaprobarObservado}
       />
 
       {/* Documentos inválidos */}

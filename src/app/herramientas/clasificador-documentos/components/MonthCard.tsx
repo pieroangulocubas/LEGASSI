@@ -1,8 +1,39 @@
 "use client"
 
-import { FileText } from "lucide-react"
+import { FileText, Eye } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatFechasRange } from "../logic"
 import type { MonthCoverage, DocumentResult } from "../types"
+
+const STATUS_CFG = {
+  CUBIERTO: {
+    dot:    "bg-emerald-500",
+    label:  "Cubierto",
+    header: "bg-emerald-50 dark:bg-emerald-950/20",
+    border: "border-emerald-200 dark:border-emerald-800",
+    badge:  "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  },
+  DÉBIL: {
+    dot:    "bg-amber-500",
+    label:  "Cobertura débil",
+    header: "bg-amber-50 dark:bg-amber-950/20",
+    border: "border-amber-200 dark:border-amber-800",
+    badge:  "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  },
+  VACÍO: {
+    dot:    "bg-red-500",
+    label:  "Sin documentos",
+    header: "bg-red-50 dark:bg-red-950/20",
+    border: "border-red-200 dark:border-red-800",
+    badge:  "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  },
+} as const
+
+const FUERZA_CFG = {
+  fuerte: { dot: "bg-emerald-500", label: "Fuerte",  text: "text-emerald-700 dark:text-emerald-400" },
+  media:  { dot: "bg-amber-400",   label: "Media",   text: "text-amber-700 dark:text-amber-400" },
+  débil:  { dot: "bg-red-400",     label: "Débil",   text: "text-red-600 dark:text-red-400" },
+} as const
 
 export function MonthCard({
   month,
@@ -11,91 +42,72 @@ export function MonthCard({
   month: MonthCoverage
   onPreview: (doc: DocumentResult) => void
 }) {
-  const statusConfig = {
-    CUBIERTO: {
-      dot: "bg-green-500",
-      text: "text-green-700 dark:text-green-400",
-      label: "Cubierto",
-      bg: "bg-green-50 dark:bg-green-950/20",
-      border: "border-green-200 dark:border-green-800",
-    },
-    DÉBIL: {
-      dot: "bg-amber-500",
-      text: "text-amber-700 dark:text-amber-400",
-      label: "Cobertura débil",
-      bg: "bg-amber-50 dark:bg-amber-950/20",
-      border: "border-amber-200 dark:border-amber-800",
-    },
-    VACÍO: {
-      dot: "bg-red-500",
-      text: "text-red-700 dark:text-red-400",
-      label: "Sin documentos válidos",
-      bg: "bg-red-50 dark:bg-red-950/20",
-      border: "border-red-200 dark:border-red-800",
-    },
-  }
-
-  const fuerzaBadge = {
-    fuerte: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-    media: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-    débil: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
-  }
-
-  const baseStyle =
+  const s =
     month.status === "VACÍO" && month.isOptional
-      ? { ...statusConfig["DÉBIL"], label: "Sin documentos (opcional)" }
-      : statusConfig[month.status]
-  const s = baseStyle
+      ? { ...STATUS_CFG.DÉBIL, label: "Sin docs (opcional)" }
+      : STATUS_CFG[month.status]
 
   return (
-    <div
-      className={cn(
-        "rounded-xl border p-4 space-y-3",
-        s.bg,
-        s.border
-      )}
-    >
-      <div className="flex items-start justify-between gap-2">
+    <div className={cn("rounded-xl border overflow-hidden", s.border)}>
+
+      {/* Header */}
+      <div className={cn("flex items-center justify-between gap-2 px-4 py-3", s.header)}>
         <div className="flex items-center gap-2 min-w-0">
-          <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", s.dot)} />
-          <span className="font-semibold text-sm text-foreground truncate">{month.label}</span>
-          {month.isOptional && month.status !== "VACÍO" && (
-            <span className="text-xs text-muted-foreground shrink-0">(opcional)</span>
+          <span className={cn("h-2 w-2 rounded-full shrink-0", s.dot)} />
+          <span className="font-bold text-sm text-foreground truncate">{month.label}</span>
+          {month.isOptional && (
+            <span className="shrink-0 text-[10px] font-medium text-muted-foreground">(opcional)</span>
           )}
         </div>
-        <span className={cn("text-xs font-medium shrink-0", s.text)}>{s.label}</span>
+        <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold", s.badge)}>
+          {s.label}
+        </span>
       </div>
 
+      {/* Document list */}
       {month.docs.length > 0 ? (
-        <ul className="space-y-1.5">
-          {month.docs.map((doc, i) => (
-            <li key={i}>
+        <div className="divide-y divide-border">
+          {month.docs.map((doc, i) => {
+            const f = FUERZA_CFG[doc.fuerza as keyof typeof FUERZA_CFG]
+            return (
               <button
+                key={i}
                 type="button"
                 onClick={() => onPreview(doc)}
-                className="w-full flex items-center gap-2 text-xs rounded-lg border border-transparent px-2 py-1.5 -mx-2 hover:border-border hover:bg-background/80 transition-all text-left min-w-0"
-                title="Ver documento"
+                className="group w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
               >
-                <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className="flex-1 text-foreground truncate min-w-0">{doc.descripcion_breve}</span>
-                <span
-                  className={cn(
-                    "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                    fuerzaBadge[doc.fuerza]
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  {/* Description */}
+                  <p className="text-xs font-semibold text-foreground leading-snug truncate">
+                    {doc.descripcion_breve}
+                  </p>
+                  {/* Dates */}
+                  {doc.fechas.length > 0 && (
+                    <p className="text-[11px] text-muted-foreground">
+                      {formatFechasRange(doc.fechas)}
+                    </p>
                   )}
-                >
-                  {doc.fuerza}
-                </span>
-                <span className="shrink-0 text-[10px] font-medium text-primary/80 underline underline-offset-2">
-                  Ver
-                </span>
+                </div>
+
+                {/* Fuerza indicator */}
+                {f && (
+                  <div className="shrink-0 flex items-center gap-1.5 mt-0.5">
+                    <span className={cn("h-1.5 w-1.5 rounded-full", f.dot)} />
+                    <span className={cn("text-[11px] font-medium", f.text)}>{f.label}</span>
+                  </div>
+                )}
+
+                {/* Preview hint */}
+                <Eye className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 group-hover:text-primary mt-0.5 transition-colors" />
               </button>
-            </li>
-          ))}
-        </ul>
+            )
+          })}
+        </div>
       ) : (
-        <p className={cn("text-xs", s.text, "opacity-70")}>
-          No se encontraron documentos válidos para este mes.
+        <p className="px-4 py-3 text-xs text-muted-foreground/70">
+          No hay documentos válidos para este mes.
         </p>
       )}
     </div>
