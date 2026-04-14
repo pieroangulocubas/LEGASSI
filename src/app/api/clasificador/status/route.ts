@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 
+export const dynamic = "force-dynamic"
+
 // GET /api/clasificador/status?jobId=xxx
 // Returns job status and (when done) the enriched results.
 export async function GET(req: NextRequest) {
@@ -20,12 +22,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Job not found" }, { status: 404 })
   }
 
-  return NextResponse.json({
-    status:           job.status,
-    step:             job.step,
-    result:           job.result ?? null,
-    error:            job.error_msg ?? null,
-    creditsRemaining: job.credits_remaining ?? null,
-    autoIssuedToken:  job.auto_issued_token ?? null,
-  })
+  return NextResponse.json(
+    {
+      status:           job.status,
+      step:             job.step,
+      result:           job.result ?? null,
+      error:            job.error_msg ?? null,
+      creditsRemaining: job.credits_remaining ?? null,
+      autoIssuedToken:  job.auto_issued_token ?? null,
+    },
+    { headers: { "Cache-Control": "no-store" } }
+  )
 }
