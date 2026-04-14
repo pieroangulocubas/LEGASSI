@@ -5,6 +5,31 @@ import { inngest } from "@/inngest/client"
 import { getMimeType, isValidEmail, normalizeEmail, isSamePerson } from "@/lib/clasificador-utils"
 import type { FileMeta } from "@/inngest/functions/clasificador"
 
+// ─── Server-side limits (mirrors client-side UI limits) ──────────────────────
+const MAX_FILES_SERVER  = 30
+const MAX_FILE_BYTES    = 10 * 1024 * 1024   // 10 MB per file
+const MAX_TOTAL_BYTES   = 50 * 1024 * 1024   // 50 MB total
+const ALLOWED_MIMES     = new Set(["application/pdf", "image/jpeg", "image/png"])
+
+// ─── IP rate limit: max freemium token creations per IP per hour ──────────────
+// Requires table: clasificador_rate_limits(ip text, created_at timestamptz default now())
+// Run in Supabase SQL editor:
+//   create table if not exists clasificador_rate_limits (
+//     ip text not null, created_at timestamptz not null default now()
+//   );
+//   create index if not exists idx_rl_ip_time
+//     on clasificador_rate_limits (ip, created_at);
+const RATE_LIMIT_MAX    = 5    // max freemium analyses per IP
+const RATE_LIMIT_WINDOW = 3600 // seconds (1 hour)
+
+function getClientIp(req: NextRequest): string {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown"
+  )
+}
+
 // POST /api/clasificador
 // Validates token, uploads files to Supabase Storage, creates job record, triggers Inngest.
 // Returns { jobId, creditsRemaining, autoIssuedToken? } immediately.
@@ -93,6 +118,31 @@ export async function POST(req: NextRequest) {
       }
       token = existing.token
     } else {
+      // ── IP rate limit: block abusive freemium signups ────────────────────────
+      const ip = getClientIp(req)
+      if (ip !== "unknown") {
+        try {
+          const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW * 1000).toISOString()
+          const { count } = await supabase
+            .from("clasificador_rate_limits")
+            .select("*", { count: "exact", head: true })
+            .eq("ip", ip)
+            .gte("created_at", windowStart)
+
+          if ((count ?? 0) >= RATE_LIMIT_MAX) {
+            return NextResponse.json(
+              { error: "PAYMENT_REQUIRED", creditsRemaining: 0, reason: "rate_limited" },
+              { status: 429 }
+            )
+          }
+
+          // Record this attempt (non-fatal if table missing)
+          await supabase.from("clasificador_rate_limits").insert({ ip })
+        } catch {
+          // Table not yet created — skip rate limit gracefully
+        }
+      }
+
       const newTok = crypto.randomUUID()
       const { error: insertError } = await supabase.from("clasificador_tokens").insert({
         token:       newTok,
@@ -128,10 +178,40 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── Validate files ────────────────────────────────────────────────────────
+  // ── Validate files (server-side — mirrors client limits, cannot be bypassed) ─
   const fileEntries = formData.getAll("files") as File[]
   if (!fileEntries || fileEntries.length === 0) {
     return NextResponse.json({ error: "No se recibieron archivos." }, { status: 400 })
+  }
+  if (fileEntries.length > MAX_FILES_SERVER) {
+    return NextResponse.json(
+      { error: `Máximo ${MAX_FILES_SERVER} archivos por análisis.` },
+      { status: 400 }
+    )
+  }
+
+  let totalBytes = 0
+  for (const file of fileEntries) {
+    const mime = file.type || getMimeType(file.name)
+    if (!ALLOWED_MIMES.has(mime)) {
+      return NextResponse.json(
+        { error: `Tipo de archivo no permitido: ${file.name}. Solo PDF, JPG y PNG.` },
+        { status: 400 }
+      )
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      return NextResponse.json(
+        { error: `El archivo «${file.name}» supera el límite de 10 MB.` },
+        { status: 400 }
+      )
+    }
+    totalBytes += file.size
+  }
+  if (totalBytes > MAX_TOTAL_BYTES) {
+    return NextResponse.json(
+      { error: "El total de archivos supera 50 MB." },
+      { status: 400 }
+    )
   }
 
   // ── Deduplicate by content hash, upload unique files to Supabase Storage ──

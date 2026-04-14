@@ -14,7 +14,7 @@ export interface FileMeta {
 export const analizarClasificador = inngest.createFunction(
   {
     id: "clasificador-analyze",
-    retries: 1,
+    retries: 2,
     // Mark job as error when all retries are exhausted.
     // No credit refund needed — credit is only deducted on successful completion.
     onFailure: async ({ event }) => {
