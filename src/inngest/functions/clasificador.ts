@@ -90,15 +90,38 @@ export const analizarClasificador = inngest.createFunction(
       }
 
       const ai = new GoogleGenAI({ apiKey })
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [{ role: "user", parts }],
-        config: {
-          temperature: 0.1,
-          responseMimeType: "application/json",
-        },
-      })
-      const rawText = response.text ?? ""
+
+      // Retry with exponential backoff for transient Gemini errors (429, 503, 5xx).
+      // Delays: 5s → 15s → 45s (3 attempts total).
+      let rawText = ""
+      {
+        const MAX_ATTEMPTS = 3
+        const BASE_DELAY_MS = 5_000
+
+        for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+          try {
+            const response = await ai.models.generateContent({
+              model: "gemini-2.0-flash",
+              contents: [{ role: "user", parts }],
+              config: {
+                temperature: 0.1,
+                responseMimeType: "application/json",
+              },
+            })
+            rawText = response.text ?? ""
+            break // success
+          } catch (err: unknown) {
+            const isRetryable =
+              err instanceof Error &&
+              /429|503|500|rate.?limit|quota|overloaded|unavailable/i.test(err.message)
+
+            if (!isRetryable || attempt === MAX_ATTEMPTS) throw err
+
+            const delay = BASE_DELAY_MS * Math.pow(3, attempt - 1) // 5s, 15s, 45s
+            await new Promise((resolve) => setTimeout(resolve, delay))
+          }
+        }
+      }
 
       // ── Step 3: "Clasificando meses y valor probatorio"
       //   Parse + enrich Gemini results ────────────────────────────────────────
