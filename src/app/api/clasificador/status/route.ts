@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServerClient()
   const { data: job, error } = await supabase
     .from("clasificador_jobs")
-    .select("status, step, result, error_msg, credits_remaining, auto_issued_token, token, new_credits, credit_refunded")
+    .select("status, step, result, error_msg, credits_remaining, auto_issued_token")
     .eq("id", jobId)
     .single()
 
