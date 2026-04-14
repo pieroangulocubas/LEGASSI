@@ -207,10 +207,10 @@ export function ResultsView({
                   key={month}
                   type="button"
                   onClick={() => setActiveMonth(month)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${
                     activeMonth === month
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                      ? "bg-gradient-to-r from-primary to-secondary text-white shadow-sm shadow-primary/20"
+                      : "border border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/40"
                   }`}
                 >
                   {label}

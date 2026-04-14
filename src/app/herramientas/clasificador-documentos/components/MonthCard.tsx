@@ -42,10 +42,7 @@ export function MonthCard({
   month: MonthCoverage
   onPreview: (doc: DocumentResult) => void
 }) {
-  const s =
-    month.status === "VACÍO" && month.isOptional
-      ? { ...STATUS_CFG.DÉBIL, label: "Sin docs (opcional)" }
-      : STATUS_CFG[month.status]
+  const s = STATUS_CFG[month.status]
 
   return (
     <div className={cn("rounded-xl border overflow-hidden", s.border)}>
@@ -55,13 +52,24 @@ export function MonthCard({
         <div className="flex items-center gap-2 min-w-0">
           <span className={cn("h-2 w-2 rounded-full shrink-0", s.dot)} />
           <span className="font-bold text-sm text-foreground truncate">{month.label}</span>
-          {month.isOptional && (
-            <span className="shrink-0 text-[10px] font-medium text-muted-foreground">(opcional)</span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {month.isOptional && month.status === "VACÍO" && (
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
+              Opcional
+            </span>
+          )}
+          {!(month.isOptional && month.status === "VACÍO") && (
+            <span className={cn("rounded-full px-2.5 py-0.5 text-[11px] font-semibold", s.badge)}>
+              {s.label}
+            </span>
+          )}
+          {month.isOptional && month.status !== "VACÍO" && (
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
+              Opcional
+            </span>
           )}
         </div>
-        <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold", s.badge)}>
-          {s.label}
-        </span>
       </div>
 
       {/* Document list */}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { CheckCircle, AlertCircle, XCircle, Loader2, X, CreditCard, Lock, ShieldCheck, Users, Mail, User } from "lucide-react"
+import { CheckCircle, AlertCircle, Loader2, X, CreditCard, Lock, ShieldCheck, Users, Mail, User } from "lucide-react"
 import { saveFilesToIDB } from "../idb"
 
 export function PaymentModal({
@@ -113,62 +113,37 @@ export function PaymentModal({
 
         {/* Body */}
         <div className="px-6 py-5 space-y-5">
-          {/* Lawyer vs AI comparison */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* Lawyer */}
-            <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-2">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-destructive">
-                Abogado tradicional
-              </p>
-              <p className="text-2xl font-bold text-foreground">80–150 €</p>
-              <ul className="text-xs text-muted-foreground space-y-1.5 mt-1">
-                <li className="flex items-start gap-1.5">
-                  <XCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-destructive/70" />
-                  Solo revisión manual
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <XCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-destructive/70" />
-                  Propenso a errores humanos
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <XCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-destructive/70" />
-                  Puede tardar días
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <XCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-destructive/70" />
-                  Sin expediente PDF
-                </li>
-              </ul>
-            </div>
-
-            {/* AI */}
-            <div className="relative rounded-xl border-2 border-primary/50 bg-primary/5 p-4 space-y-2">
-              <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-0.5 text-[10px] font-bold text-primary-foreground">
-                RECOMENDADO
+          {/* Value proposition */}
+          <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5 p-5 space-y-3">
+            <div className="flex items-baseline justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-primary">
+                  Herramienta IA · Legassi
+                </p>
+                <p className="text-3xl font-bold text-foreground mt-0.5">
+                  7,90 €
+                  <span className="text-sm font-normal text-muted-foreground ml-1.5">pago único</span>
+                </p>
+              </div>
+              <span className="rounded-full bg-gradient-to-r from-primary to-secondary px-3 py-1 text-[10px] font-bold text-white shadow-sm">
+                7 análisis
               </span>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-primary">
-                IA · Legassi
-              </p>
-              <p className="text-2xl font-bold text-foreground">7,90 €</p>
-              <ul className="text-xs text-muted-foreground space-y-1.5 mt-1">
-                <li className="flex items-start gap-1.5">
-                  <CheckCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" />
-                  7 análisis incluidos
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <CheckCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" />
-                  Resultados en segundos
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <CheckCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" />
-                  Detecta meses faltantes
-                </li>
-                <li className="flex items-start gap-1.5">
-                  <CheckCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" />
-                  Expediente PDF incluido
-                </li>
-              </ul>
             </div>
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-muted-foreground pt-1">
+              {[
+                "Resultados en segundos",
+                "Detecta meses faltantes",
+                "Expediente PDF ordenado",
+                "Veredicto claro y visual",
+                "Valor probatorio de cada doc",
+                "Avisos de discrepancias de nombre",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-1.5">
+                  <CheckCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
 
           {/* Family highlight */}

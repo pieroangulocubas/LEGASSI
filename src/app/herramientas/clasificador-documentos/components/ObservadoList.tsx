@@ -75,93 +75,78 @@ export function ObservadoList({
               <div
                 key={i}
                 className={cn(
-                  "px-5 py-4 space-y-3 transition-colors",
+                  "px-4 py-3 space-y-2 transition-colors",
                   isApproved && "bg-green-50/40 dark:bg-green-950/10"
                 )}
               >
-                {/* Document identity */}
-                <div className="flex items-start gap-2.5 min-w-0">
+                {/* Top row: icon + name + badges + actions */}
+                <div className="flex items-center gap-2 min-w-0">
                   <FileText className={cn(
-                    "h-4 w-4 shrink-0 mt-0.5",
+                    "h-3.5 w-3.5 shrink-0",
                     isApproved ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
                   )} />
                   <div className="min-w-0 flex-1">
-                    {/* Primary: descriptive name */}
-                    <p className="text-sm font-semibold text-foreground leading-snug">
+                    <span className="text-sm font-semibold text-foreground leading-snug truncate block">
                       {doc.descripcion_breve}
-                    </p>
-                    {/* Secondary: file + dates */}
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                      {doc.tipo}
-                      {doc.fechas.length > 0 && <> · {formatFechasRange(doc.fechas)}</>}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate font-mono">
-                      {doc.originalName}
-                    </p>
+                    </span>
+                    <span className="text-[11px] text-muted-foreground truncate block">
+                      {doc.tipo}{doc.fechas.length > 0 && <> · {formatFechasRange(doc.fechas)}</>}
+                    </span>
                   </div>
 
+                  {/* Inline actions */}
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {/* Approved badge */}
                     {isApproved && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/40 px-2 py-0.5 text-[11px] font-semibold text-green-700 dark:text-green-300">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Aprobado
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/40 px-2 py-0.5 text-[10px] font-semibold text-green-700 dark:text-green-300">
+                        <CheckCircle2 className="h-2.5 w-2.5" />
+                        Integrado
                       </span>
                     )}
-                    {/* Preview button */}
                     {canPreview && (
                       <button
                         type="button"
                         onClick={() => onPreview!(doc)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted hover:border-primary/40 transition-all"
+                        className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted hover:border-primary/40 transition-all"
                       >
-                        <Eye className="h-3.5 w-3.5" />
+                        <Eye className="h-3 w-3" />
                         Ver
+                      </button>
+                    )}
+                    {!isApproved && onAprobar && (
+                      <button
+                        type="button"
+                        onClick={() => onAprobar(doc)}
+                        className="inline-flex items-center gap-1 rounded-lg bg-green-600 hover:bg-green-700 active:bg-green-800 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm transition-all"
+                      >
+                        <CheckCircle2 className="h-3 w-3" />
+                        Integrar
+                      </button>
+                    )}
+                    {isApproved && onDesaprobar && (
+                      <button
+                        type="button"
+                        onClick={() => onDesaprobar(doc)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-border bg-background hover:bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground transition-all"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                        Revertir
                       </button>
                     )}
                   </div>
                 </div>
 
-                {/* Name discrepancy note */}
+                {/* Discrepancy note — compact */}
                 {doc.observacion && (
-                  <div className="flex items-start gap-2 rounded-lg px-3 py-2 text-xs bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-                    <span className="text-amber-800 dark:text-amber-300 break-words min-w-0">
+                  <div className="flex items-start gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/60">
+                    <AlertTriangle className="h-3 w-3 shrink-0 mt-px text-amber-500" />
+                    <span className="text-amber-800 dark:text-amber-300 leading-snug">
                       {doc.observacion}
+                      {doc.nombre_en_doc && (
+                        <> · En doc: <em>«{doc.nombre_en_doc}»</em></>
+                      )}
                     </span>
                   </div>
                 )}
-
-                {/* Action buttons */}
-                {doc.nombre_en_doc && (
-                  <p className="text-xs text-muted-foreground">
-                    Nombre en el documento:{" "}
-                    <span className="font-semibold text-foreground italic">«{doc.nombre_en_doc}»</span>
-                  </p>
-                )}
-
-                <div className="flex gap-2 flex-wrap">
-                  {!isApproved && onAprobar && (
-                    <button
-                      type="button"
-                      onClick={() => onAprobar(doc)}
-                      className="inline-flex items-center gap-2 rounded-lg bg-green-600 hover:bg-green-700 active:bg-green-800 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      Integrar como prueba
-                    </button>
-                  )}
-                  {isApproved && onDesaprobar && (
-                    <button
-                      type="button"
-                      onClick={() => onDesaprobar(doc)}
-                      className="inline-flex items-center gap-2 rounded-lg border border-border bg-background hover:bg-muted active:bg-muted/80 px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-all"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                      Revertir aprobación
-                    </button>
-                  )}
-                </div>
               </div>
             )
           })}

@@ -88,21 +88,28 @@ export function DocIssueList({
                   canPreview ? "hover:bg-muted/30 cursor-pointer" : "hover:bg-muted/10"
                 )}
               >
-                <div className="flex items-start gap-2 min-w-0">
+                <div className="flex items-start gap-2.5 min-w-0">
                   <FileText className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {doc.originalName}
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {doc.descripcion_breve || doc.originalName}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {doc.tipo}
                       {doc.fechas.length > 0 && <> · {formatFechasRange(doc.fechas)}</>}
                     </p>
+                    <p className="text-[11px] text-muted-foreground/60 font-mono mt-0.5 truncate">
+                      {doc.originalName}
+                    </p>
                   </div>
                   {canPreview && (
-                    <span className="shrink-0 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); onPreview!(doc) }}
+                      className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted hover:border-primary/40 transition-all"
+                    >
                       Ver
-                    </span>
+                    </button>
                   )}
                 </div>
                 <div className={cn("flex items-start gap-2 rounded-lg px-3 py-2 text-xs font-medium", style)}>
