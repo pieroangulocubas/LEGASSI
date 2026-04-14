@@ -48,53 +48,55 @@ export const analizarClasificador = inngest.createFunction(
   async ({ event, step }) => {
     const { jobId } = event.data as { jobId: string }
 
-    await step.run("analyze", async () => {
-      const apiKey = process.env.GEMINI_API_KEY
-      if (!apiKey) throw new Error("GEMINI_API_KEY not set")
+    // ── Step A: Download files + call Gemini (slow — up to ~90s) ─────────────
+    // Isolated so Inngest retries only this step on Gemini failures,
+    // and each Vercel invocation stays well under maxDuration.
+    const { rawText, nombre, token, fileMeta, allFileNames, creditsRemaining } =
+      await step.run("call-gemini", async () => {
+        const apiKey = process.env.GEMINI_API_KEY
+        if (!apiKey) throw new Error("GEMINI_API_KEY not set")
 
-      const supabase = createServerClient()
+        const supabase = createServerClient()
 
-      // Load job record
-      const { data: job, error: jobErr } = await supabase
-        .from("clasificador_jobs")
-        .select("*")
-        .eq("id", jobId)
-        .single()
+        const { data: job, error: jobErr } = await supabase
+          .from("clasificador_jobs")
+          .select("*")
+          .eq("id", jobId)
+          .single()
 
-      if (jobErr || !job) throw new Error(`Job ${jobId} not found`)
+        if (jobErr || !job) throw new Error(`Job ${jobId} not found`)
 
-      const fileMeta: FileMeta[] = job.file_meta ?? []
-      const allFileNames: string[] = job.all_file_names ?? []
+        const fileMeta: FileMeta[] = job.file_meta ?? []
+        const allFileNames: string[] = job.all_file_names ?? []
 
-      // ── Step 2: "Leyendo cada documento con IA"
-      //   Download files from storage + call Gemini ────────────────────────────
-      await supabase
-        .from("clasificador_jobs")
-        .update({ status: "processing", step: 2, updated_at: new Date().toISOString() })
-        .eq("id", jobId)
+        await supabase
+          .from("clasificador_jobs")
+          .update({ status: "processing", step: 2, updated_at: new Date().toISOString() })
+          .eq("id", jobId)
 
-      const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
-        { text: buildGeminiPrompt(job.nombre ?? "") },
-      ]
+        const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+          { text: buildGeminiPrompt(job.nombre ?? "") },
+        ]
 
-      for (const meta of fileMeta) {
-        const { data: blob, error: dlErr } = await supabase.storage
-          .from("clasificador-temp")
-          .download(meta.storageKey)
+        for (const meta of fileMeta) {
+          const { data: blob, error: dlErr } = await supabase.storage
+            .from("clasificador-temp")
+            .download(meta.storageKey)
 
-        if (dlErr || !blob) throw new Error(`Failed to download ${meta.storageKey}: ${dlErr?.message}`)
+          if (dlErr || !blob) throw new Error(`Failed to download ${meta.storageKey}: ${dlErr?.message}`)
 
-        const buf = Buffer.from(await blob.arrayBuffer())
-        parts.push({ text: `FILE_INDEX:${meta.originalIndex}` })
-        parts.push({ inlineData: { mimeType: meta.mimeType, data: buf.toString("base64") } })
-      }
+          const buf = Buffer.from(await blob.arrayBuffer())
+          parts.push({ text: `FILE_INDEX:${meta.originalIndex}` })
+          parts.push({ inlineData: { mimeType: meta.mimeType, data: buf.toString("base64") } })
+        }
 
-      const ai = new GoogleGenAI({ apiKey })
+        const ai = new GoogleGenAI({ apiKey })
 
-      // Retry with exponential backoff for transient Gemini errors (429, 503, 5xx).
-      // Delays: 5s → 15s → 45s (3 attempts total).
-      let rawText = ""
-      {
+        // Retry with exponential backoff for transient Gemini errors (429, 503, 5xx).
+        // Delays: 5s → 15s → 45s (3 attempts total).
+        // NOTE: if all attempts fail, the error propagates and Inngest retries this
+        // entire step (up to `retries: 2` at the function level).
+        let rawText = ""
         const MAX_ATTEMPTS = 3
         const BASE_DELAY_MS = 5_000
 
@@ -109,7 +111,7 @@ export const analizarClasificador = inngest.createFunction(
               },
             })
             rawText = response.text ?? ""
-            break // success
+            break
           } catch (err: unknown) {
             const isRetryable =
               err instanceof Error &&
@@ -121,10 +123,23 @@ export const analizarClasificador = inngest.createFunction(
             await new Promise((resolve) => setTimeout(resolve, delay))
           }
         }
-      }
 
-      // ── Step 3: "Clasificando meses y valor probatorio"
-      //   Parse + enrich Gemini results ────────────────────────────────────────
+        return {
+          rawText,
+          nombre:          job.nombre ?? "",
+          token:           job.token as string,
+          fileMeta,
+          allFileNames,
+          creditsRemaining: job.credits_remaining as number | null,
+        }
+      })
+
+    // ── Step B: Parse + enrich + save result (fast — <5s) ────────────────────
+    // Separate invocation so a Vercel timeout in step A never corrupts the DB.
+    await step.run("save-result", async () => {
+      const supabase = createServerClient()
+
+      // Step 3 UI progress
       await supabase
         .from("clasificador_jobs")
         .update({ step: 3, updated_at: new Date().toISOString() })
@@ -139,24 +154,23 @@ export const analizarClasificador = inngest.createFunction(
         throw new Error(`Failed to parse Gemini response: ${rawText.slice(0, 200)}`)
       }
 
-      const enriched = enrichGeminiResults(parsed, job.nombre ?? "", allFileNames)
+      const enriched = enrichGeminiResults(parsed, nombre, allFileNames)
 
-      // ── Step 4: "Generando resultado del expediente"
-      //   Deduct credit + save result + cleanup storage ───────────────────────
+      // Step 4 UI progress
       await supabase
         .from("clasificador_jobs")
         .update({ step: 4, updated_at: new Date().toISOString() })
         .eq("id", jobId)
 
-      // Deduct credit now that results are ready (idempotent: only if not already done)
+      // Deduct credit (idempotent: only if not already done)
       let creditsAfterDeduction = 0
-      if (job.credits_remaining === null) {
+      if (creditsRemaining === null) {
         const { data: deducted } = await supabase.rpc("use_clasificador_credit", {
-          p_token: job.token,
+          p_token: token,
         })
         creditsAfterDeduction = deducted ?? 0
       } else {
-        creditsAfterDeduction = job.credits_remaining as number
+        creditsAfterDeduction = creditsRemaining
       }
 
       await supabase
@@ -170,7 +184,7 @@ export const analizarClasificador = inngest.createFunction(
         })
         .eq("id", jobId)
 
-      // Delete temp files from storage (non-fatal)
+      // Delete temp files (non-fatal)
       const paths = fileMeta.map((m) => m.storageKey)
       if (paths.length > 0) {
         await supabase.storage.from("clasificador-temp").remove(paths)
