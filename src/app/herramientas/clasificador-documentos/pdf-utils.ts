@@ -469,8 +469,19 @@ async function embedPdfFile(doc: PDFDocument, bytes: Uint8Array, fileName: strin
   const indices    = pageRange && pageRange.length > 0
     ? pageRange.map((p) => Math.min(p - 1, totalPages - 1))   // 1-based → 0-based, clamped
     : Array.from({ length: totalPages }, (_, i) => i)          // all pages
-  const copied = await doc.copyPages(sourceDoc, indices)
-  for (const p of copied) doc.addPage(p)
+
+  try {
+    const copied = await doc.copyPages(sourceDoc, indices)
+    for (const p of copied) doc.addPage(p)
+  } catch {
+    // Some PDFs have internal structures pdf-lib can't remap (linearised, XRef streams, etc.)
+    // Add a placeholder page so the rest of the expedition still generates.
+    const page      = doc.addPage(PageSizes.A4)
+    const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+    page.drawText(safe(`No se pudo incrustar: ${fileName}`), {
+      x: 72, y: PageSizes.A4[1] / 2, size: 11, font: helvetica, color: rgb(0.7, 0.3, 0.3),
+    })
+  }
 }
 
 // ─── Compact doc divider (used when < 4 unique docs) ─────────────────────────
