@@ -117,7 +117,7 @@ export default function ClasificadorPage() {
             if (data.telefono) localStorage.setItem("clasificador_telefono", data.telefono)
             setCreditsRemaining(data.credits ?? 7)
             setIsFreemium(false)
-            if (data.nombre) setAccount((prev) => ({ ...prev, nombre: data.nombre }))
+            if (data.nombre) { setAccount((prev) => ({ ...prev, nombre: data.nombre })); setNombreFromFull(data.nombre) }
             restorePendingForm()
             setPaymentSuccess(true)
             // Restore files saved before Stripe redirect and trigger auto-submit
@@ -195,6 +195,7 @@ export default function ClasificadorPage() {
         email: storedEmail ?? "",
         telefono: storedTelefono ?? "",
       })
+      if (storedNombre) setNombreFromFull(storedNombre)
       if (localStorage.getItem("clasificador_is_freemium") === "true") setIsFreemium(true)
 
       // Validate token against DB — source of truth for credits and freemium status
@@ -229,12 +230,44 @@ export default function ClasificadorPage() {
             email: data.email ?? prev.email,
             telefono: data.telefono ?? prev.telefono,
           }))
+          if (data.nombre) setNombreFromFull(data.nombre)
           if (data.email)    localStorage.setItem("clasificador_email",    data.email)
           if (data.telefono) localStorage.setItem("clasificador_telefono", data.telefono)
         })
         .catch(() => {/* non-fatal — show stored state */})
     }
-    setPageState("form")
+
+    // Resume polling if the user reloaded mid-analysis
+    const pendingJobId = sessionStorage.getItem("clasificador_pending_job")
+    if (pendingJobId) {
+      setPageState("loading")
+      setLoadingStep(2)
+      const abort = new AbortController()
+      pollAbortRef.current = abort
+      pollForResult(pendingJobId, abort.signal).then((pollResult) => {
+        sessionStorage.removeItem("clasificador_pending_job")
+        if (abort.signal.aborted) return
+        if (pollResult.error) {
+          setErrorMsg("El análisis no pudo completarse. Inténtalo de nuevo.")
+          setLoadingStep(0)
+          setPageState("error")
+          return
+        }
+        const storedMes = localStorage.getItem("clasificador_mes") as PresentationMonth | null
+        const geminiResults = pollResult.results!
+        const analysisResult = runRulesEngine(geminiResults, (storedMes ?? "") as PresentationMonth)
+        setRawResults(geminiResults)
+        setResult(analysisResult)
+        if (typeof pollResult.creditsRemaining === "number") {
+          setCreditsRemaining(pollResult.creditsRemaining)
+          localStorage.setItem("clasificador_credits", String(pollResult.creditsRemaining))
+        }
+        setLoadingStep(5)
+        setTimeout(() => { setLoadingStep(0); setPageState("results") }, 400)
+      })
+    } else {
+      setPageState("form")
+    }
   }, [])
 
   function handleAddFiles(newFiles: File[]) {
@@ -410,8 +443,10 @@ export default function ClasificadorPage() {
         localStorage.setItem("clasificador_credits", String(data.creditsRemaining))
       }
 
-      // Poll until Inngest finishes
+      // Poll until Inngest finishes — persist jobId so a reload can resume
+      sessionStorage.setItem("clasificador_pending_job", data.jobId)
       const pollResult = await pollForResult(data.jobId, abort.signal)
+      sessionStorage.removeItem("clasificador_pending_job")
 
       if (abort.signal.aborted) return
       if (pollResult.error) {
@@ -1018,8 +1053,8 @@ export default function ClasificadorPage() {
                 )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {isFreemium ? (
-                    /* Freemium: nombre ya bloqueado — mostrar campo único readOnly */
+                  {isFreemium && creditsRemaining !== null && creditsRemaining > 0 ? (
+                    /* Freemium activo: nombre bloqueado para evitar uso múltiple con nombre diferente */
                     <InputField
                       label="Nombre completo"
                       id="nombre"
