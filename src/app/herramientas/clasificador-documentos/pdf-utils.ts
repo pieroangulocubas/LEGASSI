@@ -725,9 +725,19 @@ export async function generatePDF(
   async function embedDoc(docResult: DocumentResult) {
     const file = files[docResult.fileIndex]
     if (!file) return
-    // Read once — detect type and embed using the same bytes
-    const bytes = new Uint8Array(await file.arrayBuffer())
-    const fmt   = detectImageType(bytes)
+    let bytes: Uint8Array
+    try {
+      bytes = new Uint8Array(await file.arrayBuffer())
+    } catch {
+      // File handle no longer accessible (e.g. removed USB, browser security context change)
+      const page      = doc.addPage(PageSizes.A4)
+      const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+      page.drawText(safe(`No se pudo leer: ${file.name}`), {
+        x: 72, y: PageSizes.A4[1] / 2, size: 11, font: helvetica, color: rgb(0.7, 0.3, 0.3),
+      })
+      return
+    }
+    const fmt = detectImageType(bytes)
     if (fmt === "pdf") {
       await embedPdfFile(doc, bytes, file.name, docResult.pageRange)
     } else {

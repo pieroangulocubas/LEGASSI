@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import { runRulesEngine } from "./logic"
 import type { PresentationMonth, DocumentResult, AnalysisResult, ClasificadorFormData } from "./types"
-import { loadFilesFromIDB, clearFilesFromIDB } from "./idb"
+import { saveFilesToIDB, loadFilesFromIDB, clearFilesFromIDB } from "./idb"
 import { InputField } from "./components/InputField"
 import { MonthGuide } from "./components/MonthGuide"
 import { FileDropzone, MAX_FILES } from "./components/FileDropzone"
@@ -244,6 +244,10 @@ export default function ClasificadorPage() {
       setLoadingStep(2)
       const abort = new AbortController()
       pollAbortRef.current = abort
+      // Restore files from IDB so PDF generation works after reload
+      loadFilesFromIDB().then((savedFiles) => {
+        if (savedFiles.length > 0) setFiles(savedFiles)
+      })
       pollForResult(pendingJobId, abort.signal).then((pollResult) => {
         sessionStorage.removeItem("clasificador_pending_job")
         if (abort.signal.aborted) return
@@ -262,6 +266,7 @@ export default function ClasificadorPage() {
           setCreditsRemaining(pollResult.creditsRemaining)
           localStorage.setItem("clasificador_credits", String(pollResult.creditsRemaining))
         }
+        clearFilesFromIDB() // already restored to React state above
         setLoadingStep(5)
         setTimeout(() => { setLoadingStep(0); setPageState("results") }, 400)
       })
@@ -361,6 +366,9 @@ export default function ClasificadorPage() {
     let sessionAutoToken: string | null = null
 
     try {
+      // Persist files to IDB so PDF generation still works if the user reloads mid-analysis
+      await saveFilesToIDB(files)
+
       // Compress image files before upload — max 3 concurrent to avoid saturating the canvas API
       const CONCURRENCY = 3
       const processedFiles: File[] = new Array(files.length)
@@ -542,6 +550,7 @@ export default function ClasificadorPage() {
       }
 
       // Quick flash through remaining steps then show results
+      clearFilesFromIDB() // files are now in React state — IDB no longer needed
       setLoadingStep(5)
       await new Promise((r) => setTimeout(r, 400))
       setLoadingStep(0)
