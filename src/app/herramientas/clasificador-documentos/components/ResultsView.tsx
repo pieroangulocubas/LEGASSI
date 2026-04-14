@@ -98,7 +98,9 @@ export function ResultsView({
       )
 
       // 3. Trigger immediate download
-      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" })
+      // new Uint8Array(pdfBytes) copies into a fresh ArrayBuffer — required because
+      // pdf-lib returns Uint8Array<ArrayBufferLike> which Blob doesn't accept directly.
+      const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" })
       const blobUrl = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = blobUrl

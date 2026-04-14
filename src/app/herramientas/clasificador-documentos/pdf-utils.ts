@@ -422,9 +422,20 @@ async function addCoverageIndexPages(
 }
 
 // ─── Embed image file ─────────────────────────────────────────────────────────
-async function embedImageFile(doc: PDFDocument, bytes: Uint8Array): Promise<void> {
-  const isPng  = detectImageType(bytes) === "png"
-  const image  = isPng ? await doc.embedPng(bytes) : await doc.embedJpg(bytes)
+async function embedImageFile(doc: PDFDocument, bytes: Uint8Array, fileName: string): Promise<void> {
+  const fmt = detectImageType(bytes)
+  let image
+  try {
+    image = fmt === "png" ? await doc.embedPng(bytes) : await doc.embedJpg(bytes)
+  } catch {
+    // Unreadable image — add a placeholder page instead of crashing the whole PDF
+    const page      = doc.addPage(PageSizes.A4)
+    const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+    page.drawText(safe(`No se pudo incrustar la imagen: ${fileName}`), {
+      x: 72, y: PageSizes.A4[1] / 2, size: 11, font: helvetica, color: rgb(0.7, 0.3, 0.3),
+    })
+    return
+  }
 
   const { width: imgW, height: imgH } = image.size()
   const [pageW, pageH] = PageSizes.A4
@@ -693,7 +704,7 @@ export async function generatePDF(
     if (fmt === "pdf") {
       await embedPdfFile(doc, bytes, file.name, docResult.pageRange)
     } else {
-      await embedImageFile(doc, bytes)
+      await embedImageFile(doc, bytes, file.name)
     }
   }
 
