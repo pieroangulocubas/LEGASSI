@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState, useEffect, useCallback } from "react"
-import { Camera, X, RotateCcw, Check, Aperture } from "lucide-react"
+import { Camera, X, RotateCcw, Check, Aperture, RotateCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function CameraScanner({
@@ -19,6 +19,8 @@ export function CameraScanner({
   const [status, setStatus] = useState<"loading" | "ready" | "captured" | "error">("loading")
   const [capturedDataUrl, setCapturedDataUrl] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState("")
+  // Portrait (3/4) by default — most documents are A4 vertical
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait")
 
   useEffect(() => {
     let cancelled = false
@@ -129,7 +131,11 @@ export function CameraScanner({
         </div>
 
         {/* Camera viewport */}
-        <div ref={viewportRef} className="relative bg-black w-full" style={{ aspectRatio: "4/3" }}>
+        <div
+          ref={viewportRef}
+          className="relative bg-black w-full transition-all duration-300"
+          style={{ aspectRatio: orientation === "portrait" ? "3/4" : "4/3" }}
+        >
 
           {status === "loading" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white">
@@ -183,7 +189,7 @@ export function CameraScanner({
 
           {status === "ready" && (
             <>
-              <p className="absolute left-8 text-xs text-muted-foreground max-w-[130px] leading-snug">
+              <p className="absolute left-8 text-xs text-muted-foreground max-w-[110px] leading-snug">
                 Enmarca el documento y pulsa capturar
               </p>
               <button
@@ -192,6 +198,24 @@ export function CameraScanner({
                 aria-label="Capturar"
               >
                 <Aperture className="h-6 w-6 text-primary-foreground" />
+              </button>
+              {/* Orientation toggle */}
+              <button
+                onClick={() => setOrientation(o => o === "portrait" ? "landscape" : "portrait")}
+                className="absolute right-8 flex flex-col items-center gap-1"
+                aria-label="Rotar encuadre"
+              >
+                <span className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors",
+                  orientation === "portrait"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-muted text-muted-foreground hover:border-primary/50"
+                )}>
+                  <RotateCw className="h-4 w-4" />
+                </span>
+                <span className="text-[10px] text-muted-foreground leading-none">
+                  {orientation === "portrait" ? "Vertical" : "Horizontal"}
+                </span>
               </button>
             </>
           )}
