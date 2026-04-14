@@ -658,7 +658,12 @@ export default function ClasificadorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden relative">
+      {/* Ambient blobs — same treatment as landing */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-40 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute top-[40%] -left-40 w-[400px] h-[400px] bg-secondary/5 rounded-full blur-[100px]" />
+      </div>
       <Navbar />
       <SocialProofToast />
 
@@ -867,11 +872,13 @@ export default function ClasificadorPage() {
         {pageState === "form" && (
           <div className="space-y-8">
             {/* Page header */}
-            <div className="space-y-2">
-              <div className="flex items-start justify-between gap-4">
-                <h1 className="text-3xl font-bold text-foreground leading-tight">
-                  Verifica tus pruebas de permanencia para la regularización extraordinaria
-                </h1>
+            <div className="space-y-3">
+              {/* Top row: tool badge + credits */}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/8 px-4 py-1.5 text-xs font-semibold text-primary shadow-sm shadow-primary/10">
+                  <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+                  Herramienta gratuita · IA
+                </div>
                 {creditsRemaining !== null && (
                   <div className="flex items-center gap-2 shrink-0">
                     {creditsRemaining > 0 && (
@@ -892,6 +899,15 @@ export default function ClasificadorPage() {
                     )}
                   </div>
                 )}
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
+                  Verifica tus{" "}
+                  <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    pruebas de permanencia
+                  </span>
+                  {" "}para la regularización extraordinaria
+                </h1>
               </div>
               {creditsRemaining !== null && account.nombre.trim() ? (
                 <div className="space-y-2">

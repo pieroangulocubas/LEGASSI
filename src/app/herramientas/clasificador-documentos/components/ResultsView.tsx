@@ -15,6 +15,7 @@ import { generatePDF } from "../pdf-utils"
 import type { AnalysisResult, ClasificadorFormData, DocumentResult, PresentationMonth } from "../types"
 import { runRulesEngine, PRESENTATION_MONTH_LABELS } from "../logic"
 import { PreviewModal } from "./PreviewModal"
+import { PdfPreviewModal } from "./PdfPreviewModal"
 import { VeredictoBanner } from "./VeredictoBanner"
 import { MonthCard } from "./MonthCard"
 import { DocIssueList } from "./DocIssueList"
@@ -43,6 +44,7 @@ export function ResultsView({
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfError, setPdfError] = useState<string | null>(null)
   const [previewDoc, setPreviewDoc] = useState<DocumentResult | null>(null)
+  const [pdfPreviewBytes, setPdfPreviewBytes] = useState<Uint8Array | null>(null)
 
   // Derive result on every render — no stale state
   const effectiveResults = rawResults.map((doc, i) =>
@@ -65,80 +67,79 @@ export function ResultsView({
     setPreviewDoc(null)
   }
 
-  async function handleDownloadPDF() {
+  // Prepare signed upload URL for background Supabase upload (non-blocking, non-fatal)
+  async function prepareUpload(token: string): Promise<{ publicUrl?: string; signedUrl?: string }> {
+    try {
+      const prep = await fetch("/api/clasificador/prepare-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      })
+      if (prep.ok) return await prep.json()
+    } catch { /* non-fatal */ }
+    return {}
+  }
+
+  // Background upload to Supabase + optional email notification
+  function uploadAndNotify(blob: Blob, signedUrl: string, publicUrl: string) {
+    ;(async () => {
+      try {
+        await fetch(signedUrl, {
+          method: "PUT",
+          headers: { "Content-Type": "application/pdf" },
+          body: blob,
+        })
+        if (result.veredicto === "CUMPLE" && formData.email) {
+          await fetch("/api/clasificador/notify-upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: formData.email,
+              nombre: formData.nombre,
+              publicUrl,
+              months: result.months.map((m) => ({
+                label: m.label,
+                status: m.status,
+                isOptional: m.isOptional,
+              })),
+            }),
+          })
+        }
+      } catch { /* background failure — user already has the file */ }
+    })()
+  }
+
+  // Triggered when user clicks "Descargar" in the preview modal (after optional page removal)
+  async function handleFinalDownload(finalBytes: Uint8Array) {
+    const token = typeof window !== "undefined" ? localStorage.getItem("clasificador_token") : null
+    const { signedUrl, publicUrl } = token ? await prepareUpload(token) : {}
+
+    const blob = new Blob([new Uint8Array(finalBytes)], { type: "application/pdf" })
+    const blobUrl = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = blobUrl
+    a.download = `expediente_${formData.nombre.replace(/\s+/g, "_").toLowerCase()}.pdf`
+    a.click()
+    URL.revokeObjectURL(blobUrl)
+
+    if (signedUrl && publicUrl) uploadAndNotify(blob, signedUrl, publicUrl)
+  }
+
+  // Opens the preview modal — generates PDF bytes first, then hands them to the modal
+  async function handleOpenPreview() {
     setPdfGenerating(true)
     setPdfError(null)
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("clasificador_token") : null
+      const { publicUrl } = token ? await prepareUpload(token) : {}
 
-      // 1. Get a signed upload URL + public URL from server (only if token exists)
-      let publicUrl: string | undefined
-      let signedUrl: string | undefined
-      if (token) {
-        try {
-          const prep = await fetch("/api/clasificador/prepare-upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token }),
-          })
-          if (prep.ok) {
-            const prepData = await prep.json()
-            publicUrl = prepData.publicUrl
-            signedUrl = prepData.signedUrl
-          }
-        } catch { /* non-fatal — generate PDF without QR */ }
-      }
-
-      // 2. Generate PDF (with QR if publicUrl is available)
       const pdfBytes = await generatePDF(
         result,
         files,
         { nombre: formData.nombre, mesPresentation: formData.mesPresentation },
         publicUrl
       )
-
-      // 3. Trigger immediate download
-      // new Uint8Array(pdfBytes) copies into a fresh ArrayBuffer — required because
-      // pdf-lib returns Uint8Array<ArrayBufferLike> which Blob doesn't accept directly.
-      const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" })
-      const blobUrl = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = blobUrl
-      a.download = `expediente_${formData.nombre.replace(/\s+/g, "_").toLowerCase()}.pdf`
-      a.click()
-      URL.revokeObjectURL(blobUrl)
-
-      // 4. Upload to Supabase + send email in background (non-blocking)
-      if (signedUrl && publicUrl) {
-        ;(async () => {
-          try {
-            // Upload PDF directly to Supabase Storage via signed URL
-            await fetch(signedUrl, {
-              method: "PUT",
-              headers: { "Content-Type": "application/pdf" },
-              body: blob,
-            })
-
-            // Notify server to send email if veredicto === CUMPLE
-            if (result.veredicto === "CUMPLE" && formData.email) {
-              await fetch("/api/clasificador/notify-upload", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  email: formData.email,
-                  nombre: formData.nombre,
-                  publicUrl,
-                  months: result.months.map((m) => ({
-                    label: m.label,
-                    status: m.status,
-                    isOptional: m.isOptional,
-                  })),
-                }),
-              })
-            }
-          } catch { /* background upload failure — user already has the file */ }
-        })()
-      }
+      setPdfPreviewBytes(new Uint8Array(pdfBytes))
     } catch (err) {
       console.error("PDF generation error:", err)
       setPdfError("No se pudo generar el PDF. Inténtalo de nuevo.")
@@ -242,20 +243,32 @@ export function ResultsView({
       {/* Valid docs order */}
       <ValidDocsList months={result.months} onPreview={handlePreview} />
 
+      {/* PDF preview modal */}
+      {pdfPreviewBytes && (
+        <PdfPreviewModal
+          pdfBytes={pdfPreviewBytes}
+          onDownload={async (finalBytes) => {
+            await handleFinalDownload(finalBytes)
+          }}
+          onClose={() => setPdfPreviewBytes(null)}
+        />
+      )}
+
       {/* PDF download / action card */}
       {result.veredicto === "CUMPLE" ? (
         <div className="rounded-xl border border-border bg-card p-5 space-y-3">
           <div>
             <h3 className="text-sm font-semibold text-foreground">Descargar expediente en PDF</h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Todos los meses obligatorios están cubiertos. Genera el PDF ordenado y listo para presentar.
+              Todos los meses obligatorios están cubiertos. Previsualiza el expediente, depura páginas si lo necesitas y descárgalo listo para presentar.
             </p>
           </div>
           {pdfError && <p className="text-xs text-destructive">{pdfError}</p>}
-          <Button
-            onClick={handleDownloadPDF}
+          <button
+            type="button"
+            onClick={handleOpenPreview}
             disabled={pdfGenerating}
-            className="w-full sm:w-auto"
+            className="group inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:brightness-110 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:brightness-100"
           >
             {pdfGenerating ? (
               <>
@@ -265,10 +278,10 @@ export function ResultsView({
             ) : (
               <>
                 <Download className="h-4 w-4" />
-                Descargar expediente PDF
+                Previsualizar y descargar expediente
               </>
             )}
-          </Button>
+          </button>
         </div>
       ) : result.veredicto === "CUMPLE_PARCIALMENTE" ? (
         <div className="space-y-3">
