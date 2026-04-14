@@ -101,7 +101,7 @@ export const analizarClasificador = inngest.createFunction(
         for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
           try {
             const response = await ai.models.generateContent({
-              model: "gemini-2.0-flash",
+              model: "gemini-3-flash-preview",
               contents: [{ role: "user", parts }],
               config: {
                 temperature: 0.1,
