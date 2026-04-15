@@ -688,25 +688,80 @@ async function addMonthDividerPage(
   }
 }
 
+// ─── Post-process: inject QR onto the cover page (page index 0) ──────────────
+// Called at download time with the final URL so the QR always matches the
+// actual uploaded file — regardless of which pages were removed in the preview.
+export async function addQRToFirstPage(pdfBytes: Uint8Array, publicUrl: string): Promise<Uint8Array> {
+  const qrBytes = await generateQRBytes(publicUrl)
+  if (!qrBytes) return pdfBytes
+
+  const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
+  const pages = doc.getPages()
+  if (pages.length === 0) return pdfBytes
+
+  const page = pages[0]
+  const { width } = page.getSize()
+  const margin  = 64
+  const qrSize  = 90
+  const qrX     = width - margin - qrSize
+  const qrY     = margin + 32
+
+  const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+  const qrImg     = await doc.embedPng(qrBytes)
+  page.drawImage(qrImg, { x: qrX, y: qrY, width: qrSize, height: qrSize })
+
+  const caption = safe("Escanea para ver el expediente digital")
+  page.drawText(caption, {
+    x: qrX - helvetica.widthOfTextAtSize(caption, 7) + qrSize,
+    y: qrY - 10,
+    size: 7,
+    font: helvetica,
+    color: rgb(0.55, 0.55, 0.55),
+  })
+
+  return new Uint8Array(await doc.save())
+}
+
+// ─── Post-process: stamp "N / Total" at the bottom-centre of every page ───────
+// Called after page removal so numbers always match the final page count.
+export async function addPageNumbers(pdfBytes: Uint8Array): Promise<Uint8Array> {
+  const doc       = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
+  const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+  const pages     = doc.getPages()
+  const total     = pages.length
+
+  for (let i = 0; i < total; i++) {
+    const page  = pages[i]
+    const { width } = page.getSize()
+    const label = safe(`${i + 1} / ${total}`)
+    const textW = helvetica.widthOfTextAtSize(label, 8)
+    page.drawText(label, {
+      x: (width - textW) / 2,
+      y: 18,
+      size: 8,
+      font: helvetica,
+      color: rgb(0.65, 0.65, 0.65),
+    })
+  }
+
+  return new Uint8Array(await doc.save())
+}
+
 // ─── Public export ────────────────────────────────────────────────────────────
 export async function generatePDF(
   result: AnalysisResult,
   files: File[],
   formData: { nombre: string; mesPresentation: string },
-  publicUrl?: string,
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create()
   doc.setTitle(safe("Documentacion acreditativa de permanencia ininterrumpida"))
   doc.setAuthor(safe(formData.nombre))
   doc.setCreationDate(new Date())
 
-  const [logoBytes, qrBytes] = await Promise.all([
-    fetchLogo(),
-    publicUrl ? generateQRBytes(publicUrl) : Promise.resolve(null),
-  ])
+  const logoBytes = await fetchLogo()
 
-  // 1. Cover (with QR code if publicUrl is available)
-  await addCoverPage(doc, formData.nombre, logoBytes, qrBytes)
+  // 1. Cover (QR is injected later at download time via addQRToFirstPage)
+  await addCoverPage(doc, formData.nombre, logoBytes, null)
 
   // 2. Coverage index (month table + unique document list)
   const uniqueDocs = getUniqueDocsOrdered(result.months)

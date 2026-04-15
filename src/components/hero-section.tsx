@@ -109,6 +109,7 @@ export function HeroSection() {
                 src="/espaldas.png"
                 alt="Persona mirando su futuro en España"
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover object-center"
                 priority
               />

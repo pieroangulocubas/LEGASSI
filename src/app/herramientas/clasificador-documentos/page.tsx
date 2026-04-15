@@ -711,7 +711,7 @@ export default function ClasificadorPage() {
       {paymentModal.open && (
         <PaymentModal
           reason={paymentModal.reason}
-          formValues={{ nombre, email, telefono, mesPresentation }}
+          formValues={{ nombre: isFreemium ? (account.nombre || nombre) : nombre, email, telefono, mesPresentation }}
           files={files}
           existingToken={localStorage.getItem("clasificador_token") ?? undefined}
           onClose={() => setPaymentModal((prev) => ({ ...prev, open: false }))}
@@ -721,7 +721,7 @@ export default function ClasificadorPage() {
       {/* ── Freemium upgrade modal (shown on return from results) ── */}
       {showUpgradeModal && (
         <FreemiumUpgradeModal
-          nombre={account.nombre || nombre}
+          nombre={account.nombre}
           onPay={() => {
             setShowUpgradeModal(false)
             setPaymentModal({ open: true, reason: "first_time" })
@@ -1013,7 +1013,7 @@ export default function ClasificadorPage() {
                 <Button
                   type="button"
                   onClick={() => setPaymentModal({ open: true, reason: isFreemium ? "first_time" : "exhausted" })}
-                  className="shrink-0 w-full sm:w-auto"
+                  className="shrink-0 w-full sm:w-auto  bg-gradient-to-r from-primary to-secondary px-5 py-3 text-base font-bold text-white shadow-md shadow-primary/20 hover:brightness-110 transition-all duration-200"
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Conseguir 7 análisis · 7,90 €
@@ -1109,15 +1109,19 @@ export default function ClasificadorPage() {
                 )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {isFreemium && creditsRemaining !== null && creditsRemaining > 0 ? (
-                    /* Freemium activo: nombre bloqueado para evitar uso múltiple con nombre diferente */
+                  {isFreemium && creditsRemaining !== null ? (
+                    /* Freemium (activo o agotado): nombre bloqueado — ya registrado en BD */
                     <InputField
                       label="Nombre completo"
                       id="nombre"
-                      value={nombre}
+                      value={account.nombre || nombre}
                       onChange={() => {}}
                       readOnly
-                      helperText="Vinculado a tu cuenta gratuita — un análisis por nombre"
+                      helperText={
+                        creditsRemaining > 0
+                          ? "Vinculado a tu cuenta gratuita — un análisis por nombre"
+                          : "Nombre registrado en tu cuenta — no puede modificarse"
+                      }
                     />
                   ) : (
                     <>
@@ -1166,6 +1170,18 @@ export default function ClasificadorPage() {
                         autoComplete="tel"
                       />
                     </>
+                  )}
+                  {isFreemium && creditsRemaining === 0 && (
+                    <InputField
+                      label="Correo electrónico"
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={setEmail}
+                      placeholder="maria@ejemplo.com"
+                      autoComplete="email"
+                      helperText="Puedes actualizarlo para recibir el recibo del pago."
+                    />
                   )}
 
                   {/* Month selector */}

@@ -137,8 +137,6 @@ export function FileDropzone({
 
       {/* Dropzone */}
       <div
-        role="button"
-        tabIndex={0}
         className={cn(
           "relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition-colors cursor-pointer",
           dragging
@@ -151,28 +149,37 @@ export function FileDropzone({
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
-        onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
       >
-        <Upload className="mb-3 h-8 w-8 text-muted-foreground" />
-        <p className="text-sm font-medium text-foreground">
-          Arrastra tus archivos aquí o{" "}
-          <span className="text-primary underline underline-offset-2">selecciónalos</span>
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          PDF, JPG o PNG · Máximo {MAX_FILES} archivos · 10 MB por archivo · 50 MB total
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground/70">
-          Un archivo por documento · Si un doc ocupa varias páginas, súbelo como un solo PDF
-        </p>
+        {/*
+          The input sits transparently over the entire tap area.
+          This avoids the iOS/Android restriction where programmatic .click()
+          on a file input from a div handler is not treated as a direct user gesture
+          and silently fails or freezes on mobile.
+        */}
         <input
           ref={inputRef}
+          id="file-input"
           type="file"
           multiple
           accept={ACCEPTED_EXT.join(",")}
-          className="hidden"
-          onChange={(e) => validateAndAdd(e.target.files)}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          onChange={(e) => {
+            validateAndAdd(e.target.files)
+            // Reset so the same file can be re-selected after removal
+            e.target.value = ""
+          }}
         />
+        <Upload className="mb-3 h-8 w-8 text-muted-foreground pointer-events-none" />
+        <p className="text-sm font-medium text-foreground pointer-events-none">
+          Arrastra tus archivos aquí o{" "}
+          <span className="text-primary underline underline-offset-2">selecciónalos</span>
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground pointer-events-none">
+          PDF, JPG o PNG · Máximo {MAX_FILES} archivos · 10 MB por archivo · 50 MB total
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground/70 pointer-events-none">
+          Un archivo por documento · Si un doc ocupa varias páginas, súbelo como un solo PDF
+        </p>
       </div>
 
       {/* Camera scan button */}

@@ -120,6 +120,7 @@ export function ResolucionesFavorablesSection() {
                   src={res.src}
                   alt={res.alt}
                   fill
+                  sizes="(max-width: 640px) 75vw, (max-width: 1024px) 33vw, 25vw"
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

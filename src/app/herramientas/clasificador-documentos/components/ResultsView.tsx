@@ -11,7 +11,7 @@ import {
   Download,
   MessageCircle,
 } from "lucide-react"
-import { generatePDF } from "../pdf-utils"
+import { generatePDF, addQRToFirstPage, addPageNumbers } from "../pdf-utils"
 import type { AnalysisResult, ClasificadorFormData, DocumentResult, PresentationMonth } from "../types"
 import { runRulesEngine, PRESENTATION_MONTH_LABELS } from "../logic"
 import { PreviewModal } from "./PreviewModal"
@@ -122,12 +122,21 @@ export function ResultsView({
     })()
   }
 
-  // Triggered when user clicks "Descargar" in the preview modal (after optional page removal)
+  // Triggered when user clicks "Descargar" in the preview modal (after optional page removal).
+  // QR and page numbers are applied here — on the final bytes — so:
+  //   1. The QR URL matches the file that actually gets uploaded (single prepareUpload call)
+  //   2. Page numbers are correct after any pages were removed in the preview
   async function handleFinalDownload(finalBytes: Uint8Array) {
     const token = typeof window !== "undefined" ? localStorage.getItem("clasificador_token") : null
     const { signedUrl, publicUrl } = token ? await prepareUpload(token) : {}
 
-    const blob = new Blob([new Uint8Array(finalBytes)], { type: "application/pdf" })
+    // Post-process: number pages first (so count is accurate), then inject QR
+    let processedBytes = await addPageNumbers(finalBytes)
+    if (publicUrl) {
+      processedBytes = await addQRToFirstPage(processedBytes, publicUrl)
+    }
+
+    const blob = new Blob([processedBytes], { type: "application/pdf" })
     const blobUrl = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = blobUrl
@@ -138,19 +147,15 @@ export function ResultsView({
     if (signedUrl && publicUrl) uploadAndNotify(blob, signedUrl, publicUrl)
   }
 
-  // Opens the preview modal — generates PDF bytes first, then hands them to the modal
+  // Opens the preview modal — generates PDF bytes (without QR/page numbers, applied at download).
   async function handleOpenPreview() {
     setPdfGenerating(true)
     setPdfError(null)
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("clasificador_token") : null
-      const { publicUrl } = token ? await prepareUpload(token) : {}
-
       const pdfBytes = await generatePDF(
         result,
         files,
         { nombre: formData.nombre, mesPresentation: formData.mesPresentation },
-        publicUrl
       )
       setPdfPreviewBytes(new Uint8Array(pdfBytes))
     } catch (err) {

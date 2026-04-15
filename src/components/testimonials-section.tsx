@@ -86,7 +86,7 @@ function VideoCard({ item }: { item: Extract<TestimonialItem, { type: "video" }>
       ) : (
         <>
           {item.thumbnail ? (
-            <Image src={item.thumbnail} alt={item.name} fill className="object-cover opacity-80" />
+            <Image src={item.thumbnail} alt={item.name} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover opacity-80" />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-secondary/30" />
           )}
@@ -154,7 +154,7 @@ export function TestimonialsSection() {
               <div className="mt-4 mb-5 sm:mb-8 flex items-start gap-4">
                 {item.photo ? (
                   <div className="relative shrink-0 w-14 h-14 rounded-full overflow-hidden border-2 border-primary/20">
-                    <Image src={item.photo} alt={item.name} fill className="object-cover" />
+                    <Image src={item.photo} alt={item.name} fill sizes="56px" className="object-cover" />
                   </div>
                 ) : (
                   <div className="shrink-0 w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-xl font-bold text-primary">

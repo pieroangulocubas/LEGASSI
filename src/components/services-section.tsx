@@ -161,7 +161,7 @@ export function ServicesSection() {
               className="group relative shrink-0 w-full min-[854px]:w-44 lg:w-48 h-52 min-[854px]:h-auto min-[854px]:self-stretch rounded-t-2xl min-[854px]:rounded-l-2xl min-[854px]:rounded-tr-none overflow-hidden border-b min-[854px]:border-b-0 min-[854px]:border-r border-primary/20 bg-muted/40"
               aria-label="Ver imagen completa"
             >
-              <Image src="/oferta-reg2026.png" alt="Oferta Regularización 2026" fill className="object-cover" />
+              <Image src="/oferta-reg2026.png" alt="Oferta Regularización 2026" fill sizes="(max-width: 854px) 100vw, 12rem" className="object-cover" />
               <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Expand className="h-5 w-5 text-white" />
               </div>
