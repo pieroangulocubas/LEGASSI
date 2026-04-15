@@ -1110,19 +1110,18 @@ export default function ClasificadorPage() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   {isFreemium && creditsRemaining !== null ? (
-                    /* Freemium (activo o agotado): nombre bloqueado — ya registrado en BD */
-                    <InputField
-                      label="Nombre completo"
-                      id="nombre"
-                      value={account.nombre || nombre}
-                      onChange={() => {}}
-                      readOnly
-                      helperText={
-                        creditsRemaining > 0
-                          ? "Vinculado a tu cuenta gratuita — un análisis por nombre"
-                          : "Nombre registrado en tu cuenta — no puede modificarse"
-                      }
-                    />
+                    /* Freemium (activo o agotado): nombre solo lectura — ya registrado en BD */
+                    <div className="space-y-1.5">
+                      <label className="block text-sm font-medium text-foreground">
+                        Nombre completo
+                      </label>
+                      <div className="block w-full rounded-lg border border-input bg-muted px-3 py-2 text-sm text-muted-foreground select-none">
+                        {account.nombre || nombre}
+                      </div>
+                      <p className="text-xs text-primary/80 leading-snug">
+                        Nombre registrado en tu cuenta — no puede modificarse
+                      </p>
+                    </div>
                   ) : (
                     <>
                       <InputField
@@ -1171,7 +1170,7 @@ export default function ClasificadorPage() {
                       />
                     </>
                   )}
-                  {isFreemium && creditsRemaining === 0 && (
+                  {isFreemium && creditsRemaining !== null && (
                     <InputField
                       label="Correo electrónico"
                       id="email"
