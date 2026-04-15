@@ -18,22 +18,22 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
-          <a href="#servicios" className="text-sm font-medium hover:text-primary transition-colors">
+          <a href="/#servicios" className="text-sm font-medium hover:text-primary transition-colors">
             Servicios
           </a>
-          <a href="#por-que-elegirnos" className="text-sm font-medium hover:text-primary transition-colors">
+          <a href="/#por-que-elegirnos" className="text-sm font-medium hover:text-primary transition-colors">
             Por qué elegirnos
           </a>
-          <a href="#testimonios" className="text-sm font-medium hover:text-primary transition-colors">
+          <a href="/#testimonios" className="text-sm font-medium hover:text-primary transition-colors">
             Testimonios
           </a>
-          <a href="#mision" className="text-sm font-medium hover:text-primary transition-colors">
+          <a href="/#mision" className="text-sm font-medium hover:text-primary transition-colors">
             Misión y Visión
           </a>
-          <a href="#faq" className="text-sm font-medium hover:text-primary transition-colors">
+          <a href="/#faq" className="text-sm font-medium hover:text-primary transition-colors">
             FAQ
           </a>
-          <a href="#contacto" className="text-sm font-medium hover:text-primary transition-colors">
+          <a href="/#contacto" className="text-sm font-medium hover:text-primary transition-colors">
             Contacto
           </a>
         </nav>
@@ -67,22 +67,22 @@ export function Header() {
       {isMenuOpen && (
         <div className="md:hidden border-t bg-background">
           <nav className="flex flex-col space-y-4 p-4">
-            <a href="#servicios" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="/#servicios" className="text-sm font-medium hover:text-primary transition-colors">
               Servicios
             </a>
-            <a href="#por-que-elegirnos" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="/#por-que-elegirnos" className="text-sm font-medium hover:text-primary transition-colors">
               Por qué elegirnos
             </a>
-            <a href="#testimonios" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="/#testimonios" className="text-sm font-medium hover:text-primary transition-colors">
               Testimonios
             </a>
-            <a href="#mision" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="/#mision" className="text-sm font-medium hover:text-primary transition-colors">
               Misión y Visión
             </a>
-            <a href="#faq" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="/#faq" className="text-sm font-medium hover:text-primary transition-colors">
               FAQ
             </a>
-            <a href="#contacto" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="/#contacto" className="text-sm font-medium hover:text-primary transition-colors">
               Contacto
             </a>
             <Button className="w-full mt-4" asChild>
