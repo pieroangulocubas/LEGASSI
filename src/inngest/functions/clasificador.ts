@@ -14,7 +14,7 @@ export interface FileMeta {
 export const analizarClasificador = inngest.createFunction(
   {
     id: "clasificador-analyze",
-    retries: 2,
+    retries: 4,
     // Mark job as error when all retries are exhausted.
     // No credit refund needed — credit is only deducted on successful completion.
     onFailure: async ({ event }) => {
@@ -93,12 +93,14 @@ export const analizarClasificador = inngest.createFunction(
         const ai = new GoogleGenAI({ apiKey })
 
         // Retry with exponential backoff for transient Gemini errors (429, 503, 5xx).
-        // Delays: 5s → 15s → 45s (3 attempts total).
+        // Delays: 10s → 30s → 90s → 180s (5 attempts total).
+        // Large batches (30 files / 50 MB) can take 2–4 min — generous delays reduce
+        // unnecessary hammering while still recovering from transient quota spikes.
         // NOTE: if all attempts fail, the error propagates and Inngest retries this
-        // entire step (up to `retries: 2` at the function level).
+        // entire step (up to `retries: 4` at the function level).
         let rawText = ""
-        const MAX_ATTEMPTS = 3
-        const BASE_DELAY_MS = 5_000
+        const MAX_ATTEMPTS = 5
+        const BASE_DELAY_MS = 10_000
 
         for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
           try {
@@ -119,7 +121,7 @@ export const analizarClasificador = inngest.createFunction(
 
             if (!isRetryable || attempt === MAX_ATTEMPTS) throw err
 
-            const delay = BASE_DELAY_MS * Math.pow(3, attempt - 1) // 5s, 15s, 45s
+            const delay = BASE_DELAY_MS * Math.pow(3, attempt - 1) // 10s, 30s, 90s, 180s
             await new Promise((resolve) => setTimeout(resolve, delay))
           }
         }

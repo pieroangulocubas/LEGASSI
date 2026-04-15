@@ -324,7 +324,7 @@ export default function ClasificadorPage() {
     jobId: string,
     signal: AbortSignal,
   ): Promise<{ results?: DocumentResult[]; creditsRemaining?: number; error?: string }> {
-    const MAX_POLLS = 90 // 3 minutes
+    const MAX_POLLS = 450 // 15 minutes (450 × 2s) — enough for 30 files / 50 MB with retries
     for (let i = 0; i < MAX_POLLS; i++) {
       await new Promise((r) => setTimeout(r, 2000))
       if (signal.aborted) return { error: "Cancelado" }
@@ -348,7 +348,7 @@ export default function ClasificadorPage() {
         // Transient network error — keep polling
       }
     }
-    return { error: "El análisis tardó demasiado. Inténtalo de nuevo." }
+    return { error: "El análisis está tardando más de lo esperado (archivos grandes o alta demanda). Inténtalo de nuevo en unos minutos." }
   }
 
   async function handleSubmitCore() {
