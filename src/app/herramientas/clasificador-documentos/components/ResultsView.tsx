@@ -136,7 +136,7 @@ export function ResultsView({
       processedBytes = await addQRToFirstPage(processedBytes, publicUrl)
     }
 
-    const blob = new Blob([processedBytes], { type: "application/pdf" })
+    const blob = new Blob([new Uint8Array(processedBytes)], { type: "application/pdf" })
     const blobUrl = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = blobUrl
