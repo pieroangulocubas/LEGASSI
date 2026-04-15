@@ -19,9 +19,8 @@ export function PaymentModal({
 }) {
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState("")
-  // Editable locally so the user can fill them in directly from the modal
-  const [nombre, setNombre] = useState(formValues.nombre)
-  const [email, setEmail]   = useState(formValues.email)
+  const nombre = formValues.nombre
+  const [email, setEmail] = useState(formValues.email)
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -161,24 +160,13 @@ export function PaymentModal({
               <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5 text-muted-foreground" />
                 Nombre completo
-                {existingToken && (
-                  <span className="ml-auto text-xs font-normal text-muted-foreground">
-                    No editable
-                  </span>
-                )}
               </label>
-              <input
-                type="text"
-                value={nombre}
-                onChange={existingToken ? undefined : (e) => setNombre(e.target.value)}
-                readOnly={!!existingToken}
-                placeholder="Tu nombre completo"
-                className={`w-full rounded-lg border px-3 py-2.5 text-sm transition-colors
-                           ${existingToken
-                             ? "border-input bg-muted text-muted-foreground cursor-default select-none"
-                             : "border-input bg-background placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                           }`}
-              />
+              <div className="w-full rounded-lg border border-input bg-muted px-3 py-2.5 text-sm text-muted-foreground select-none">
+                {nombre}
+              </div>
+              <p className="text-xs text-primary/80 leading-snug">
+                Nombre registrado en tu cuenta — no puede modificarse
+              </p>
             </div>
 
             <div className="space-y-1.5" suppressHydrationWarning>
