@@ -324,7 +324,7 @@ export default function ClasificadorPage() {
     jobId: string,
     signal: AbortSignal,
   ): Promise<{ results?: DocumentResult[]; creditsRemaining?: number; error?: string }> {
-    const MAX_POLLS = 450 // 15 minutes (450 × 2s) — enough for 30 files / 50 MB with retries
+    const MAX_POLLS = 150 // 5 minutes (150 × 2s)
     for (let i = 0; i < MAX_POLLS; i++) {
       await new Promise((r) => setTimeout(r, 2000))
       if (signal.aborted) return { error: "Cancelado" }
