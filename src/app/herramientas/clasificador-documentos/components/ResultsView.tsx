@@ -88,8 +88,15 @@ export function ResultsView({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
       })
-      if (prep.ok) return await prep.json()
-    } catch { /* non-fatal */ }
+      if (prep.ok) {
+        const data = await prep.json()
+        console.log("[ResultsView] prepareUpload OK:", data)
+        return data
+      }
+      console.warn("[ResultsView] prepareUpload non-ok status:", prep.status)
+    } catch (err) {
+      console.error("[ResultsView] prepareUpload failed:", err)
+    }
     return {}
   }
 

@@ -89,7 +89,10 @@ async function generateQRBytes(url: string): Promise<Uint8Array | null> {
     })
     const base64 = dataUrl.split(",")[1]
     return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
-  } catch { return null }
+  } catch (err) {
+    console.error("[pdf-utils] generateQRBytes failed:", err)
+    return null
+  }
 }
 
 // Fetch the logo PNG from the public folder (browser context)
@@ -692,34 +695,43 @@ async function addMonthDividerPage(
 // Called at download time with the final URL so the QR always matches the
 // actual uploaded file — regardless of which pages were removed in the preview.
 export async function addQRToFirstPage(pdfBytes: Uint8Array, publicUrl: string): Promise<Uint8Array> {
+  console.log("[pdf-utils] addQRToFirstPage called with url:", publicUrl)
   const qrBytes = await generateQRBytes(publicUrl)
-  if (!qrBytes) return pdfBytes
+  if (!qrBytes) {
+    console.warn("[pdf-utils] QR generation returned null — skipping QR")
+    return pdfBytes
+  }
 
-  const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
-  const pages = doc.getPages()
-  if (pages.length === 0) return pdfBytes
+  try {
+    const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true })
+    const pages = doc.getPages()
+    if (pages.length === 0) return pdfBytes
 
-  const page = pages[0]
-  const { width } = page.getSize()
-  const margin  = 64
-  const qrSize  = 90
-  const qrX     = width - margin - qrSize
-  const qrY     = margin + 32
+    const page = pages[0]
+    const { width } = page.getSize()
+    const margin  = 64
+    const qrSize  = 90
+    const qrX     = width - margin - qrSize
+    const qrY     = margin + 32
 
-  const helvetica = await doc.embedFont(StandardFonts.Helvetica)
-  const qrImg     = await doc.embedPng(qrBytes)
-  page.drawImage(qrImg, { x: qrX, y: qrY, width: qrSize, height: qrSize })
+    const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+    const qrImg     = await doc.embedPng(qrBytes)
+    page.drawImage(qrImg, { x: qrX, y: qrY, width: qrSize, height: qrSize })
 
-  const caption = safe("Escanea para ver el expediente digital")
-  page.drawText(caption, {
-    x: qrX - helvetica.widthOfTextAtSize(caption, 7) + qrSize,
-    y: qrY - 10,
-    size: 7,
-    font: helvetica,
-    color: rgb(0.55, 0.55, 0.55),
-  })
+    const caption = safe("Escanea para ver el expediente digital")
+    page.drawText(caption, {
+      x: qrX - helvetica.widthOfTextAtSize(caption, 7) + qrSize,
+      y: qrY - 10,
+      size: 7,
+      font: helvetica,
+      color: rgb(0.55, 0.55, 0.55),
+    })
 
-  return new Uint8Array(await doc.save())
+    return new Uint8Array(await doc.save())
+  } catch (err) {
+    console.error("[pdf-utils] addQRToFirstPage failed:", err)
+    return pdfBytes
+  }
 }
 
 // ─── Post-process: stamp "N / Total" at the bottom-centre of every page ───────
@@ -734,13 +746,13 @@ export async function addPageNumbers(pdfBytes: Uint8Array): Promise<Uint8Array> 
     const page  = pages[i]
     const { width } = page.getSize()
     const label = safe(`${i + 1} / ${total}`)
-    const textW = helvetica.widthOfTextAtSize(label, 8)
+    const textW = helvetica.widthOfTextAtSize(label, 9)
     page.drawText(label, {
       x: (width - textW) / 2,
-      y: 18,
-      size: 8,
+      y: 22,
+      size: 9,
       font: helvetica,
-      color: rgb(0.65, 0.65, 0.65),
+      color: rgb(0.35, 0.35, 0.35),
     })
   }
 
