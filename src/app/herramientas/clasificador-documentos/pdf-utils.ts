@@ -468,8 +468,20 @@ async function embedPdfFile(doc: PDFDocument, bytes: Uint8Array, fileName: strin
     })
     return
   }
-  const totalPages = sourceDoc.getPageCount()
-  const indices    = pageRange && pageRange.length > 0
+  let totalPages: number
+  try {
+    totalPages = sourceDoc.getPageCount()
+  } catch {
+    // PDF has a broken page tree (invalid object refs, corrupted XRef, etc.)
+    const page      = doc.addPage(PageSizes.A4)
+    const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+    page.drawText(safe(`No se pudo leer estructura: ${fileName}`), {
+      x: 72, y: PageSizes.A4[1] / 2, size: 11, font: helvetica, color: rgb(0.7, 0.3, 0.3),
+    })
+    return
+  }
+
+  const indices = pageRange && pageRange.length > 0
     ? pageRange.map((p) => Math.min(p - 1, totalPages - 1))   // 1-based → 0-based, clamped
     : Array.from({ length: totalPages }, (_, i) => i)          // all pages
 
