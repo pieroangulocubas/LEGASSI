@@ -160,6 +160,9 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
     → Nunca el rango entre primera y última visita.
 
 "nombre_en_doc": string o null. Nombre literal del titular tal como aparece en el documento. null si no hay nombre.
+  IMPORTANTE: si el documento no tiene nombre explícito pero el concepto, asunto o descripción
+  menciona "familia", "flia", "fam" seguido de uno o más apellidos (ej. "noviembre flia Bastardo Boscan",
+  "alquiler fam García"), copia ese fragmento completo en nombre_en_doc — cuenta como referencia de nombre.
 
 "fileIndex": integer. Índice del archivo donde se encuentra este documento (usa el número del marcador FILE_INDEX:N más cercano antes de este documento).
 
@@ -212,6 +215,21 @@ function buildNameObservacion(solicitante: string, nombreEnDoc: string): string 
   const missing = sTokens.filter((t) => !dSet.has(t))
   const missingText = missing.length > 0 ? `No coincide: ${missing.join(", ")}. ` : ""
   return `En el documento: «${nombreEnDoc}». ${missingText}Requiere revisión manual.`
+}
+
+// ─── Familia pattern check ────────────────────────────────────────────────────
+// Returns true if nombreEnDoc contains "familia/flia/fam" and at least one token
+// from the solicitante's name (≥3 chars) appears in the text (edit-distance ≤1).
+function checkFamiliaMatch(solicitante: string, nombreEnDoc: string): boolean {
+  if (!/\b(flia|familia|fam)\b/i.test(nombreEnDoc)) return false
+  const sTokens = tokenizeName(solicitante).filter((t) => t.length >= 3)
+  const dTokens = tokenizeName(nombreEnDoc)
+  for (const st of sTokens) {
+    for (const dt of dTokens) {
+      if (levenshtein(st, dt) <= 1) return true
+    }
+  }
+  return false
 }
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
@@ -306,6 +324,17 @@ export function enrichGeminiResults(
           motivo_rechazo = null
         }
         // "exact" → no changes; nombre_en_doc absent → trust Gemini (identifier-based)
+      }
+    }
+
+    // Familia rescue: if Gemini rejected the doc but nombre_en_doc contains
+    // "familia/flia/fam" + a matching surname → send to manual review instead of invalid.
+    if (!valido && !observado) {
+      const nameInDoc = typeof doc.nombre_en_doc === "string" ? doc.nombre_en_doc : null
+      if (nameInDoc?.trim() && checkFamiliaMatch(nombre, nameInDoc)) {
+        observado = true
+        observacion = `Referencia familiar detectada. En el documento: «${nameInDoc}». Requiere revisión manual.`
+        motivo_rechazo = null
       }
     }
 
