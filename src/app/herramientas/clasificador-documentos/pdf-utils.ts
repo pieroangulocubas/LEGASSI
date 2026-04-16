@@ -456,46 +456,53 @@ async function embedImageFile(doc: PDFDocument, bytes: Uint8Array, fileName: str
 
 // ─── Embed PDF file ───────────────────────────────────────────────────────────
 // pageRange: 1-based page numbers to embed; null/empty = embed all pages
+//
+// Repair strategy for non-standard PDFs (government, notarías, instituciones):
+//   Pass 1 — load with throwOnInvalidObject:false to tolerate broken object refs.
+//   Pass 2 — if getPageCount() still throws, re-serialize the document (rebuilds
+//             the XRef table) then reload. This fixes most linearized / XRef-stream
+//             PDFs that pdf-lib can parse but not traverse directly.
 async function embedPdfFile(doc: PDFDocument, bytes: Uint8Array, fileName: string, pageRange?: number[] | null): Promise<void> {
-  let sourceDoc: PDFDocument
-  try {
-    sourceDoc = await PDFDocument.load(bytes, { ignoreEncryption: true })
-  } catch {
+  async function placeholder(label: string) {
     const page      = doc.addPage(PageSizes.A4)
     const helvetica = await doc.embedFont(StandardFonts.Helvetica)
-    page.drawText(safe(`No se pudo incrustar: ${fileName}`), {
-      x: 72, y: PageSizes.A4[1] / 2, size: 11, font: helvetica, color: rgb(0.7, 0.3, 0.3),
-    })
+    page.drawText(safe(label), { x: 72, y: PageSizes.A4[1] / 2, size: 11, font: helvetica, color: rgb(0.7, 0.3, 0.3) })
+  }
+
+  // ── Pass 1: tolerant load ──────────────────────────────────────────────────
+  let sourceDoc: PDFDocument
+  try {
+    sourceDoc = await PDFDocument.load(bytes, { ignoreEncryption: true, throwOnInvalidObject: false })
+  } catch {
+    await placeholder(`No se pudo cargar: ${fileName}`)
     return
   }
+
+  // ── Pass 2: repair if page tree is unreadable ──────────────────────────────
   let totalPages: number
   try {
     totalPages = sourceDoc.getPageCount()
   } catch {
-    // PDF has a broken page tree (invalid object refs, corrupted XRef, etc.)
-    const page      = doc.addPage(PageSizes.A4)
-    const helvetica = await doc.embedFont(StandardFonts.Helvetica)
-    page.drawText(safe(`No se pudo leer estructura: ${fileName}`), {
-      x: 72, y: PageSizes.A4[1] / 2, size: 11, font: helvetica, color: rgb(0.7, 0.3, 0.3),
-    })
-    return
+    try {
+      // Re-serialize to rebuild XRef, then reload
+      const repairedBytes = await sourceDoc.save()
+      sourceDoc  = await PDFDocument.load(repairedBytes, { ignoreEncryption: true, throwOnInvalidObject: false })
+      totalPages = sourceDoc.getPageCount()
+    } catch {
+      await placeholder(`No se pudo leer estructura: ${fileName}`)
+      return
+    }
   }
 
   const indices = pageRange && pageRange.length > 0
-    ? pageRange.map((p) => Math.min(p - 1, totalPages - 1))   // 1-based → 0-based, clamped
-    : Array.from({ length: totalPages }, (_, i) => i)          // all pages
+    ? pageRange.map((p) => Math.min(p - 1, totalPages - 1))
+    : Array.from({ length: totalPages }, (_, i) => i)
 
   try {
     const copied = await doc.copyPages(sourceDoc, indices)
     for (const p of copied) doc.addPage(p)
   } catch {
-    // Some PDFs have internal structures pdf-lib can't remap (linearised, XRef streams, etc.)
-    // Add a placeholder page so the rest of the expedition still generates.
-    const page      = doc.addPage(PageSizes.A4)
-    const helvetica = await doc.embedFont(StandardFonts.Helvetica)
-    page.drawText(safe(`No se pudo incrustar: ${fileName}`), {
-      x: 72, y: PageSizes.A4[1] / 2, size: 11, font: helvetica, color: rgb(0.7, 0.3, 0.3),
-    })
+    await placeholder(`No se pudo incrustar: ${fileName}`)
   }
 }
 
