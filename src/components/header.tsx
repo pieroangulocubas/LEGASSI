@@ -19,24 +19,24 @@ export function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
-          <a href="/#servicios" className="text-sm font-medium hover:text-primary transition-colors">
+          <Link href="/#servicios" className="text-sm font-medium hover:text-primary transition-colors">
             Servicios
-          </a>
-          <a href="/#por-que-elegirnos" className="text-sm font-medium hover:text-primary transition-colors">
+          </Link>
+          <Link href="/#por-que-elegirnos" className="text-sm font-medium hover:text-primary transition-colors">
             Por qué elegirnos
-          </a>
-          <a href="/#testimonios" className="text-sm font-medium hover:text-primary transition-colors">
+          </Link>
+          <Link href="/#testimonios" className="text-sm font-medium hover:text-primary transition-colors">
             Testimonios
-          </a>
-          <a href="/#mision" className="text-sm font-medium hover:text-primary transition-colors">
+          </Link>
+          <Link href="/#mision" className="text-sm font-medium hover:text-primary transition-colors">
             Misión y Visión
-          </a>
-          <a href="/#faq" className="text-sm font-medium hover:text-primary transition-colors">
+          </Link>
+          <Link href="/#faq" className="text-sm font-medium hover:text-primary transition-colors">
             FAQ
-          </a>
-          <a href="/#contacto" className="text-sm font-medium hover:text-primary transition-colors">
+          </Link>
+          <Link href="/#contacto" className="text-sm font-medium hover:text-primary transition-colors">
             Contacto
-          </a>
+          </Link>
         </nav>
 
         <div className="flex items-center space-x-4">
@@ -52,9 +52,9 @@ export function Header() {
           </Button>
 
           <Button className="hidden md:inline-flex" asChild>
-            <a href="https://wa.me/34611759973" target="_blank" rel="noopener noreferrer">
+            <Link href="https://wa.me/34611759973" target="_blank" rel="noopener noreferrer">
               Habla con un asesor
-            </a>
+            </Link>
           </Button>
 
           {/* Mobile menu button */}
@@ -87,9 +87,9 @@ export function Header() {
               Contacto
             </Link>
             <Button className="w-full mt-4" asChild>
-              <a href="https://wa.me/34611759973" target="_blank" rel="noopener noreferrer">
+              <Link href="https://wa.me/34611759973" target="_blank" rel="noopener noreferrer">
                 Habla con un asesor
-              </a>
+              </Link>
             </Button>
           </nav>
         </div>
