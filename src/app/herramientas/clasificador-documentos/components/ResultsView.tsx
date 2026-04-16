@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Download,
   MessageCircle,
+  RefreshCw,
 } from "lucide-react"
 import { generatePDF, addQRToFirstPage, addPageNumbers } from "../pdf-utils"
 import type { AnalysisResult, ClasificadorFormData, DocumentResult, PresentationMonth } from "../types"
@@ -291,18 +292,7 @@ export function ResultsView({
               Todos los meses obligatorios están cubiertos. Previsualiza el expediente, depura páginas si lo necesitas y descárgalo listo para presentar.
             </p>
           </div>
-          {pdfError && (
-            <p className="text-xs text-destructive">
-              {pdfError}{" "}
-              <button
-                type="button"
-                onClick={handleOpenPreview}
-                className="underline font-semibold hover:opacity-80"
-              >
-                Reintentar
-              </button>
-            </p>
-          )}
+          {pdfError && <p className="text-xs text-destructive">{pdfError}</p>}
           <button
             type="button"
             onClick={handleOpenPreview}
@@ -313,6 +303,11 @@ export function ResultsView({
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Generando PDF…
+              </>
+            ) : pdfError ? (
+              <>
+                <RefreshCw className="h-4 w-4" />
+                Reintentar generación
               </>
             ) : (
               <>
