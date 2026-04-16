@@ -74,18 +74,25 @@ export const analizarClasificador = inngest.createFunction(
           .update({ status: "processing", step: 2, updated_at: new Date().toISOString() })
           .eq("id", jobId)
 
+        // Download all files in parallel — significant speedup for multi-file batches
+        const downloaded = await Promise.all(
+          fileMeta.map(async (meta) => {
+            const { data: blob, error: dlErr } = await supabase.storage
+              .from("clasificador-temp")
+              .download(meta.storageKey)
+            if (dlErr || !blob) throw new Error(`Failed to download ${meta.storageKey}: ${dlErr?.message}`)
+            const buf = Buffer.from(await blob.arrayBuffer())
+            return { meta, buf }
+          })
+        )
+
+        // Rebuild parts in original order so FILE_INDEX markers are correct
+        downloaded.sort((a, b) => a.meta.originalIndex - b.meta.originalIndex)
+
         const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
           { text: buildGeminiPrompt(job.nombre ?? "") },
         ]
-
-        for (const meta of fileMeta) {
-          const { data: blob, error: dlErr } = await supabase.storage
-            .from("clasificador-temp")
-            .download(meta.storageKey)
-
-          if (dlErr || !blob) throw new Error(`Failed to download ${meta.storageKey}: ${dlErr?.message}`)
-
-          const buf = Buffer.from(await blob.arrayBuffer())
+        for (const { meta, buf } of downloaded) {
           parts.push({ text: `FILE_INDEX:${meta.originalIndex}` })
           parts.push({ inlineData: { mimeType: meta.mimeType, data: buf.toString("base64") } })
         }
@@ -105,7 +112,7 @@ export const analizarClasificador = inngest.createFunction(
         for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
           try {
             const response = await ai.models.generateContent({
-              model: "gemini-3-flash-preview",
+              model: "gemini-2.5-flash-preview-04-17",
               contents: [{ role: "user", parts }],
               config: {
                 temperature: 0.1,
