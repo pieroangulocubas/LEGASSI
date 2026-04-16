@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
@@ -67,24 +68,24 @@ export function Header() {
       {isMenuOpen && (
         <div className="md:hidden border-t bg-background">
           <nav className="flex flex-col space-y-4 p-4">
-            <a href="/#servicios" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link href="/#servicios" className="text-sm font-medium hover:text-primary transition-colors">
               Servicios
-            </a>
-            <a href="/#por-que-elegirnos" className="text-sm font-medium hover:text-primary transition-colors">
+            </Link>
+            <Link href="/#por-que-elegirnos" className="text-sm font-medium hover:text-primary transition-colors">
               Por qué elegirnos
-            </a>
-            <a href="/#testimonios" className="text-sm font-medium hover:text-primary transition-colors">
+            </Link>
+            <Link href="/#testimonios" className="text-sm font-medium hover:text-primary transition-colors">
               Testimonios
-            </a>
-            <a href="/#mision" className="text-sm font-medium hover:text-primary transition-colors">
+            </Link>
+            <Link href="/#mision" className="text-sm font-medium hover:text-primary transition-colors">
               Misión y Visión
-            </a>
-            <a href="/#faq" className="text-sm font-medium hover:text-primary transition-colors">
+            </Link>
+            <Link href="/#faq" className="text-sm font-medium hover:text-primary transition-colors">
               FAQ
-            </a>
-            <a href="/#contacto" className="text-sm font-medium hover:text-primary transition-colors">
+            </Link>
+            <Link href="/#contacto" className="text-sm font-medium hover:text-primary transition-colors">
               Contacto
-            </a>
+            </Link>
             <Button className="w-full mt-4" asChild>
               <a href="https://wa.me/34611759973" target="_blank" rel="noopener noreferrer">
                 Habla con un asesor
