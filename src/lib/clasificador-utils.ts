@@ -82,9 +82,14 @@ SOLICITANTE: "${nombre}"
 
 INSTRUCCIONES:
 
-1. IDENTIDAD: Copia el nombre del titular tal como aparece en el documento en el campo
-   "nombre_en_doc" (null si no hay nombre visible). La validación del nombre la hace
-   el sistema, no tú — NO uses el nombre para decidir si el documento es válido o no.
+1. IDENTIDAD: Copia en "nombre_en_doc" el nombre de la persona física titular del documento.
+   Regla cuando hay varios nombres en el documento (ej. cambio de titularidad, documentos
+   con titular anterior y nuevo):
+     a) Si el nombre del SOLICITANTE aparece en el documento → cópialo exactamente como aparece.
+     b) Si el SOLICITANTE no aparece pero hay otro titular → copia ese otro nombre.
+     c) Sin ningún nombre visible → null.
+   La validación final del nombre la hace el sistema, no tú — NO uses el nombre para decidir
+   si el documento es válido o no.
    Si hay un identificador único (DNI/NIE/PASAPORTE/NASS) y no hay nombre → valido=true.
    Si no hay nombre ni identificador → valido=false.
 
@@ -121,21 +126,35 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
       regulatoria, condiciones generales, publicidad, datos técnicos
     · Meses futuros respecto a la fecha de emisión del documento
 
-  ── CÓMO EXTRAER LOS MESES según la naturaleza del documento ──────────────────
-  Documentos puntuales (acreditan uno o pocos meses discretos):
-    → Incluye solo el mes o meses en que ocurrió el hecho activo.
-    → Nunca rellenes huecos ni inferir continuidad entre dos fechas.
-    → Ejemplos: nómina, factura, recibo, cita médica, padrón.
+  ── REGLAS POR TIPO DE DOCUMENTO ──────────────────────────────────────────────
 
-  Documentos de periodo continuo (el contrato PRUEBA que la persona estuvo durante todo ese rango):
-    → Incluye todos los meses desde el inicio hasta el fin del periodo visible en el documento.
-    → Solo si el documento muestra explícitamente un rango activo (fecha inicio + fecha fin o
-       "hasta la fecha"), no si solo menciona una fecha de contrato.
-    → Ejemplos: contrato de trabajo, extracto bancario con saldo mes a mes, certificado empresa.
+  PADRÓN MUNICIPAL (certificado individual / volante de empadronamiento):
+    → Solo dos posibles fechas: (1) el mes de la fecha de expedición/emisión del certificado,
+      y (2) el mes de la fecha de "Alta en Padrón" (si aparece explícitamente).
+    → NUNCA incluyas los meses intermedios entre "Alta en Padrón" y la emisión.
+    → NUNCA uses "Alta en Vivienda", "fecha de baja", "fecha de caducidad" ni ninguna otra
+      fecha del documento.
+    → Resultado típico: uno o dos meses concretos, nunca un rango.
+    → Ejemplo: Alta en Padrón 03/02/2025, emitido 10/04/2026 → fechas: ["2025-02", "2026-04"]
 
-  Documentos históricos/certificados:
-    → Incluye únicamente los meses específicos que el documento certifica o lista explícitamente.
-    → Ejemplos: empadronamiento histórico, historial médico con lista de visitas.
+  EMPADRONAMIENTO HISTÓRICO (historial de inscripciones):
+    → Incluye únicamente el mes de cada acción registral explícita que aparezca listada
+      (alta, modificación, baja). Cada acción = un mes concreto.
+    → NUNCA rellenes el hueco entre dos acciones consecutivas como si fueran meses continuos.
+    → Ejemplo: Alta feb 2023, modificación sep 2024, baja ene 2026 → ["2023-02","2024-09","2026-01"]
+
+  CONTRATO DE TRABAJO / CERTIFICADO EMPRESA / INFORME MÉDICO CON PERIODO:
+    → Estos SÍ prueban permanencia continua: incluye todos los meses desde el inicio
+      hasta el fin del periodo explícitamente indicado en el documento.
+    → Solo si el documento muestra un rango activo (fecha inicio + fecha fin o "hasta la fecha").
+
+  NÓMINA / FACTURA / RECIBO / EXTRACTO BANCARIO:
+    → Solo el mes o meses concretos a los que corresponde el documento o la transacción.
+    → Nunca inferir continuidad.
+
+  HISTORIAL MÉDICO CON LISTA DE VISITAS / CITAS:
+    → Solo los meses en que hay una cita o visita explícitamente registrada.
+    → Nunca el rango entre primera y última visita.
 
 "nombre_en_doc": string o null. Nombre literal del titular tal como aparece en el documento. null si no hay nombre.
 
