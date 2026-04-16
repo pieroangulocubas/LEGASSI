@@ -454,14 +454,67 @@ async function embedImageFile(doc: PDFDocument, bytes: Uint8Array, fileName: str
   })
 }
 
+// ─── pdfjs-dist fallback: render pages to canvas → embed as PNG ──────────────
+// Used when pdf-lib can't traverse the page tree (non-standard XRef, broken refs).
+// pdfjs is the same engine Chrome uses — handles any displayable PDF.
+async function embedPdfViaCanvas(
+  doc: PDFDocument,
+  bytes: Uint8Array,
+  pageRange?: number[] | null,
+): Promise<boolean> {
+  try {
+    const pdfjs = await import("pdfjs-dist")
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+      "pdfjs-dist/build/pdf.worker.min.mjs",
+      import.meta.url,
+    ).href
+
+    const loadingTask = pdfjs.getDocument({ data: bytes })
+    const pdfDoc      = await loadingTask.promise
+    const total       = pdfDoc.numPages
+
+    // 1-based page numbers to embed
+    const pages = pageRange && pageRange.length > 0
+      ? pageRange.map((p) => Math.min(Math.max(p, 1), total))
+      : Array.from({ length: total }, (_, i) => i + 1)
+
+    for (const pageNum of pages) {
+      const page     = await pdfDoc.getPage(pageNum)
+      const viewport = page.getViewport({ scale: 2.0 }) // 2× for quality
+
+      const canvas    = document.createElement("canvas")
+      canvas.width    = viewport.width
+      canvas.height   = viewport.height
+      const ctx       = canvas.getContext("2d")!
+
+      await page.render({ canvasContext: ctx, viewport, canvas }).promise
+
+      // Embed the canvas as a PNG page in the destination PDF
+      const dataUrl  = canvas.toDataURL("image/png")
+      const base64   = dataUrl.split(",")[1]
+      const pngBytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+
+      const img     = await doc.embedPng(pngBytes)
+      // Scale back to 1× (we rendered at 2× for sharpness)
+      const [w, h]  = [viewport.width / 2, viewport.height / 2]
+      const pdfPage = doc.addPage([w, h])
+      pdfPage.drawImage(img, { x: 0, y: 0, width: w, height: h })
+    }
+
+    return true
+  } catch (err) {
+    console.error("[pdf-utils] pdfjs fallback failed:", err)
+    return false
+  }
+}
+
 // ─── Embed PDF file ───────────────────────────────────────────────────────────
 // pageRange: 1-based page numbers to embed; null/empty = embed all pages
 //
-// Repair strategy for non-standard PDFs (government, notarías, instituciones):
-//   Pass 1 — load with throwOnInvalidObject:false to tolerate broken object refs.
-//   Pass 2 — if getPageCount() still throws, re-serialize the document (rebuilds
-//             the XRef table) then reload. This fixes most linearized / XRef-stream
-//             PDFs that pdf-lib can parse but not traverse directly.
+// Strategy:
+//   Pass 1 — pdf-lib fast path (standards-compliant PDFs).
+//   Pass 2 — pdfjs-dist fallback (any PDF the browser can display — handles
+//             broken XRef tables, object streams, encrypted government PDFs, etc.)
 async function embedPdfFile(doc: PDFDocument, bytes: Uint8Array, fileName: string, pageRange?: number[] | null): Promise<void> {
   async function placeholder(label: string) {
     const page      = doc.addPage(PageSizes.A4)
@@ -469,39 +522,26 @@ async function embedPdfFile(doc: PDFDocument, bytes: Uint8Array, fileName: strin
     page.drawText(safe(label), { x: 72, y: PageSizes.A4[1] / 2, size: 11, font: helvetica, color: rgb(0.7, 0.3, 0.3) })
   }
 
-  // ── Pass 1: tolerant load ──────────────────────────────────────────────────
-  let sourceDoc: PDFDocument
+  // ── Pass 1: pdf-lib (fast, lossless) ──────────────────────────────────────
+  let pdfLibOk = false
   try {
-    sourceDoc = await PDFDocument.load(bytes, { ignoreEncryption: true, throwOnInvalidObject: false })
-  } catch {
-    await placeholder(`No se pudo cargar: ${fileName}`)
-    return
-  }
-
-  // ── Pass 2: repair if page tree is unreadable ──────────────────────────────
-  let totalPages: number
-  try {
-    totalPages = sourceDoc.getPageCount()
-  } catch {
-    try {
-      // Re-serialize to rebuild XRef, then reload
-      const repairedBytes = await sourceDoc.save()
-      sourceDoc  = await PDFDocument.load(repairedBytes, { ignoreEncryption: true, throwOnInvalidObject: false })
-      totalPages = sourceDoc.getPageCount()
-    } catch {
-      await placeholder(`No se pudo leer estructura: ${fileName}`)
-      return
-    }
-  }
-
-  const indices = pageRange && pageRange.length > 0
-    ? pageRange.map((p) => Math.min(p - 1, totalPages - 1))
-    : Array.from({ length: totalPages }, (_, i) => i)
-
-  try {
+    const sourceDoc  = await PDFDocument.load(bytes, { ignoreEncryption: true, throwOnInvalidObject: false })
+    const totalPages = sourceDoc.getPageCount()
+    const indices    = pageRange && pageRange.length > 0
+      ? pageRange.map((p) => Math.min(p - 1, totalPages - 1))
+      : Array.from({ length: totalPages }, (_, i) => i)
     const copied = await doc.copyPages(sourceDoc, indices)
     for (const p of copied) doc.addPage(p)
+    pdfLibOk = true
   } catch {
+    // pdf-lib couldn't handle this PDF — try pdfjs fallback
+  }
+
+  if (pdfLibOk) return
+
+  // ── Pass 2: pdfjs-dist (canvas render → PNG embed) ───────────────────────
+  const canvasOk = await embedPdfViaCanvas(doc, bytes, pageRange)
+  if (!canvasOk) {
     await placeholder(`No se pudo incrustar: ${fileName}`)
   }
 }
