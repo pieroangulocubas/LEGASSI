@@ -291,7 +291,18 @@ export function ResultsView({
               Todos los meses obligatorios están cubiertos. Previsualiza el expediente, depura páginas si lo necesitas y descárgalo listo para presentar.
             </p>
           </div>
-          {pdfError && <p className="text-xs text-destructive">{pdfError}</p>}
+          {pdfError && (
+            <p className="text-xs text-destructive">
+              {pdfError}{" "}
+              <button
+                type="button"
+                onClick={handleOpenPreview}
+                className="underline font-semibold hover:opacity-80"
+              >
+                Reintentar
+              </button>
+            </p>
+          )}
           <button
             type="button"
             onClick={handleOpenPreview}
