@@ -82,16 +82,19 @@ SOLICITANTE: "${nombre}"
 
 INSTRUCCIONES:
 
-1. IDENTIDAD: Copia en "nombre_en_doc" el nombre de la persona física titular del documento.
-   Regla cuando hay varios nombres en el documento (ej. cambio de titularidad, documentos
-   con titular anterior y nuevo):
+1. IDENTIDAD: Copia en "nombre_en_doc" el nombre de la persona física que aparece en el
+   documento. Cuando haya varios nombres de persona:
      a) Si el nombre del SOLICITANTE aparece en el documento → cópialo exactamente como aparece.
-     b) Si el SOLICITANTE no aparece pero hay otro titular → copia ese otro nombre.
+     b) Si el SOLICITANTE no aparece → copia el nombre más prominente que encuentres.
      c) Sin ningún nombre visible → null.
-   La validación final del nombre la hace el sistema, no tú — NO uses el nombre para decidir
-   si el documento es válido o no.
+
+   CRÍTICO — el campo "valido" NUNCA depende del nombre:
+     · Que el nombre no sea el del solicitante NO es motivo de rechazo.
+     · Que el documento sea de un tercero NO es motivo de rechazo.
+     · NO uses "titularidad ajena", "nombre incorrecto" ni similares en motivo_rechazo.
+   "valido" solo depende de si el documento tiene fechas razonables de presencia en España.
    Si hay un identificador único (DNI/NIE/PASAPORTE/NASS) y no hay nombre → valido=true.
-   Si no hay nombre ni identificador → valido=false.
+   Si no hay nombre ni identificador ni fechas → valido=false.
 
 2. RELEVANCIA: el documento debe ser una prueba razonable de presencia física en España.
 
