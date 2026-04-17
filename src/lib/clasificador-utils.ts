@@ -132,13 +132,15 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
   ── REGLAS POR TIPO DE DOCUMENTO ──────────────────────────────────────────────
 
   PADRÓN MUNICIPAL (certificado individual / volante de empadronamiento):
-    → Solo dos posibles fechas: (1) el mes de la fecha de expedición/emisión del certificado,
-      y (2) el mes de la fecha de "Alta en Padrón" (si aparece explícitamente).
-    → NUNCA incluyas los meses intermedios entre "Alta en Padrón" y la emisión.
-    → NUNCA uses "Alta en Vivienda", "fecha de baja", "fecha de caducidad" ni ninguna otra
-      fecha del documento.
-    → Resultado típico: uno o dos meses concretos, nunca un rango.
-    → Ejemplo: Alta en Padrón 03/02/2025, emitido 10/04/2026 → fechas: ["2025-02", "2026-04"]
+    → Incluye únicamente los meses de estas fechas concretas si aparecen explícitamente:
+        (1) Fecha de expedición / emisión del certificado.
+        (2) Fecha de "Alta en Padrón".
+        (3) Fecha de "Alta en Vivienda" (también válida como prueba de presencia).
+    → NUNCA incluyas los meses intermedios entre cualquiera de estas fechas.
+    → NUNCA uses "fecha de baja", "fecha de caducidad" ni ninguna otra fecha del documento.
+    → Resultado típico: entre uno y tres meses concretos, nunca un rango.
+    → Ejemplo: Alta en Vivienda 15/01/2024, Alta en Padrón 03/02/2025, emitido 10/04/2026
+               → fechas: ["2024-01", "2025-02", "2026-04"]
 
   EMPADRONAMIENTO HISTÓRICO (historial de inscripciones):
     → Incluye únicamente el mes de cada acción registral explícita que aparezca listada
@@ -232,6 +234,60 @@ function checkFamiliaMatch(solicitante: string, nombreEnDoc: string): boolean {
   return false
 }
 
+// ─── Date parsing ─────────────────────────────────────────────────────────────
+// Converts any recognizable date string to "YYYY-MM". Returns null if unrecognizable.
+// Handles: YYYY-MM, YYYY-MM-DD, DD/MM/YYYY, D/M/YYYY, DD-MM-YYYY,
+//          "15 de marzo de 2024", "marzo 2024", "marzo de 2024", etc.
+const MONTH_MAP: Record<string, string> = {
+  enero: "01", january: "01", jan: "01",
+  febrero: "02", february: "02", feb: "02",
+  marzo: "03", march: "03", mar: "03",
+  abril: "04", april: "04", apr: "04",
+  mayo: "05", may: "05",
+  junio: "06", june: "06", jun: "06",
+  julio: "07", july: "07", jul: "07",
+  agosto: "08", august: "08", aug: "08",
+  septiembre: "09", setiembre: "09", september: "09", sep: "09", sept: "09",
+  octubre: "10", october: "10", oct: "10",
+  noviembre: "11", november: "11", nov: "11",
+  diciembre: "12", december: "12", dec: "12",
+}
+
+export function parseDateToYearMonth(raw: string): string | null {
+  const s = raw.trim()
+
+  // Already YYYY-MM
+  if (/^\d{4}-\d{2}$/.test(s)) return s
+
+  // YYYY-MM-DD or YYYY/MM/DD
+  const isoFull = s.match(/^(\d{4})[-/](\d{1,2})[-/]\d{1,2}$/)
+  if (isoFull) return `${isoFull[1]}-${isoFull[2].padStart(2, "0")}`
+
+  // DD/MM/YYYY or DD-MM-YYYY or D/M/YYYY
+  const dmy = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/)
+  if (dmy) return `${dmy[3]}-${dmy[2].padStart(2, "0")}`
+
+  // "15 de marzo de 2024" / "15 marzo 2024"
+  const dayMonthYear = s.match(/^(\d{1,2})\s+(?:de\s+)?([a-záéíóúñ]+)(?:\s+de)?\s+(\d{4})$/i)
+  if (dayMonthYear) {
+    const mm = MONTH_MAP[dayMonthYear[2].toLowerCase()]
+    if (mm) return `${dayMonthYear[3]}-${mm}`
+  }
+
+  // "marzo de 2024" / "marzo 2024"
+  const monthYear = s.match(/^([a-záéíóúñ]+)(?:\s+de)?\s+(\d{4})$/i)
+  if (monthYear) {
+    const mm = MONTH_MAP[monthYear[1].toLowerCase()]
+    if (mm) return `${monthYear[2]}-${mm}`
+  }
+
+  // MM/YYYY or MM-YYYY
+  const mmyyyy = s.match(/^(\d{1,2})[-/](\d{4})$/)
+  if (mmyyyy) return `${mmyyyy[2]}-${mmyyyy[1].padStart(2, "0")}`
+
+  return null
+}
+
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 const RANGE_TIPOS = new Set([
   "contrato",
@@ -300,9 +356,12 @@ export function enrichGeminiResults(
     const tipo = typeof doc.tipo === "string" ? doc.tipo : ""
     let rawFechas: string[] = []
     if (Array.isArray(doc.fechas)) {
-      rawFechas = (doc.fechas as string[]).filter((f) => /^\d{4}-\d{2}$/.test(f))
-    } else if (typeof doc.fecha === "string" && /^\d{4}-\d{2}$/.test(doc.fecha)) {
-      rawFechas = [doc.fecha]
+      rawFechas = (doc.fechas as string[])
+        .map((f) => (typeof f === "string" ? parseDateToYearMonth(f) : null))
+        .filter((f): f is string => f !== null)
+    } else if (typeof doc.fecha === "string") {
+      const parsed = parseDateToYearMonth(doc.fecha)
+      if (parsed) rawFechas = [parsed]
     }
     const fechas = normalizeFechas(rawFechas, tipo)
 
