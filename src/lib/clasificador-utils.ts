@@ -88,13 +88,20 @@ INSTRUCCIONES:
      b) Si el SOLICITANTE no aparece → copia el nombre más prominente que encuentres.
      c) Sin ningún nombre visible → null.
 
-   CRÍTICO — el campo "valido" NUNCA depende del nombre:
+   CRÍTICO — el campo "valido" NUNCA depende de si el nombre coincide con el del solicitante:
      · Que el nombre no sea el del solicitante NO es motivo de rechazo.
      · Que el documento sea de un tercero NO es motivo de rechazo.
      · NO uses "titularidad ajena", "nombre incorrecto" ni similares en motivo_rechazo.
-   "valido" solo depende de si el documento tiene fechas razonables de presencia en España.
-   Si hay un identificador único (DNI/NIE/PASAPORTE/NASS) y no hay nombre → valido=true.
-   Si no hay nombre ni identificador ni fechas → valido=false.
+   "valido" depende de si el documento tiene fechas razonables de presencia en España
+   Y de si permite identificar a su titular (nombre o identificador visible).
+
+   REGLA DE IDENTIDAD (obligatoria para que valido=true):
+     · Si el documento tiene nombre de persona visible → cópialo en nombre_en_doc.
+     · Si no hay nombre pero sí un identificador único (DNI/NIE/NIE/PASAPORTE/NASS/NIF)
+       → copia el identificador exactamente como aparece en nombre_en_doc.
+     · Si no hay nombre NI identificador → valido=false, motivo_rechazo: "Sin identificación del titular".
+       Esto aplica a tickets de transporte, recibos genéricos, facturas simplificadas sin datos
+       del cliente, y cualquier documento que no identifique a una persona concreta.
 
 2. RELEVANCIA: el documento debe ser una prueba razonable de presencia física en España.
 
@@ -382,7 +389,13 @@ export function enrichGeminiResults(
           observacion = buildNameObservacion(nombre, nameInDoc)
           motivo_rechazo = null
         }
-        // "exact" → no changes; nombre_en_doc absent → trust Gemini (identifier-based)
+        // "exact" → no changes
+      } else {
+        // No name and no identifier visible → cannot link document to the applicant
+        valido = false
+        observado = true
+        observacion = "No se detectó nombre ni identificador del titular en el documento. Requiere revisión manual."
+        motivo_rechazo = null
       }
     }
 
