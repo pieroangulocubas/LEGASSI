@@ -491,11 +491,22 @@ async function embedPdfViaCanvas(
       const base64   = dataUrl.split(",")[1]
       const pngBytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
 
-      const img     = await doc.embedPng(pngBytes)
-      // Scale back to 1× (we rendered at 2× for sharpness)
-      const [w, h]  = [viewport.width / 2, viewport.height / 2]
-      const pdfPage = doc.addPage([w, h])
-      pdfPage.drawImage(img, { x: 0, y: 0, width: w, height: h })
+      const img = await doc.embedPng(pngBytes)
+      // Normalize to A4 — scale down if needed, center on page
+      const [a4W, a4H] = PageSizes.A4
+      const marg = 36
+      const imgW = viewport.width / 2   // 1× dimensions
+      const imgH = viewport.height / 2
+      const scale = Math.min((a4W - marg * 2) / imgW, (a4H - marg * 2) / imgH, 1)
+      const scaledW = imgW * scale
+      const scaledH = imgH * scale
+      const pdfPage = doc.addPage(PageSizes.A4)
+      pdfPage.drawImage(img, {
+        x: (a4W - scaledW) / 2,
+        y: (a4H - scaledH) / 2,
+        width: scaledW,
+        height: scaledH,
+      })
     }
 
     return true
@@ -527,8 +538,34 @@ async function embedPdfFile(doc: PDFDocument, bytes: Uint8Array, fileName: strin
     const indices    = pageRange && pageRange.length > 0
       ? pageRange.map((p) => Math.min(p - 1, totalPages - 1))
       : Array.from({ length: totalPages }, (_, i) => i)
-    const copied = await doc.copyPages(sourceDoc, indices)
-    for (const p of copied) doc.addPage(p)
+
+    const [a4W, a4H] = PageSizes.A4
+    const marg = 36
+
+    for (const idx of indices) {
+      const sourcePage = sourceDoc.getPages()[idx]
+      const { width: origW, height: origH } = sourcePage.getSize()
+
+      if (Math.abs(origW - a4W) < 2 && Math.abs(origH - a4H) < 2) {
+        // Already A4 — fast copy, no re-encoding
+        const [copied] = await doc.copyPages(sourceDoc, [idx])
+        doc.addPage(copied)
+      } else {
+        // Non-A4 source — embed as XObject and scale onto an A4 page
+        const embedded = await doc.embedPage(sourcePage)
+        const scale    = Math.min((a4W - marg * 2) / origW, (a4H - marg * 2) / origH, 1)
+        const scaledW  = origW * scale
+        const scaledH  = origH * scale
+        const newPage  = doc.addPage(PageSizes.A4)
+        newPage.drawPage(embedded, {
+          x: (a4W - scaledW) / 2,
+          y: (a4H - scaledH) / 2,
+          width:  scaledW,
+          height: scaledH,
+        })
+      }
+    }
+
     pdfLibOk = true
   } catch {
     // pdf-lib couldn't handle this PDF — try pdfjs fallback
