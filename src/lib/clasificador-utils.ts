@@ -130,7 +130,8 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
   Una fecha NO es válida cuando describe un metadato administrativo del documento, no
   un hecho de la persona. Ejemplos universales de fechas inválidas:
     · Cualquier "fecha de fin / vencimiento / caducidad / baja" de un contrato o servicio
-    · Cualquier "fecha de inicio de contrato" sin periodo de facturación asociado visible
+    · "Fecha de inicio de contrato" cuando NO hay fecha de fin NI indicación de vigencia indefinida
+      (si hay fecha de inicio con fin indefinido → usa "termino_indefinido": true en su lugar)
     · Fechas de nacimiento, expiración de DNI/NIE/pasaporte
     · Fechas en contenido no referido a la persona: tablas estadísticas, información
       regulatoria, condiciones generales, publicidad, datos técnicos
@@ -156,9 +157,12 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
     → Ejemplo: Alta feb 2023, modificación sep 2024, baja ene 2026 → ["2023-02","2024-09","2026-01"]
 
   CONTRATO DE TRABAJO / CERTIFICADO EMPRESA / INFORME MÉDICO CON PERIODO:
-    → Estos SÍ prueban permanencia continua: incluye todos los meses desde el inicio
-      hasta el fin del periodo explícitamente indicado en el documento.
-    → Solo si el documento muestra un rango activo (fecha inicio + fecha fin o "hasta la fecha").
+    → Si el documento muestra fecha de inicio Y fecha de fin (o "hasta la fecha" / "vigente"):
+        incluye todos los meses del rango en "fechas".
+    → Si el documento tiene fecha de inicio pero NO tiene fecha de fin explícita, o la terminación
+      es indefinida / abierta / "indefinido" / "hasta nuevo aviso" / sin límite temporal:
+        incluye únicamente el mes de la fecha de inicio en "fechas" y pon "termino_indefinido": true.
+    → Sin ninguna fecha de inicio visible: no incluyas meses; "termino_indefinido": false.
 
   NÓMINA / FACTURA / RECIBO / EXTRACTO BANCARIO:
     → Solo el mes o meses concretos a los que corresponde el documento o la transacción.
@@ -183,11 +187,13 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
   Si un PDF contiene varios documentos distintos escaneados juntos, devuelve un objeto
   separado por cada documento identificado, con sus páginas correspondientes.
 
+El campo "termino_indefinido" solo aplica a contratos; en cualquier otro tipo de documento omítelo o ponlo false.
+
 Solo JSON válido, sin texto adicional, sin markdown.
 Ejemplo con un archivo que contiene dos documentos escaneados:
 [
-  {"fileIndex":0,"paginas":[1],"tipo":"nómina","fechas":["2026-01"],"nombre_en_doc":"GARCIA LUIS","valido":true,"observacion":null,"fuerza":"fuerte","motivo_rechazo":null,"nombre_sugerido":"2026-01_nomina_empresa","descripcion_breve":"Nómina enero 2026"},
-  {"fileIndex":0,"paginas":[2,3],"tipo":"factura de servicios","fechas":["2026-01"],"nombre_en_doc":"GARCIA LUIS","valido":true,"observacion":null,"fuerza":"media","motivo_rechazo":null,"nombre_sugerido":"2026-01_factura_luz","descripcion_breve":"Factura luz enero 2026"}
+  {"fileIndex":0,"paginas":[1],"tipo":"nómina","fechas":["2026-01"],"termino_indefinido":false,"nombre_en_doc":"GARCIA LUIS","valido":true,"observacion":null,"fuerza":"fuerte","motivo_rechazo":null,"nombre_sugerido":"2026-01_nomina_empresa","descripcion_breve":"Nómina enero 2026"},
+  {"fileIndex":0,"paginas":[2,3],"tipo":"contrato","fechas":["2025-11"],"termino_indefinido":true,"nombre_en_doc":"GARCIA LUIS","valido":true,"observacion":null,"fuerza":"fuerte","motivo_rechazo":null,"nombre_sugerido":"2025-11_contrato_empresa","descripcion_breve":"Contrato de trabajo indefinido desde noviembre 2025"}
 ]`
 }
 
@@ -370,12 +376,26 @@ export function enrichGeminiResults(
       const parsed = parseDateToYearMonth(doc.fecha)
       if (parsed) rawFechas = [parsed]
     }
+
+    // Contrato con término indefinido: extender hasta el último mes del horizonte
+    // para que runRulesEngine pueda filtrar los meses cubiertos dentro de la ventana
+    const terminoIndefinido = doc.termino_indefinido === true
+    if (tipo === "contrato" && terminoIndefinido && rawFechas.length >= 1) {
+      rawFechas = [...rawFechas, "2026-12"]
+    }
+
     const fechas = normalizeFechas(rawFechas, tipo)
 
     let valido = doc.valido as boolean
     let observado = false
     let observacion = (doc.observacion as string | null) ?? null
     let motivo_rechazo = (doc.motivo_rechazo as string | null) ?? null
+
+    // Contrato con término indefinido + fecha de inicio → prueba de cobertura válida
+    if (tipo === "contrato" && terminoIndefinido && fechas.length > 0 && !valido) {
+      valido = true
+      motivo_rechazo = null
+    }
 
     // Name check runs only when Gemini considered the document valid on dates/relevance.
     // If Gemini already rejected it (bad dates, no date, irrelevant), keep it invalid.

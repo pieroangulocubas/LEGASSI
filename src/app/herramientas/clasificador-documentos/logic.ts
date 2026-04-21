@@ -84,14 +84,24 @@ export function runRulesEngine(
     }
 
     if (!doc.valido) {
-      invalidDocs.push(doc)
+      // Contratos nunca van a inválidos: al menos a observados para revisión manual
+      if (doc.tipo === "contrato") {
+        observadoDocs.push(doc)
+      } else {
+        invalidDocs.push(doc)
+      }
       continue
     }
 
     const coveredMonths = doc.fechas.filter((ym) => monthsMap.has(ym))
     if (coveredMonths.length === 0) {
-      // Válido como documento pero fuera de la ventana temporal → también inválido a efectos del expediente
-      invalidDocs.push(doc)
+      // Válido como documento pero fuera de la ventana temporal
+      // Contratos → observados; resto → inválidos
+      if (doc.tipo === "contrato") {
+        observadoDocs.push(doc)
+      } else {
+        invalidDocs.push(doc)
+      }
     } else {
       for (const ym of coveredMonths) {
         monthsMap.get(ym)!.push(doc)
