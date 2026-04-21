@@ -403,7 +403,7 @@ export function enrichGeminiResults(
       const nameInDoc = typeof doc.nombre_en_doc === "string" ? doc.nombre_en_doc : null
       if (nameInDoc?.trim()) {
         if (checkNameMatchLevel(nombre, nameInDoc) === "observado") {
-          // Any token missing → manual review; dates are fine so keep for the queue
+          // Passed date filter but name doesn't match exactly → manual review queue
           valido = false
           observado = true
           observacion = buildNameObservacion(nombre, nameInDoc)
@@ -411,11 +411,11 @@ export function enrichGeminiResults(
         }
         // "exact" → no changes
       } else {
-        // No name and no identifier visible → cannot link document to the applicant
+        // No name and no identifier visible → hard reject (inválido), not manual review
         valido = false
-        observado = true
-        observacion = "No se detectó nombre ni identificador del titular en el documento. Requiere revisión manual."
-        motivo_rechazo = null
+        observado = false
+        motivo_rechazo = "Sin identificación del titular"
+        observacion = null
       }
     }
 
