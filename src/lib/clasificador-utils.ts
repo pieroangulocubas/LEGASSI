@@ -172,6 +172,8 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
     → Solo los meses en que hay una cita o visita explícitamente registrada.
     → Nunca el rango entre primera y última visita.
 
+"fechas_descartadas": array de objetos {fecha: "YYYY-MM", motivo: string}. Fechas encontradas en el documento que NO se incluyen en "fechas" porque no prueban presencia activa del titular en España. Incluye aquí: fechas de vencimiento/caducidad, fechas de nacimiento, fecha de inicio de contrato cuando hay fin que no se puede confirmar indefinido, meses futuros respecto a la emisión, fechas estadísticas o regulatorias no referidas a la persona. Omite el campo (o usa []) si no hay fechas descartadas.
+
 "nombre_en_doc": string o null. Nombre literal del titular tal como aparece en el documento. null si no hay nombre.
   IMPORTANTE: si el documento no tiene nombre explícito pero el concepto, asunto o descripción
   menciona "familia", "flia", "fam" seguido de uno o más apellidos (ej. "noviembre flia Bastardo Boscan",
@@ -192,8 +194,8 @@ El campo "termino_indefinido" solo aplica a contratos; en cualquier otro tipo de
 Solo JSON válido, sin texto adicional, sin markdown.
 Ejemplo con un archivo que contiene dos documentos escaneados:
 [
-  {"fileIndex":0,"paginas":[1],"tipo":"nómina","fechas":["2026-01"],"termino_indefinido":false,"nombre_en_doc":"GARCIA LUIS","valido":true,"observacion":null,"fuerza":"fuerte","motivo_rechazo":null,"nombre_sugerido":"2026-01_nomina_empresa","descripcion_breve":"Nómina enero 2026"},
-  {"fileIndex":0,"paginas":[2,3],"tipo":"contrato","fechas":["2025-11"],"termino_indefinido":true,"nombre_en_doc":"GARCIA LUIS","valido":true,"observacion":null,"fuerza":"fuerte","motivo_rechazo":null,"nombre_sugerido":"2025-11_contrato_empresa","descripcion_breve":"Contrato de trabajo indefinido desde noviembre 2025"}
+  {"fileIndex":0,"paginas":[1],"tipo":"nómina","fechas":["2026-01"],"fechas_descartadas":[],"termino_indefinido":false,"nombre_en_doc":"GARCIA LUIS","valido":true,"observacion":null,"fuerza":"fuerte","motivo_rechazo":null,"nombre_sugerido":"2026-01_nomina_empresa","descripcion_breve":"Nómina enero 2026"},
+  {"fileIndex":0,"paginas":[2,3],"tipo":"contrato","fechas":["2025-11"],"fechas_descartadas":[{"fecha":"2027-11","motivo":"Fecha de vencimiento del contrato, no prueba presencia en ese mes"}],"termino_indefinido":true,"nombre_en_doc":"GARCIA LUIS","valido":true,"observacion":null,"fuerza":"fuerte","motivo_rechazo":null,"nombre_sugerido":"2025-11_contrato_empresa","descripcion_breve":"Contrato de trabajo indefinido desde noviembre 2025"}
 ]`
 }
 
@@ -442,6 +444,10 @@ export function enrichGeminiResults(
         typeof doc.evidencia_por_mes === "object" &&
         !Array.isArray(doc.evidencia_por_mes)
           ? (doc.evidencia_por_mes as Record<string, string>)
+          : null,
+      fechas_descartadas:
+        Array.isArray(doc.fechas_descartadas) && doc.fechas_descartadas.length > 0
+          ? (doc.fechas_descartadas as Array<{ fecha: string; motivo: string }>)
           : null,
       fecha: undefined,
       paginas: undefined,

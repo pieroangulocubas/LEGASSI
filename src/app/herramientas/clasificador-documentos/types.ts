@@ -15,6 +15,7 @@ export interface DocumentResult {
   descripcion_breve: string
   nombre_en_doc: string | null // nombre exactamente como aparece en el documento
   evidencia_por_mes: Record<string, string> | null // YYYY-MM → texto literal que prueba ese mes
+  fechas_descartadas: Array<{ fecha: string; motivo: string }> | null // fechas encontradas pero excluidas como prueba
   originalName: string
   fileIndex: number
   pageRange: number[] | null  // 1-based page numbers within the original file; null = all pages

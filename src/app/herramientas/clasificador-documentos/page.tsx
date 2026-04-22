@@ -23,6 +23,7 @@ import { saveFilesToIDB, loadFilesFromIDB, clearFilesFromIDB } from "./idb"
 import { InputField } from "./components/InputField"
 import { MonthGuide } from "./components/MonthGuide"
 import { FileDropzone, MAX_FILES } from "./components/FileDropzone"
+import { CriteriosEvaluacion } from "./components/CriteriosEvaluacion"
 import { RecoverModal } from "./components/RecoverModal"
 import { PaymentModal } from "./components/PaymentModal"
 import { ResultsView } from "./components/ResultsView"
@@ -1233,6 +1234,7 @@ export default function ClasificadorPage() {
                   onRemove={handleRemoveFile}
                   onClear={() => setFiles([])}
                 />
+                <CriteriosEvaluacion />
               </section>
 
               {/* ── Inline error ── */}

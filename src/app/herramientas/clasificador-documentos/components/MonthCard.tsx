@@ -1,6 +1,7 @@
 "use client"
 
-import { FileText, Eye } from "lucide-react"
+import { useState } from "react"
+import { FileText, Eye, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatFechasRange } from "../logic"
 import type { MonthCoverage, DocumentResult } from "../types"
@@ -34,6 +35,75 @@ const FUERZA_CFG = {
   media:  { dot: "bg-amber-400",   label: "Media",   text: "text-amber-700 dark:text-amber-400" },
   débil:  { dot: "bg-red-400",     label: "Débil",   text: "text-red-600 dark:text-red-400" },
 } as const
+
+function DocRow({
+  doc,
+  onPreview,
+}: {
+  doc: DocumentResult
+  onPreview: (doc: DocumentResult) => void
+}) {
+  const [showExcluded, setShowExcluded] = useState(false)
+  const f = FUERZA_CFG[doc.fuerza as keyof typeof FUERZA_CFG]
+  const excluded = doc.fechas_descartadas ?? []
+
+  return (
+    <div className="divide-y divide-border/60">
+      <button
+        type="button"
+        onClick={() => onPreview(doc)}
+        className="group w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
+      >
+        <FileText className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+
+        <div className="flex-1 min-w-0 space-y-0.5">
+          <p className="text-xs font-semibold text-foreground leading-snug truncate">
+            {doc.descripcion_breve}
+          </p>
+          {doc.fechas.length > 0 && (
+            <p className="text-[11px] text-muted-foreground">
+              {formatFechasRange(doc.fechas)}
+            </p>
+          )}
+        </div>
+
+        {f && (
+          <div className="shrink-0 flex items-center gap-1.5 mt-0.5">
+            <span className={cn("h-1.5 w-1.5 rounded-full", f.dot)} />
+            <span className={cn("text-[11px] font-medium", f.text)}>{f.label}</span>
+          </div>
+        )}
+
+        <Eye className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 group-hover:text-primary mt-0.5 transition-colors" />
+      </button>
+
+      {excluded.length > 0 && (
+        <div className="bg-muted/20">
+          <button
+            type="button"
+            onClick={() => setShowExcluded((v) => !v)}
+            className="w-full flex items-center gap-1.5 px-4 py-1.5 text-left hover:bg-muted/40 transition-colors"
+          >
+            <ChevronDown className={cn("h-3 w-3 text-muted-foreground/60 shrink-0 transition-transform duration-150", showExcluded && "rotate-180")} />
+            <span className="text-[10px] text-muted-foreground/70">
+              {excluded.length} fecha{excluded.length > 1 ? "s" : ""} excluida{excluded.length > 1 ? "s" : ""}
+            </span>
+          </button>
+          {showExcluded && (
+            <ul className="px-4 pb-2.5 space-y-1">
+              {excluded.map(({ fecha, motivo }, i) => (
+                <li key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground/70">
+                  <span className="font-mono shrink-0">{fecha}</span>
+                  <span>— {motivo}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export function MonthCard({
   month,
@@ -75,43 +145,9 @@ export function MonthCard({
       {/* Document list */}
       {month.docs.length > 0 ? (
         <div className="divide-y divide-border">
-          {month.docs.map((doc, i) => {
-            const f = FUERZA_CFG[doc.fuerza as keyof typeof FUERZA_CFG]
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => onPreview(doc)}
-                className="group w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
-              >
-                <FileText className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
-
-                <div className="flex-1 min-w-0 space-y-0.5">
-                  {/* Description */}
-                  <p className="text-xs font-semibold text-foreground leading-snug truncate">
-                    {doc.descripcion_breve}
-                  </p>
-                  {/* Dates */}
-                  {doc.fechas.length > 0 && (
-                    <p className="text-[11px] text-muted-foreground">
-                      {formatFechasRange(doc.fechas)}
-                    </p>
-                  )}
-                </div>
-
-                {/* Fuerza indicator */}
-                {f && (
-                  <div className="shrink-0 flex items-center gap-1.5 mt-0.5">
-                    <span className={cn("h-1.5 w-1.5 rounded-full", f.dot)} />
-                    <span className={cn("text-[11px] font-medium", f.text)}>{f.label}</span>
-                  </div>
-                )}
-
-                {/* Preview hint */}
-                <Eye className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 group-hover:text-primary mt-0.5 transition-colors" />
-              </button>
-            )
-          })}
+          {month.docs.map((doc, i) => (
+            <DocRow key={i} doc={doc} onPreview={onPreview} />
+          ))}
         </div>
       ) : (
         <p className="px-4 py-3 text-xs text-muted-foreground/70">
