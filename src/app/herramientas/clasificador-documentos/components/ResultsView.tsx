@@ -326,19 +326,39 @@ export function ResultsView({
               <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                  Expediente incompleto — descarga no disponible
+                  Expediente con documentos débiles
                 </h3>
                 <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
                   Algunos meses obligatorios solo están cubiertos con documentos de valor débil.
-                  Consigue documentos más sólidos (nómina, padrón, extracto bancario) para esos meses
-                  y vuelve a analizar.
+                  Puedes descargar el expediente, pero te recomendamos conseguir documentos más
+                  sólidos (nómina, padrón, extracto bancario) para esos meses.
                 </p>
               </div>
             </div>
-            <Button variant="outline" onClick={onReset} className="w-full sm:w-auto">
-              <ArrowLeft className="h-4 w-4" />
-              Volver a evaluar con nuevos documentos
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleOpenPreview}
+                disabled={pdfGenerating}
+                className="group inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:brightness-110 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:brightness-100"
+              >
+                {pdfGenerating ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Generando PDF…
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Previsualizar y descargar expediente
+                  </>
+                )}
+              </button>
+              <Button variant="outline" onClick={onReset} className="w-full sm:w-auto">
+                <ArrowLeft className="h-4 w-4" />
+                Volver a evaluar con nuevos documentos
+              </Button>
+            </div>
           </div>
           {/* CTA asesoría */}
           <div className="rounded-xl border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800 p-5 space-y-3">
