@@ -115,7 +115,7 @@ export const analizarClasificador = inngest.createFunction(
               model: "gemini-3-flash-preview",
               contents: [{ role: "user", parts }],
               config: {
-                temperature: 0.1,
+                temperature: 0,
                 responseMimeType: "application/json",
               },
             })
