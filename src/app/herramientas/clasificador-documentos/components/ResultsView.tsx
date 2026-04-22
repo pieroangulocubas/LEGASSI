@@ -12,7 +12,7 @@ import {
   MessageCircle,
   RefreshCw,
 } from "lucide-react"
-import { generatePDF, addQRToFirstPage, addPageNumbers } from "../pdf-utils"
+import { generatePDF, addQRToFirstPage, addPageNumbers, compressPdfIfNeeded } from "../pdf-utils"
 import type { AnalysisResult, ClasificadorFormData, DocumentResult, PresentationMonth } from "../types"
 import { runRulesEngine, PRESENTATION_MONTH_LABELS } from "../logic"
 import { PreviewModal } from "./PreviewModal"
@@ -143,6 +143,8 @@ export function ResultsView({
     if (publicUrl) {
       processedBytes = await addQRToFirstPage(processedBytes, publicUrl)
     }
+    // Compress only if the result exceeds the 5 MB platform limit
+    processedBytes = await compressPdfIfNeeded(processedBytes)
 
     const blob = new Blob([new Uint8Array(processedBytes)], { type: "application/pdf" })
     const blobUrl = URL.createObjectURL(blob)

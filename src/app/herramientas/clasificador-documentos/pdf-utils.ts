@@ -852,6 +852,58 @@ export async function addPageNumbers(pdfBytes: Uint8Array): Promise<Uint8Array> 
   return new Uint8Array(await doc.save())
 }
 
+// ─── PDF compression ─────────────────────────────────────────────────────────
+// Renders every page via pdfjs to JPEG and rebuilds a smaller PDF.
+// Only applies when the final file exceeds the 5 MB platform limit.
+const PDF_SIZE_LIMIT = 5 * 1024 * 1024
+
+export async function compressPdfIfNeeded(bytes: Uint8Array): Promise<Uint8Array> {
+  if (bytes.length <= PDF_SIZE_LIMIT) return bytes
+
+  try {
+    const pdfjs = await import("pdfjs-dist")
+    pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
+
+    const src   = await pdfjs.getDocument({ data: bytes }).promise
+    const total = src.numPages
+    const out   = await PDFDocument.create()
+
+    for (let i = 1; i <= total; i++) {
+      const page     = await src.getPage(i)
+      const viewport = page.getViewport({ scale: 1.5 })
+
+      const canvas  = document.createElement("canvas")
+      canvas.width  = viewport.width
+      canvas.height = viewport.height
+      await page.render({ canvasContext: canvas.getContext("2d")!, viewport, canvas }).promise
+
+      const base64  = canvas.toDataURL("image/jpeg", 0.85).split(",")[1]
+      const jpg     = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+      const img     = await out.embedJpg(jpg)
+
+      const [a4W, a4H] = PageSizes.A4
+      const marg   = 36
+      // viewport is at 1.5× scale — divide back to logical pts
+      const imgW   = viewport.width  / 1.5
+      const imgH   = viewport.height / 1.5
+      const scale  = Math.min((a4W - marg * 2) / imgW, (a4H - marg * 2) / imgH, 1)
+      const pdfPage = out.addPage(PageSizes.A4)
+      pdfPage.drawImage(img, {
+        x: (a4W - imgW * scale) / 2,
+        y: (a4H - imgH * scale) / 2,
+        width:  imgW * scale,
+        height: imgH * scale,
+      })
+    }
+
+    const result = new Uint8Array(await out.save())
+    return result.length < bytes.length ? result : bytes
+  } catch (err) {
+    console.error("[pdf-utils] compressPdfIfNeeded failed, using original:", err)
+    return bytes
+  }
+}
+
 // ─── Public export ────────────────────────────────────────────────────────────
 export async function generatePDF(
   result: AnalysisResult,
