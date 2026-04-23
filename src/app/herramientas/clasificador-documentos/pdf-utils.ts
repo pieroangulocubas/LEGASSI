@@ -400,19 +400,6 @@ async function addCoverageIndexPages(
       x: textCol, y: afterDesc - 11, size: 7.5, font: helvetica, color: rgb(0.35, 0.35, 0.55),
     })
 
-    // Strength badge inline
-    const fuerzaColor: Record<string, [number, number, number]> = {
-      fuerte: [0.12, 0.55, 0.28],
-      media:  [0.70, 0.45, 0.05],
-      débil:  [0.62, 0.22, 0.22],
-    }
-    const fc = fuerzaColor[d.fuerza] ?? [0.5, 0.5, 0.5]
-    const fuerzaLabel = `Valor: ${d.fuerza}`
-    const fuerzaW     = helvetica.widthOfTextAtSize(fuerzaLabel, 7)
-    page.drawText(safe(fuerzaLabel), {
-      x: textCol + textColW - fuerzaW, y: afterDesc - 11,
-      size: 7, font: helvetica, color: rgb(...fc),
-    })
 
     y = afterDesc - 11 - 12  // move cursor below card content
 
@@ -629,8 +616,8 @@ async function addCompactDocDivider(
     })
   })
 
-  // Tipo + fuerza (below description, still in band)
-  page.drawText(safe(`${docResult.tipo}  ·  Valor: ${docResult.fuerza}`), {
+  // Tipo (below description, still in band)
+  page.drawText(safe(docResult.tipo), {
     x: margin, y: height - bandH + 18,
     size: 8.5, font: helvetica, color: rgb(0.65, 0.70, 0.90),
   })
@@ -754,19 +741,6 @@ async function addMonthDividerPage(
       size: 7.5, font: helvetica, color: rgb(0.48, 0.48, 0.48),
     })
 
-    // Strength (right-aligned)
-    const fuerzaColor: Record<string, [number, number, number]> = {
-      fuerte: [0.12, 0.55, 0.28],
-      media:  [0.70, 0.45, 0.05],
-      débil:  [0.62, 0.22, 0.22],
-    }
-    const fc         = fuerzaColor[d.fuerza] ?? [0.5, 0.5, 0.5]
-    const fuerzaText = safe(`Valor: ${d.fuerza}`)
-    const fuerzaW    = helvetica.widthOfTextAtSize(fuerzaText, 7.5)
-    page.drawText(fuerzaText, {
-      x: width - margin - fuerzaW, y: y - descH,
-      size: 7.5, font: helvetica, color: rgb(...fc),
-    })
 
     // Cross-month note: document is physically embedded in a different section
     let extraH = 0
