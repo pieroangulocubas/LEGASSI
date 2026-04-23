@@ -138,21 +138,22 @@ export function ResultsView({
     const token = typeof window !== "undefined" ? localStorage.getItem("clasificador_token") : null
     const { signedUrl, publicUrl } = token ? await prepareUpload(token) : {}
 
-    // Post-process: number pages first (so count is accurate), then inject QR
     let processedBytes = await addPageNumbers(finalBytes)
     if (publicUrl) {
       processedBytes = await addQRToFirstPage(processedBytes, publicUrl)
     }
-    // Compress only if the result exceeds the 5 MB platform limit
     processedBytes = await compressPdfIfNeeded(processedBytes)
 
-    const blob = new Blob([new Uint8Array(processedBytes)], { type: "application/pdf" })
+    const blob = new Blob([processedBytes], { type: "application/pdf" })
     const blobUrl = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = blobUrl
     a.download = `expediente_${formData.nombre.replace(/\s+/g, "_").toLowerCase()}.pdf`
+    document.body.appendChild(a)
     a.click()
-    URL.revokeObjectURL(blobUrl)
+    document.body.removeChild(a)
+    // Delay revocation so the browser has time to read the blob URL
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000)
 
     if (signedUrl && publicUrl) uploadAndNotify(blob, signedUrl, publicUrl)
   }
@@ -278,9 +279,7 @@ export function ResultsView({
       {pdfPreviewBytes && (
         <PdfPreviewModal
           pdfBytes={pdfPreviewBytes}
-          onDownload={async (finalBytes) => {
-            await handleFinalDownload(finalBytes)
-          }}
+          onDownload={handleFinalDownload}
           onClose={() => setPdfPreviewBytes(null)}
         />
       )}
