@@ -1,4 +1,4 @@
-import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb, PageSizes, degrees } from "pdf-lib"
+import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb, PageSizes } from "pdf-lib"
 import QRCode from "qrcode"
 import type { AnalysisResult, DocumentResult, MonthCoverage } from "./types"
 
@@ -544,63 +544,25 @@ async function embedPdfFile(doc: PDFDocument, bytes: Uint8Array, fileName: strin
 
     for (const idx of indices) {
       const sourcePage = sourceDoc.getPages()[idx]
-      // getSize() returns the *displayed* dimensions — already accounts for /Rotate
       const { width: origW, height: origH } = sourcePage.getSize()
-      const rotation = sourcePage.getRotation().angle // 0 | 90 | 180 | 270 (degrees CW per PDF spec)
 
       if (Math.abs(origW - a4W) < 2 && Math.abs(origH - a4H) < 2) {
-        // Already A4 in displayed dimensions — fast copy; copyPages preserves /Rotate metadata
+        // Already A4 — fast copy, no re-encoding
         const [copied] = await doc.copyPages(sourceDoc, [idx])
         doc.addPage(copied)
       } else {
-        // Non-A4: embed as XObject and scale onto a fresh A4 page.
-        // embedPage creates an XObject whose BBox matches the physical MediaBox and does NOT
-        // apply /Rotate. So we must apply the rotation ourselves via drawPage's rotate option,
-        // using the physical (pre-rotation) dimensions for width/height.
-        //
-        // Physical (XObject natural) dims:
-        //   R=0,180 → physW=origW, physH=origH
-        //   R=90,270 → physW=origH, physH=origW  (getSize swaps them)
-        const isSwapped = rotation === 90 || rotation === 270
-        const embedded  = await doc.embedPage(sourcePage)
-        const scale     = Math.min((a4W - marg * 2) / origW, (a4H - marg * 2) / origH, 1)
-        const displayW  = origW * scale
-        const displayH  = origH * scale
-        // XObject draw dimensions match its physical size (pre-rotation)
-        const xobjW = isSwapped ? displayH : displayW
-        const xobjH = isSwapped ? displayW : displayH
-        const newPage = doc.addPage(PageSizes.A4)
-
-        // Anchor point (x, y) is pdf-lib's rotation origin (bottom-left of the unrotated XObject).
-        // After CCW rotation the bounding box shifts — formulae derived from rotation geometry:
-        //   R=0:   BBox [x, x+xobjW] × [y, y+xobjH]  → x=(a4W-displayW)/2, y=(a4H-displayH)/2
-        //   R=90:  CCW 90° → BBox [x-xobjH, x] × [y, y+xobjW] → x=(a4W+displayW)/2, y=(a4H-displayH)/2
-        //   R=180: BBox [x-xobjW, x] × [y-xobjH, y] → x=(a4W+displayW)/2, y=(a4H+displayH)/2
-        //   R=270: CW 90° (=-90° CCW) → BBox [x, x+xobjH] × [y-xobjW, y] → x=(a4W-displayW)/2, y=(a4H+displayH)/2
-        if (rotation === 0) {
-          newPage.drawPage(embedded, {
-            x: (a4W - displayW) / 2, y: (a4H - displayH) / 2,
-            width: xobjW, height: xobjH,
-          })
-        } else if (rotation === 90) {
-          newPage.drawPage(embedded, {
-            x: (a4W + displayW) / 2, y: (a4H - displayH) / 2,
-            width: xobjW, height: xobjH,
-            rotate: degrees(90),
-          })
-        } else if (rotation === 180) {
-          newPage.drawPage(embedded, {
-            x: (a4W + displayW) / 2, y: (a4H + displayH) / 2,
-            width: xobjW, height: xobjH,
-            rotate: degrees(180),
-          })
-        } else { // 270
-          newPage.drawPage(embedded, {
-            x: (a4W - displayW) / 2, y: (a4H + displayH) / 2,
-            width: xobjW, height: xobjH,
-            rotate: degrees(-90),
-          })
-        }
+        // Non-A4 source — embed as XObject and scale onto an A4 page
+        const embedded = await doc.embedPage(sourcePage)
+        const scale    = Math.min((a4W - marg * 2) / origW, (a4H - marg * 2) / origH, 1)
+        const scaledW  = origW * scale
+        const scaledH  = origH * scale
+        const newPage  = doc.addPage(PageSizes.A4)
+        newPage.drawPage(embedded, {
+          x: (a4W - scaledW) / 2,
+          y: (a4H - scaledH) / 2,
+          width:  scaledW,
+          height: scaledH,
+        })
       }
     }
 
