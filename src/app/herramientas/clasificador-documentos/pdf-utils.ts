@@ -291,9 +291,9 @@ async function addCoverageIndexPages(
   sectionTitle("Indice de cobertura")
 
   const STATUS_CFG: Record<string, { label: string; r: number; g: number; b: number }> = {
-    CUBIERTO: { label: "Cubierto",        r: 0.18, g: 0.60, b: 0.30 },
-    DÉBIL:    { label: "Cobertura debil", r: 0.80, g: 0.50, b: 0.10 },
-    VACÍO:    { label: "Sin documentos",  r: 0.75, g: 0.18, b: 0.18 },
+    CUBIERTO: { label: "Cubierto",       r: 0.18, g: 0.60, b: 0.30 },
+    DÉBIL:    { label: "Cubierto",       r: 0.18, g: 0.60, b: 0.30 },
+    VACÍO:    { label: "Sin documentos", r: 0.75, g: 0.18, b: 0.18 },
   }
 
   // Column starts
@@ -686,9 +686,9 @@ async function addMonthDividerPage(
 
   // ── Status (colored, centered just below month name) ──
   const STATUS_CFG: Record<string, { label: string; r: number; g: number; b: number }> = {
-    CUBIERTO: { label: "Cubierto",        r: 0.25, g: 0.78, b: 0.45 },
-    DÉBIL:    { label: "Cobertura debil", r: 0.95, g: 0.65, b: 0.15 },
-    VACÍO:    { label: "Sin documentos",  r: 0.90, g: 0.35, b: 0.35 },
+    CUBIERTO: { label: "Cubierto",       r: 0.25, g: 0.78, b: 0.45 },
+    DÉBIL:    { label: "Cubierto",       r: 0.25, g: 0.78, b: 0.45 },
+    VACÍO:    { label: "Sin documentos", r: 0.90, g: 0.35, b: 0.35 },
   }
   const st     = STATUS_CFG[month.status] ?? STATUS_CFG["VACÍO"]
   const stText = safe(st.label)
