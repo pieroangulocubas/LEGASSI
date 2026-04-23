@@ -83,10 +83,13 @@ SOLICITANTE: "${nombre}"
 INSTRUCCIONES:
 
 1. IDENTIDAD: Copia en "nombre_en_doc" el nombre de la persona física que aparece en el
-   documento. Cuando haya varios nombres de persona:
+   documento. Cuando haya varios nombres de persona (p.ej. empleador y empleado en un
+   contrato, arrendador y arrendatario, médico y paciente):
      a) Si el nombre del SOLICITANTE aparece en el documento → cópialo exactamente como aparece.
      b) Si el SOLICITANTE no aparece → copia el nombre más prominente que encuentres.
      c) Sin ningún nombre visible → null.
+   IMPORTANTE: basta con encontrar el nombre del SOLICITANTE entre todos los nombres del
+   documento. La presencia de otros nombres de personas o entidades no afecta a "valido".
 
    CRÍTICO — el campo "valido" NUNCA depende de si el nombre coincide con el del solicitante:
      · Que el nombre no sea el del solicitante NO es motivo de rechazo.
@@ -156,13 +159,20 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
     → NUNCA rellenes el hueco entre dos acciones consecutivas como si fueran meses continuos.
     → Ejemplo: Alta feb 2023, modificación sep 2024, baja ene 2026 → ["2023-02","2024-09","2026-01"]
 
-  CONTRATO DE TRABAJO / CERTIFICADO EMPRESA / INFORME MÉDICO CON PERIODO:
+  DOCUMENTOS CON PERIODO EXPLÍCITO — aplica a: contrato de trabajo, certificado empresa,
+  contrato de alquiler, matrícula escolar/universitaria, informe médico con periodo, y
+  cualquier documento que acredite una relación o servicio durante un intervalo de tiempo:
     → Si el documento muestra fecha de inicio Y fecha de fin (o "hasta la fecha" / "vigente"):
-        incluye todos los meses del rango en "fechas".
+        incluye TODOS los meses del rango (inicio inclusive, fin inclusive) en "fechas".
     → Si el documento tiene fecha de inicio pero NO tiene fecha de fin explícita, o la terminación
       es indefinida / abierta / "indefinido" / "hasta nuevo aviso" / sin límite temporal:
         incluye únicamente el mes de la fecha de inicio en "fechas" y pon "termino_indefinido": true.
     → Sin ninguna fecha de inicio visible: no incluyas meses; "termino_indefinido": false.
+  ATENCIÓN — solo cuenta la relación de la persona con el documento, no el documento mismo:
+    · En un contrato de trabajo: cuenta el periodo entre inicio y fin, no la fecha de firma.
+    · En un contrato de alquiler: cuenta el periodo arrendado, no la fecha de formalización.
+    · La fecha de emisión del documento cuenta ÚNICAMENTE si implica que el titular estaba
+      vinculado al servicio en ese mes (p.ej. padrón emitido = alta activa en ese mes).
 
   NÓMINA / FACTURA / RECIBO / EXTRACTO BANCARIO:
     → Solo el mes o meses concretos a los que corresponde el documento o la transacción.
@@ -308,6 +318,8 @@ const RANGE_TIPOS = new Set([
   "contrato",
   "extracto bancario",
   "certificado empresa",
+  "recibo de alquiler",
+  "matrícula",
 ])
 
 function fillMonthRange(from: string, to: string): string[] {
