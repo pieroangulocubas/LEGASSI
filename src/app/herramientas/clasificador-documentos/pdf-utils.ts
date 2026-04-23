@@ -545,13 +545,18 @@ async function embedPdfFile(doc: PDFDocument, bytes: Uint8Array, fileName: strin
     for (const idx of indices) {
       const sourcePage = sourceDoc.getPages()[idx]
       const { width: origW, height: origH } = sourcePage.getSize()
+      const rotation = sourcePage.getRotation().angle // 0 | 90 | 180 | 270
 
       if (Math.abs(origW - a4W) < 2 && Math.abs(origH - a4H) < 2) {
-        // Already A4 — fast copy, no re-encoding
+        // Already A4 — fast copy, preserves /Rotate; viewer applies it correctly
         const [copied] = await doc.copyPages(sourceDoc, [idx])
         doc.addPage(copied)
+      } else if (rotation !== 0) {
+        // Non-A4 with /Rotate — embedPage ignores rotation metadata so the content
+        // would appear wrong. Delegate to pdfjs which respects /Rotate when rendering.
+        await embedPdfViaCanvas(doc, bytes, [idx + 1])
       } else {
-        // Non-A4 source — embed as XObject and scale onto an A4 page
+        // Non-A4, no rotation — embed as XObject and scale onto an A4 page
         const embedded = await doc.embedPage(sourcePage)
         const scale    = Math.min((a4W - marg * 2) / origW, (a4H - marg * 2) / origH, 1)
         const scaledW  = origW * scale
