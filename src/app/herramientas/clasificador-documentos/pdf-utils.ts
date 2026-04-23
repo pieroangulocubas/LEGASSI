@@ -864,7 +864,9 @@ export async function compressPdfIfNeeded(bytes: Uint8Array): Promise<Uint8Array
     const pdfjs = await import("pdfjs-dist")
     pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
 
-    const src   = await pdfjs.getDocument({ data: bytes }).promise
+    // pdfjs transfers the ArrayBuffer to its worker thread (detaches it).
+    // Pass a copy so the original bytes remain valid if compression is skipped or fails.
+    const src   = await pdfjs.getDocument({ data: bytes.slice() }).promise
     const total = src.numPages
     const out   = await PDFDocument.create()
 
