@@ -117,8 +117,13 @@ export const analizarClasificador = inngest.createFunction(
               config: {
                 temperature: 0,
                 responseMimeType: "application/json",
+                maxOutputTokens: 65536,
               },
             })
+            const finishReason = response.candidates?.[0]?.finishReason
+            if (finishReason === "MAX_TOKENS") {
+              throw new Error("Gemini response truncated (MAX_TOKENS) — output too large for this batch")
+            }
             rawText = response.text ?? ""
             break
           } catch (err: unknown) {
