@@ -412,33 +412,45 @@ async function addCoverageIndexPages(
 }
 
 // ─── Embed image file ─────────────────────────────────────────────────────────
+// Uses createImageBitmap + canvas so any format the browser can display works:
+// JPG, PNG, WebP (Android), HEIC (iPhone), AVIF, etc.
 async function embedImageFile(doc: PDFDocument, bytes: Uint8Array, fileName: string): Promise<void> {
-  const fmt = detectImageType(bytes)
-  let image
+  const [pageW, pageH] = PageSizes.A4
+  const marg = 36
+
   try {
-    image = fmt === "png" ? await doc.embedPng(bytes) : await doc.embedJpg(bytes)
+    const blob   = new Blob([bytes.buffer as ArrayBuffer])
+    const bitmap = await createImageBitmap(blob)
+
+    const canvas  = document.createElement("canvas")
+    canvas.width  = bitmap.width
+    canvas.height = bitmap.height
+    const ctx = canvas.getContext("2d")!
+    ctx.drawImage(bitmap, 0, 0)
+    bitmap.close()
+
+    const dataUrl  = canvas.toDataURL("image/png")
+    const base64   = dataUrl.split(",")[1]
+    const pngBytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+
+    const image = await doc.embedPng(pngBytes)
+    const { width: imgW, height: imgH } = image.size()
+    const scale = Math.min((pageW - marg * 2) / imgW, (pageH - marg * 2) / imgH, 1)
+
+    const page = doc.addPage(PageSizes.A4)
+    page.drawImage(image, {
+      x: (pageW - imgW * scale) / 2,
+      y: (pageH - imgH * scale) / 2,
+      width:  imgW * scale,
+      height: imgH * scale,
+    })
   } catch {
-    // Unreadable image — add a placeholder page instead of crashing the whole PDF
     const page      = doc.addPage(PageSizes.A4)
     const helvetica = await doc.embedFont(StandardFonts.Helvetica)
     page.drawText(safe(`No se pudo incrustar la imagen: ${fileName}`), {
       x: 72, y: PageSizes.A4[1] / 2, size: 11, font: helvetica, color: rgb(0.7, 0.3, 0.3),
     })
-    return
   }
-
-  const { width: imgW, height: imgH } = image.size()
-  const [pageW, pageH] = PageSizes.A4
-  const marg = 36
-  const scale = Math.min((pageW - marg * 2) / imgW, (pageH - marg * 2) / imgH, 1)
-
-  const page = doc.addPage(PageSizes.A4)
-  page.drawImage(image, {
-    x: (pageW - imgW * scale) / 2,
-    y: (pageH - imgH * scale) / 2,
-    width:  imgW * scale,
-    height: imgH * scale,
-  })
 }
 
 // ─── pdfjs-dist fallback: render pages to canvas → embed as PNG ──────────────
@@ -506,69 +518,17 @@ async function embedPdfViaCanvas(
 // ─── Embed PDF file ───────────────────────────────────────────────────────────
 // pageRange: 1-based page numbers to embed; null/empty = embed all pages
 //
-// Strategy:
-//   Pass 1 — pdf-lib fast path (standards-compliant PDFs).
-//   Pass 2 — pdfjs-dist fallback (any PDF the browser can display — handles
-//             broken XRef tables, object streams, encrypted government PDFs, etc.)
+// Always uses pdfjs canvas rendering: the same engine the browser uses to display
+// PDFs, so it handles encrypted bank statements, scanned documents, and any PDF
+// the user can see on screen. All pages are normalized to A4.
 async function embedPdfFile(doc: PDFDocument, bytes: Uint8Array, fileName: string, pageRange?: number[] | null): Promise<void> {
-  async function placeholder(label: string) {
+  const ok = await embedPdfViaCanvas(doc, bytes, pageRange)
+  if (!ok) {
     const page      = doc.addPage(PageSizes.A4)
     const helvetica = await doc.embedFont(StandardFonts.Helvetica)
-    page.drawText(safe(label), { x: 72, y: PageSizes.A4[1] / 2, size: 11, font: helvetica, color: rgb(0.7, 0.3, 0.3) })
-  }
-
-  // ── Pass 1: pdf-lib (fast, lossless) ──────────────────────────────────────
-  let pdfLibOk = false
-  try {
-    const sourceDoc  = await PDFDocument.load(bytes, { ignoreEncryption: true, throwOnInvalidObject: false })
-    const totalPages = sourceDoc.getPageCount()
-    const indices    = pageRange && pageRange.length > 0
-      ? pageRange.map((p) => Math.min(p - 1, totalPages - 1))
-      : Array.from({ length: totalPages }, (_, i) => i)
-
-    const [a4W, a4H] = PageSizes.A4
-    const marg = 36
-
-    for (const idx of indices) {
-      const sourcePage = sourceDoc.getPages()[idx]
-      const { width: origW, height: origH } = sourcePage.getSize()
-      const rotation = sourcePage.getRotation().angle // 0 | 90 | 180 | 270
-
-      if (Math.abs(origW - a4W) < 2 && Math.abs(origH - a4H) < 2) {
-        // Already A4 — fast copy, preserves /Rotate; viewer applies it correctly
-        const [copied] = await doc.copyPages(sourceDoc, [idx])
-        doc.addPage(copied)
-      } else if (rotation !== 0) {
-        // Non-A4 with /Rotate — embedPage ignores rotation metadata so the content
-        // would appear wrong. Delegate to pdfjs which respects /Rotate when rendering.
-        await embedPdfViaCanvas(doc, bytes, [idx + 1])
-      } else {
-        // Non-A4, no rotation — embed as XObject and scale onto an A4 page
-        const embedded = await doc.embedPage(sourcePage)
-        const scale    = Math.min((a4W - marg * 2) / origW, (a4H - marg * 2) / origH, 1)
-        const scaledW  = origW * scale
-        const scaledH  = origH * scale
-        const newPage  = doc.addPage(PageSizes.A4)
-        newPage.drawPage(embedded, {
-          x: (a4W - scaledW) / 2,
-          y: (a4H - scaledH) / 2,
-          width:  scaledW,
-          height: scaledH,
-        })
-      }
-    }
-
-    pdfLibOk = true
-  } catch {
-    // pdf-lib couldn't handle this PDF — try pdfjs fallback
-  }
-
-  if (pdfLibOk) return
-
-  // ── Pass 2: pdfjs-dist (canvas render → PNG embed) ───────────────────────
-  const canvasOk = await embedPdfViaCanvas(doc, bytes, pageRange)
-  if (!canvasOk) {
-    await placeholder(`No se pudo incrustar: ${fileName}`)
+    page.drawText(safe(`No se pudo incrustar: ${fileName}`), {
+      x: 72, y: PageSizes.A4[1] / 2, size: 11, font: helvetica, color: rgb(0.7, 0.3, 0.3),
+    })
   }
 }
 
