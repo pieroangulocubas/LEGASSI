@@ -175,8 +175,11 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
       vinculado al servicio en ese mes (p.ej. padrón emitido = alta activa en ese mes).
 
   NÓMINA / FACTURA / RECIBO / EXTRACTO BANCARIO:
-    → Solo el mes o meses concretos a los que corresponde el documento o la transacción.
-    → Nunca inferir continuidad.
+    → Solo los meses en que hay transacciones, cargos o abonos reales del titular.
+    → La fecha de emisión o generación del documento NUNCA es una fecha válida para
+      extractos bancarios: no la incluyas en "fechas". Si aparece, ponla en "fechas_descartadas"
+      con motivo "Fecha de emisión del certificado, no prueba transacción en ese mes".
+    → Nunca inferir continuidad entre transacciones.
 
   HISTORIAL MÉDICO CON LISTA DE VISITAS / CITAS:
     → Solo los meses en que hay una cita o visita explícitamente registrada.
