@@ -483,7 +483,17 @@ async function embedPdfViaCanvas(
       canvas.height   = viewport.height
       const ctx       = canvas.getContext("2d")!
 
-      await page.render({ canvasContext: ctx, viewport, canvas }).promise
+      // First pass: triggers async image loading into pdfjs worker cache
+      try {
+        await page.render({ canvasContext: ctx, viewport, canvas, intent: "print" }).promise
+      } catch { /* ignore first-pass errors */ }
+
+      // Wait for image data transfer from worker thread to complete
+      await new Promise<void>((resolve) => setTimeout(resolve, 300))
+
+      // Second pass: images are now cached — renders synchronously and completely
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      await page.render({ canvasContext: ctx, viewport, canvas, intent: "print" }).promise
 
       // Embed the canvas as a PNG page in the destination PDF
       const dataUrl  = canvas.toDataURL("image/png")
@@ -518,10 +528,41 @@ async function embedPdfViaCanvas(
 // ─── Embed PDF file ───────────────────────────────────────────────────────────
 // pageRange: 1-based page numbers to embed; null/empty = embed all pages
 //
-// Always uses pdfjs canvas rendering: the same engine the browser uses to display
-// PDFs, so it handles encrypted bank statements, scanned documents, and any PDF
-// the user can see on screen. All pages are normalized to A4.
+// Primary: pdf-lib copyPages() — copies page dictionaries directly, preserving
+// all image formats (JPEG2000, JBIG2, JPEG…) and /Rotate without any decoding.
+// Fallback: pdfjs canvas rendering for PDFs with broken cross-references.
 async function embedPdfFile(doc: PDFDocument, bytes: Uint8Array, fileName: string, pageRange?: number[] | null): Promise<void> {
+  try {
+    const srcDoc = await PDFDocument.load(bytes, { ignoreEncryption: true })
+    const total  = srcDoc.getPageCount()
+
+    const indices = pageRange && pageRange.length > 0
+      ? pageRange.map((p) => Math.min(Math.max(p - 1, 0), total - 1))
+      : Array.from({ length: total }, (_, i) => i)
+
+    const [a4W, a4H] = PageSizes.A4
+    const copied = await doc.copyPages(srcDoc, indices)
+    for (const p of copied) {
+      const { width: rawW, height: rawH } = p.getSize()
+      const rot = p.getRotation().angle
+      // Effective visible dimensions after viewer applies /Rotate
+      const effW = rot === 90 || rot === 270 ? rawH : rawW
+      const effH = rot === 90 || rot === 270 ? rawW : rawH
+      const scale = Math.min(a4W / effW, a4H / effH)
+      const dx = (a4W - effW * scale) / 2
+      const dy = (a4H - effH * scale) / 2
+      p.setSize(a4W, a4H)
+      // translateContent prepends — applied second (after scale)
+      p.translateContent(dx, dy)
+      // scaleContent prepends — applied first
+      p.scaleContent(scale, scale)
+      doc.addPage(p)
+    }
+    return
+  } catch {
+    // Broken XRef or encrypted — fall back to pdfjs canvas render
+  }
+
   const ok = await embedPdfViaCanvas(doc, bytes, pageRange)
   if (!ok) {
     const page      = doc.addPage(PageSizes.A4)
@@ -816,7 +857,17 @@ export async function compressPdfIfNeeded(bytes: Uint8Array): Promise<Uint8Array
       const canvas  = document.createElement("canvas")
       canvas.width  = viewport.width
       canvas.height = viewport.height
-      await page.render({ canvasContext: canvas.getContext("2d")!, viewport, canvas }).promise
+      const ctx = canvas.getContext("2d")!
+
+      // First pass: triggers async image loading (JPEG2000/JBIG2) into worker cache
+      try {
+        await page.render({ canvasContext: ctx, viewport, canvas, intent: "print" }).promise
+      } catch { /* ignore first-pass errors */ }
+      await new Promise<void>((resolve) => setTimeout(resolve, 300))
+
+      // Second pass: images now cached — renders completely
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      await page.render({ canvasContext: ctx, viewport, canvas, intent: "print" }).promise
 
       const base64  = canvas.toDataURL("image/jpeg", 0.85).split(",")[1]
       const jpg     = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
