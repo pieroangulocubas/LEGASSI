@@ -147,3 +147,19 @@ export function runRulesEngine(
 
   return { veredicto, months, observadoDocs, invalidDocs, validDocs }
 }
+
+export function getCriterioPorTipo(tipo: string): string | null {
+  const criterios: Record<string, string> = {
+    "nómina":                   "Mes del periodo retributivo de la nómina.",
+    "extracto bancario":        "Solo meses con transacciones reales del titular.",
+    "contrato":                 "Periodo entre fecha de inicio y fin (o solo inicio si es indefinido).",
+    "certificado empresa":      "Periodo de actividad laboral declarado.",
+    "padrón":                   "Fecha de expedición, alta en padrón y/o alta en vivienda.",
+    "empadronamiento histórico":"Cada acción registral explícita: alta, modificación o baja.",
+    "factura de servicios":     "Mes del periodo de servicio facturado.",
+    "recibo de alquiler":       "Periodo arrendado indicado en el recibo.",
+    "historial médico":         "Solo meses con citas o visitas registradas.",
+    "matrícula":                "Periodo académico entre fechas de inicio y fin.",
+  }
+  return criterios[tipo] ?? null
+}

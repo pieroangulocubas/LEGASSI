@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { X, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { formatFechasRange } from "../logic"
+import { formatFechasRange, getCriterioPorTipo } from "../logic"
 import type { DocumentResult } from "../types"
 
 export function PreviewModal({
@@ -87,6 +87,11 @@ export function PreviewModal({
                 {doc.fuerza}
               </span>
             </div>
+            {getCriterioPorTipo(doc.tipo) && (
+              <p className="text-[11px] text-muted-foreground/70 italic mt-1">
+                Criterio: {getCriterioPorTipo(doc.tipo)}
+              </p>
+            )}
           </div>
           <button
             type="button"

@@ -11,7 +11,10 @@ import {
   Download,
   MessageCircle,
   RefreshCw,
+  RotateCcw,
+  FileText,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { generatePDF, addQRToFirstPage, addPageNumbers, compressPdfIfNeeded } from "../pdf-utils"
 import type { AnalysisResult, ClasificadorFormData, DocumentResult, PresentationMonth } from "../types"
 import { runRulesEngine, PRESENTATION_MONTH_LABELS } from "../logic"
@@ -23,6 +26,8 @@ import { DocIssueList } from "./DocIssueList"
 import { ObservadoList } from "./ObservadoList"
 import { ValidDocsList } from "./ValidDocsList"
 import { FuerzaLegend } from "./FuerzaLegend"
+
+type SecondaryTab = "por-confirmar" | "invalidos" | "eliminados"
 
 export function ResultsView({
   result: _initialResult,
@@ -40,23 +45,42 @@ export function ResultsView({
   onReset: () => void
 }) {
   const [activeMonth, setActiveMonth] = useState<PresentationMonth>(formData.mesPresentation)
-  // Indices into rawResults that the user has manually approved from the observados queue
   const [approvedIndices, setApprovedIndices] = useState<Set<number>>(new Set())
+  const [deletedIndices, setDeletedIndices] = useState<Set<number>>(new Set())
+  const [activeSecondaryTab, setActiveSecondaryTab] = useState<SecondaryTab>("por-confirmar")
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfError, setPdfError] = useState<string | null>(null)
   const [previewDoc, setPreviewDoc] = useState<DocumentResult | null>(null)
   const [pdfPreviewBytes, setPdfPreviewBytes] = useState<Uint8Array | null>(null)
 
-  // Derive result on every render — no stale state
-  const effectiveResults = rawResults.map((doc, i) =>
-    doc.observado && approvedIndices.has(i)
+  // Build effectiveResults + index map in one pass
+  const docToRawIndex = new Map<DocumentResult, number>()
+  const effectiveResultsList: DocumentResult[] = []
+  rawResults.forEach((doc, i) => {
+    if (deletedIndices.has(i)) return
+    const effective = (doc.observado && approvedIndices.has(i))
       ? { ...doc, valido: true, observado: false }
       : doc
-  )
-  const result = runRulesEngine(effectiveResults, activeMonth)
+    effectiveResultsList.push(effective)
+    docToRawIndex.set(effective, i)
+  })
+  const result = runRulesEngine(effectiveResultsList, activeMonth)
 
-  // All docs that Gemini flagged as observado (constant — derived from rawResults)
-  const allObservadoDocs = rawResults.filter((d) => d.observado)
+  const allObservadoDocs = rawResults.filter((d, i) => d.observado && !deletedIndices.has(i))
+  const deletedDocs = rawResults.map((doc, i) => ({ doc, rawIdx: i })).filter(({ rawIdx }) => deletedIndices.has(rawIdx))
+
+  function handleDelete(doc: DocumentResult) {
+    const rawIdx = docToRawIndex.get(doc) ?? rawResults.indexOf(doc)
+    if (rawIdx === -1) return
+    setDeletedIndices((prev) => new Set([...prev, rawIdx]))
+    if (approvedIndices.has(rawIdx)) {
+      setApprovedIndices((prev) => { const n = new Set(prev); n.delete(rawIdx); return n })
+    }
+  }
+
+  function handleRestore(rawIdx: number) {
+    setDeletedIndices((prev) => { const n = new Set(prev); n.delete(rawIdx); return n })
+  }
 
   function handleAprobarObservado(doc: DocumentResult) {
     const idx = rawResults.indexOf(doc)
@@ -67,21 +91,12 @@ export function ResultsView({
   function handleDesaprobarObservado(doc: DocumentResult) {
     const idx = rawResults.indexOf(doc)
     if (idx === -1) return
-    setApprovedIndices((prev) => {
-      const next = new Set(prev)
-      next.delete(idx)
-      return next
-    })
+    setApprovedIndices((prev) => { const n = new Set(prev); n.delete(idx); return n })
   }
 
-  function handlePreview(doc: DocumentResult) {
-    setPreviewDoc(doc)
-  }
-  function handleClosePreview() {
-    setPreviewDoc(null)
-  }
+  function handlePreview(doc: DocumentResult) { setPreviewDoc(doc) }
+  function handleClosePreview() { setPreviewDoc(null) }
 
-  // Prepare signed upload URL for background Supabase upload (non-blocking, non-fatal)
   async function prepareUpload(token: string): Promise<{ publicUrl?: string; signedUrl?: string }> {
     try {
       const prep = await fetch("/api/clasificador/prepare-upload", {
@@ -91,17 +106,12 @@ export function ResultsView({
       })
       if (prep.ok) {
         const data = await prep.json()
-        console.log("[ResultsView] prepareUpload OK:", data)
         return data
       }
-      console.warn("[ResultsView] prepareUpload non-ok status:", prep.status)
-    } catch (err) {
-      console.error("[ResultsView] prepareUpload failed:", err)
-    }
+    } catch { /* non-fatal */ }
     return {}
   }
 
-  // Background upload to Supabase + optional email notification
   function uploadAndNotify(blob: Blob, signedUrl: string, publicUrl: string) {
     ;(async () => {
       try {
@@ -126,14 +136,10 @@ export function ResultsView({
             }),
           })
         }
-      } catch { /* background failure — user already has the file */ }
+      } catch { /* background failure */ }
     })()
   }
 
-  // Triggered when user clicks "Descargar" in the preview modal (after optional page removal).
-  // QR and page numbers are applied here — on the final bytes — so:
-  //   1. The QR URL matches the file that actually gets uploaded (single prepareUpload call)
-  //   2. Page numbers are correct after any pages were removed in the preview
   async function handleFinalDownload(finalBytes: Uint8Array) {
     const token = typeof window !== "undefined" ? localStorage.getItem("clasificador_token") : null
     const { signedUrl, publicUrl } = token ? await prepareUpload(token) : {}
@@ -152,13 +158,11 @@ export function ResultsView({
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
-    // Delay revocation so the browser has time to read the blob URL
     setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000)
 
     if (signedUrl && publicUrl) uploadAndNotify(blob, signedUrl, publicUrl)
   }
 
-  // Opens the preview modal — generates PDF bytes (without QR/page numbers, applied at download).
   async function handleOpenPreview() {
     setPdfGenerating(true)
     setPdfError(null)
@@ -176,6 +180,29 @@ export function ResultsView({
       setPdfGenerating(false)
     }
   }
+
+  // Tabs config
+  const secondaryTabs: { id: SecondaryTab; label: string; count: number; color: string }[] = [
+    {
+      id: "por-confirmar",
+      label: "Por confirmar",
+      count: allObservadoDocs.length,
+      color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    },
+    {
+      id: "invalidos",
+      label: "Inválidos",
+      count: result.invalidDocs.length,
+      color: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    },
+    {
+      id: "eliminados",
+      label: "Eliminados",
+      count: deletedDocs.length,
+      color: "bg-muted text-muted-foreground",
+    },
+  ]
+  const hasSecondaryContent = secondaryTabs.some((t) => t.count > 0)
 
   return (
     <div className="space-y-6">
@@ -213,7 +240,6 @@ export function ResultsView({
           <p className="text-sm text-muted-foreground mt-1">{formData.nombre}</p>
         </div>
 
-        {/* Month switcher — re-runs rules engine locally, no credit consumed */}
         <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
           <span className="text-xs text-muted-foreground shrink-0">Mes de presentación:</span>
           <div className="flex gap-1.5 flex-wrap">
@@ -248,32 +274,98 @@ export function ResultsView({
         <h3 className="text-sm font-semibold text-foreground">Cobertura mensual</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {result.months.map((month) => (
-            <MonthCard key={month.yearMonth} month={month} onPreview={handlePreview} />
+            <MonthCard key={month.yearMonth} month={month} onPreview={handlePreview} onDelete={handleDelete} />
           ))}
         </div>
       </div>
 
-      {/* Documentos pendientes de revisión (nombre con discrepancia) */}
-      <ObservadoList
-        allObservadoDocs={allObservadoDocs}
-        approvedIndices={approvedIndices}
-        rawResults={rawResults}
-        files={files}
-        onPreview={handlePreview}
-        onAprobar={handleAprobarObservado}
-        onDesaprobar={handleDesaprobarObservado}
-      />
+      {/* Orden del expediente */}
+      <ValidDocsList months={result.months} onPreview={handlePreview} onDelete={handleDelete} />
 
-      {/* Documentos inválidos */}
-      <DocIssueList
-        docs={result.invalidDocs}
-        files={files}
-        onPreview={handlePreview}
-      />
+      {/* Secondary tabs: Por confirmar / Inválidos / Eliminados */}
+      {hasSecondaryContent && (
+        <div className="rounded-xl border border-border overflow-hidden">
+          {/* Tab bar */}
+          <div className="flex border-b border-border bg-muted/20">
+            {secondaryTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveSecondaryTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold transition-colors border-b-2 -mb-px",
+                  activeSecondaryTab === tab.id
+                    ? "border-primary text-foreground bg-background"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                )}
+              >
+                {tab.label}
+                {tab.count > 0 && (
+                  <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none", tab.color)}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
 
+          {/* Tab content */}
+          {activeSecondaryTab === "por-confirmar" && (
+            <ObservadoList
+              allObservadoDocs={allObservadoDocs}
+              approvedIndices={approvedIndices}
+              rawResults={rawResults}
+              files={files}
+              onPreview={handlePreview}
+              onAprobar={handleAprobarObservado}
+              onDesaprobar={handleDesaprobarObservado}
+              onDelete={handleDelete}
+            />
+          )}
 
-      {/* Valid docs order */}
-      <ValidDocsList months={result.months} onPreview={handlePreview} />
+          {activeSecondaryTab === "invalidos" && (
+            <DocIssueList
+              docs={result.invalidDocs}
+              files={files}
+              onPreview={handlePreview}
+            />
+          )}
+
+          {activeSecondaryTab === "eliminados" && (
+            <div>
+              {deletedDocs.length === 0 ? (
+                <p className="px-4 py-6 text-xs text-center text-muted-foreground/60">
+                  No hay documentos eliminados.
+                </p>
+              ) : (
+                <div className="divide-y divide-border">
+                  {deletedDocs.map(({ doc, rawIdx }) => (
+                    <div key={rawIdx} className="flex items-center gap-3 px-4 py-3 bg-muted/10">
+                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground/50" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-muted-foreground truncate">
+                          {doc.descripcion_breve || doc.originalName}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/60 truncate mt-0.5">
+                          {doc.tipo}{doc.fechas.length > 0 ? ` · ${doc.fechas.join(", ")}` : ""}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRestore(rawIdx)}
+                        className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-border bg-background hover:bg-muted px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                        Restaurar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* PDF preview modal */}
       {pdfPreviewBytes && (
@@ -359,7 +451,6 @@ export function ResultsView({
               </Button>
             </div>
           </div>
-          {/* CTA asesoría */}
           <div className="rounded-xl border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800 p-5 space-y-3">
             <div>
               <h3 className="text-sm font-semibold text-green-800 dark:text-green-300">
@@ -401,7 +492,6 @@ export function ResultsView({
               Volver a evaluar con nuevos documentos
             </Button>
           </div>
-          {/* CTA asesoría */}
           <div className="rounded-xl border border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800 p-5 space-y-3">
             <div>
               <h3 className="text-sm font-semibold text-green-800 dark:text-green-300">

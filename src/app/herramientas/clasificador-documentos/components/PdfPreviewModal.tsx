@@ -220,7 +220,7 @@ export function PdfPreviewModal({
                         className={cn(
                           "relative group flex flex-col items-center justify-center rounded-lg border-2 cursor-grab active:cursor-grabbing transition-all select-none",
                           "aspect-[3/4] text-xs font-semibold",
-                          isDragOver && "scale-105 border-primary/70 bg-primary/10",
+                          isDragOver && "border-l-[3px] border-l-primary bg-primary/5",
                           marked && !isDragOver
                             ? "bg-destructive/10 border-destructive text-destructive"
                             : !isDragOver

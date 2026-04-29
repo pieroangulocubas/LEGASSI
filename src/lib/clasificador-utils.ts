@@ -319,7 +319,6 @@ export function parseDateToYearMonth(raw: string): string | null {
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 const RANGE_TIPOS = new Set([
   "contrato",
-  "extracto bancario",
   "certificado empresa",
   "recibo de alquiler",
   "matrícula",
