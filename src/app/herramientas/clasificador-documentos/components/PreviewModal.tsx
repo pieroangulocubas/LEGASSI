@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { X, Download } from "lucide-react"
+import { X, Download, Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatFechasRange, getCriterioPorTipo } from "../logic"
 import type { DocumentResult } from "../types"
@@ -88,9 +88,13 @@ export function PreviewModal({
               </span>
             </div>
             {getCriterioPorTipo(doc.tipo) && (
-              <p className="text-[11px] text-muted-foreground/70 italic mt-1">
-                Criterio: {getCriterioPorTipo(doc.tipo)}
-              </p>
+              <div className="flex items-start gap-1.5 mt-2 rounded-md bg-primary/5 border border-primary/15 px-2.5 py-2">
+                <Info className="h-3 w-3 shrink-0 mt-px text-primary/60" />
+                <p className="text-[11px] text-foreground/70 leading-snug">
+                  <span className="font-semibold text-primary/80">Criterio aplicado: </span>
+                  {getCriterioPorTipo(doc.tipo)}
+                </p>
+              </div>
             )}
           </div>
           <button

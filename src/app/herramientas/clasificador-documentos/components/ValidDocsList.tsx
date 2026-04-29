@@ -1,7 +1,6 @@
 "use client"
 
 import { FileText, Eye, BookOpen, Trash2 } from "lucide-react"
-import { getCriterioPorTipo } from "../logic"
 import type { DocumentResult, MonthCoverage } from "../types"
 
 const FUERZA_CFG = {
@@ -67,7 +66,6 @@ export function ValidDocsList({
               globalIndex++
               const idx = globalIndex
               const fuerza = FUERZA_CFG[doc.fuerza as keyof typeof FUERZA_CFG]
-              const criterio = getCriterioPorTipo(doc.tipo)
 
               return (
                 <div
@@ -88,11 +86,6 @@ export function ValidDocsList({
                       <p className="text-xs font-semibold text-foreground truncate leading-snug">
                         {doc.descripcion_breve}
                       </p>
-                      {criterio && (
-                        <p className="text-[10px] text-muted-foreground/60 italic truncate mt-0.5">
-                          {criterio}
-                        </p>
-                      )}
                       <p className="text-[10px] text-muted-foreground truncate mt-0.5 font-mono">
                         {doc.originalName ?? doc.nombre_sugerido}
                       </p>

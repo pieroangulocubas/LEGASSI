@@ -127,8 +127,9 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
     · Un acto laboral o de pago ocurrido      (nómina, transferencia)
     · Una acción registral real               (alta padrón, modificación, baja)
     · Un evento presencial con fecha          (cita médica, matrícula)
-    · La emisión de un documento oficial      (cuando la emisión implica que el titular
-                                               estaba vinculado al servicio en esa fecha)
+    · La fecha de emisión / expedición de cualquier documento → SIEMPRE válida.
+      El mes en que se emite un documento prueba que la persona estaba físicamente
+      en España para obtenerlo o solicitarlo. Aplica a todos los tipos sin excepción.
 
   Una fecha NO es válida cuando describe un metadato administrativo del documento, no
   un hecho de la persona. Ejemplos universales de fechas inválidas:
@@ -171,14 +172,11 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
   ATENCIÓN — solo cuenta la relación de la persona con el documento, no el documento mismo:
     · En un contrato de trabajo: cuenta el periodo entre inicio y fin, no la fecha de firma.
     · En un contrato de alquiler: cuenta el periodo arrendado, no la fecha de formalización.
-    · La fecha de emisión del documento cuenta ÚNICAMENTE si implica que el titular estaba
-      vinculado al servicio en ese mes (p.ej. padrón emitido = alta activa en ese mes).
+    · La fecha de emisión del documento siempre cuenta (regla universal de emisión).
 
   NÓMINA / FACTURA / RECIBO / EXTRACTO BANCARIO:
-    → Solo los meses en que hay transacciones, cargos o abonos reales del titular.
-    → La fecha de emisión o generación del documento NUNCA es una fecha válida para
-      extractos bancarios: no la incluyas en "fechas". Si aparece, ponla en "fechas_descartadas"
-      con motivo "Fecha de emisión del certificado, no prueba transacción en ese mes".
+    → Los meses con transacciones, cargos o abonos reales del titular.
+    → La fecha de emisión del documento también es válida (regla universal de emisión).
     → Nunca inferir continuidad entre transacciones.
 
   HISTORIAL MÉDICO CON LISTA DE VISITAS / CITAS:

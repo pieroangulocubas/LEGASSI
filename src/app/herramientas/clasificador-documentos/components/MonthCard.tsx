@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { FileText, Eye, ChevronDown, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { formatFechasRange, getCriterioPorTipo } from "../logic"
+import { formatFechasRange } from "../logic"
 import type { MonthCoverage, DocumentResult } from "../types"
 
 const STATUS_CFG = {
@@ -48,7 +48,6 @@ function DocRow({
   const [showExcluded, setShowExcluded] = useState(false)
   const f = FUERZA_CFG[doc.fuerza as keyof typeof FUERZA_CFG]
   const excluded = doc.fechas_descartadas ?? []
-  const criterio = getCriterioPorTipo(doc.tipo)
 
   return (
     <div className="divide-y divide-border/60">
@@ -67,11 +66,6 @@ function DocRow({
             {doc.fechas.length > 0 && (
               <p className="text-[11px] text-muted-foreground">
                 {formatFechasRange(doc.fechas)}
-              </p>
-            )}
-            {criterio && (
-              <p className="text-[10px] text-muted-foreground/60 italic leading-snug">
-                {criterio}
               </p>
             )}
           </div>
