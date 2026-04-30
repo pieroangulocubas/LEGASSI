@@ -112,11 +112,12 @@ INSTRUCCIONES:
 
 Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
 
-"tipo": nómina|contrato|padrón|empadronamiento histórico|extracto bancario|factura de servicios|recibo de alquiler|historial médico|matrícula|certificado empresa|otro
+"tipo": nómina|contrato de trabajo|contrato de alquiler|padrón|empadronamiento histórico|extracto bancario|factura de servicios|recibo de alquiler|historial médico|matrícula|certificado empresa|otro
   Usa "certificado empresa" para: certificado de empresa, informe de vida laboral, vida laboral,
   informe de cotizaciones, certificado de cotizaciones, certificado SEPE, certificado de empleo,
   y cualquier documento emitido por la Seguridad Social o empresa que acredite actividad laboral.
-  Usa "contrato" exclusivamente para contratos de trabajo o contratos de arrendamiento/alquiler.
+  Usa "contrato de trabajo" para contratos laborales (relación empleado-empleador).
+  Usa "contrato de alquiler" para contratos de arrendamiento de vivienda u otro inmueble.
 
 "fechas": array YYYY-MM de los meses que prueban presencia física en España.
 
@@ -187,6 +188,19 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
     → Solo los meses en que hay una cita o visita explícitamente registrada.
     → Nunca el rango entre primera y última visita.
 
+  CERTIFICADO EMPRESA / INFORME DE VIDA LABORAL / INFORME DE COTIZACIONES (tipo "certificado empresa"):
+    → Si el documento contiene una tabla de situaciones o periodos laborales (filas con fecha de alta
+      y fecha de baja por empresa, régimen o situación de cotización):
+        · Por cada fila con fecha de alta Y fecha de baja explícitas: incluye el rango completo de
+          meses entre fecha_alta y fecha_baja (ambos meses inclusive).
+        · Para la última fila que NO tenga fecha de baja (situación vigente / activa / "en alta"):
+          incluye el rango desde su fecha_alta hasta el mes de emisión del documento (inclusive).
+        · No rellenes meses entre situaciones distintas; pueden existir periodos sin actividad.
+      Además del rango anterior, el mes de emisión del documento siempre se incluye de forma
+      independiente (regla universal de emisión).
+    → Si el documento es un certificado simple sin tabla de periodos:
+        · Solo el periodo laboral declarado explícitamente + mes de emisión.
+
 "fechas_descartadas": array de objetos {fecha: "YYYY-MM", motivo: string}. Fechas encontradas en el documento que NO se incluyen en "fechas" porque no prueban presencia activa del titular en España. Incluye aquí: fechas de vencimiento/caducidad, fechas de nacimiento, fecha de inicio de contrato cuando hay fin que no se puede confirmar indefinido, meses futuros respecto a la emisión, fechas estadísticas o regulatorias no referidas a la persona. Omite el campo (o usa []) si no hay fechas descartadas.
 
 "nombre_en_doc": string o null. Nombre literal del titular tal como aparece en el documento. null si no hay nombre.
@@ -210,7 +224,7 @@ Solo JSON válido, sin texto adicional, sin markdown.
 Ejemplo con un archivo que contiene dos documentos escaneados:
 [
   {"fileIndex":0,"paginas":[1],"tipo":"nómina","fechas":["2026-01"],"fechas_descartadas":[],"termino_indefinido":false,"nombre_en_doc":"GARCIA LUIS","valido":true,"observacion":null,"fuerza":"fuerte","motivo_rechazo":null,"nombre_sugerido":"2026-01_nomina_empresa","descripcion_breve":"Nómina enero 2026"},
-  {"fileIndex":0,"paginas":[2,3],"tipo":"contrato","fechas":["2025-11"],"fechas_descartadas":[{"fecha":"2027-11","motivo":"Fecha de vencimiento del contrato, no prueba presencia en ese mes"}],"termino_indefinido":true,"nombre_en_doc":"GARCIA LUIS","valido":true,"observacion":null,"fuerza":"fuerte","motivo_rechazo":null,"nombre_sugerido":"2025-11_contrato_empresa","descripcion_breve":"Contrato de trabajo indefinido desde noviembre 2025"}
+  {"fileIndex":0,"paginas":[2,3],"tipo":"contrato de trabajo","fechas":["2025-11"],"fechas_descartadas":[{"fecha":"2027-11","motivo":"Fecha de vencimiento del contrato, no prueba presencia en ese mes"}],"termino_indefinido":true,"nombre_en_doc":"GARCIA LUIS","valido":true,"observacion":null,"fuerza":"fuerte","motivo_rechazo":null,"nombre_sugerido":"2025-11_contrato_trabajo_empresa","descripcion_breve":"Contrato de trabajo indefinido desde noviembre 2025"}
 ]`
 }
 
@@ -321,6 +335,8 @@ export function parseDateToYearMonth(raw: string): string | null {
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 const RANGE_TIPOS = new Set([
   "contrato",
+  "contrato de trabajo",
+  "contrato de alquiler",
   "certificado empresa",
   "recibo de alquiler",
   "matrícula",
@@ -398,7 +414,8 @@ export function enrichGeminiResults(
     // Contrato con término indefinido: extender hasta el último mes del horizonte
     // para que runRulesEngine pueda filtrar los meses cubiertos dentro de la ventana
     const terminoIndefinido = doc.termino_indefinido === true
-    if (tipo === "contrato" && terminoIndefinido && rawFechas.length >= 1) {
+    const isContrato = tipo === "contrato" || tipo === "contrato de trabajo" || tipo === "contrato de alquiler"
+    if (isContrato && terminoIndefinido && rawFechas.length >= 1) {
       rawFechas = [...rawFechas, "2026-12"]
     }
 
@@ -410,7 +427,7 @@ export function enrichGeminiResults(
     let motivo_rechazo = (doc.motivo_rechazo as string | null) ?? null
 
     // Contrato con término indefinido + fecha de inicio → prueba de cobertura válida
-    if (tipo === "contrato" && terminoIndefinido && fechas.length > 0 && !valido) {
+    if (isContrato && terminoIndefinido && fechas.length > 0 && !valido) {
       valido = true
       motivo_rechazo = null
     }

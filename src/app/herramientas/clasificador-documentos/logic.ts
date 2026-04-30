@@ -53,12 +53,26 @@ function shortMonthLabel(ym: string): string {
   return `${SHORT[m] ?? m} ${String(y).slice(2)}`
 }
 
-// Compact range for display: "Nov 25", "Nov 25 · Dic 25", "Feb 23 – Jul 23 (6m)"
+function areConsecutive(sorted: string[]): boolean {
+  for (let i = 1; i < sorted.length; i++) {
+    const [py, pm] = sorted[i - 1].split("-").map(Number)
+    const expectedY = pm === 12 ? py + 1 : py
+    const expectedM = pm === 12 ? 1 : pm + 1
+    const expected = `${expectedY}-${String(expectedM).padStart(2, "0")}`
+    if (sorted[i] !== expected) return false
+  }
+  return true
+}
+
+// Consecutive range → "Sep 24 – Abr 26"; non-consecutive → "Nov 24, Ene 25, Mar 25"
 export function formatFechasRange(fechas: string[]): string {
   if (fechas.length === 0) return "—"
   if (fechas.length === 1) return MONTH_LABELS[fechas[0]] ?? fechas[0]
-  if (fechas.length === 2) return fechas.map(shortMonthLabel).join(" · ")
-  return `${shortMonthLabel(fechas[0])} – ${shortMonthLabel(fechas[fechas.length - 1])} (${fechas.length}m)`
+  const sorted = [...fechas].sort()
+  if (areConsecutive(sorted)) {
+    return `${shortMonthLabel(sorted[0])} – ${shortMonthLabel(sorted[sorted.length - 1])}`
+  }
+  return sorted.map(shortMonthLabel).join(", ")
 }
 
 export function runRulesEngine(
@@ -83,9 +97,11 @@ export function runRulesEngine(
       continue
     }
 
+    const isContrato = doc.tipo === "contrato" || doc.tipo === "contrato de trabajo" || doc.tipo === "contrato de alquiler"
+
     if (!doc.valido) {
       // Contratos nunca van a inválidos: al menos a observados para revisión manual
-      if (doc.tipo === "contrato") {
+      if (isContrato) {
         observadoDocs.push(doc)
       } else {
         invalidDocs.push(doc)
@@ -97,7 +113,7 @@ export function runRulesEngine(
     if (coveredMonths.length === 0) {
       // Válido como documento pero fuera de la ventana temporal
       // Contratos → observados; resto → inválidos
-      if (doc.tipo === "contrato") {
+      if (isContrato) {
         observadoDocs.push(doc)
       } else {
         invalidDocs.push(doc)
@@ -166,9 +182,11 @@ export function getCategoryForTipo(tipo: string): string | null {
     "padrón":                   "Domicilio",
     "empadronamiento histórico":"Domicilio",
     "recibo de alquiler":       "Domicilio",
+    "contrato de alquiler":     "Domicilio",
+    "contrato":                 "Domicilio",
     "nómina":                   "Laboral",
     "certificado empresa":      "Laboral",
-    "contrato":                 "Domicilio",
+    "contrato de trabajo":      "Laboral",
     "historial médico":         "Sanitaria",
     "extracto bancario":        "Económica",
     "factura de servicios":     "Vida Diaria",
@@ -193,6 +211,10 @@ export function getCriterioPorTipo(tipo: string): string | null {
       `Se toma el mes del periodo retributivo indicado en la nómina (el mes al que corresponde el salario, no necesariamente el mes de pago). ${EMISION_NOTA}`,
     "extracto bancario":
       `Se incluyen únicamente los meses en que aparecen transacciones, cargos o abonos reales realizados por el titular: uso de la cuenta en España. No se infiere presencia entre dos fechas. ${EMISION_NOTA}`,
+    "contrato de trabajo":
+      `Se incluye el periodo completo entre la fecha de inicio y la fecha de fin del contrato laboral. Si el contrato no tiene fecha de fin o es de duración indefinida, se toma solo el mes de inicio y se marca como indefinido. ${EMISION_NOTA}`,
+    "contrato de alquiler":
+      `Se incluye el periodo completo entre la fecha de inicio y la fecha de fin del contrato de arrendamiento. Si el contrato no tiene fecha de fin o es de duración indefinida, se toma solo el mes de inicio y se marca como indefinido. ${EMISION_NOTA}`,
     "contrato":
       `Se incluye el periodo completo entre la fecha de inicio y la fecha de fin del contrato. Si el contrato no tiene fecha de fin o es de duración indefinida, se toma solo el mes de inicio y se marca como indefinido. ${EMISION_NOTA}`,
     "certificado empresa":
