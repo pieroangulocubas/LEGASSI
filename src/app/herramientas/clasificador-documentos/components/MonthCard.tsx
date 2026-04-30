@@ -1,7 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import { FileText, Eye, ChevronDown, Trash2, Lightbulb } from "lucide-react"
+import { FileText, Eye, Trash2, Lightbulb } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatFechasRange, getCategoryForTipo, CATEGORY_BADGE_CFG, getMonthSuggestion } from "../logic"
 import type { MonthCoverage, DocumentResult } from "../types"
@@ -45,9 +44,7 @@ function DocRow({
   onPreview: (doc: DocumentResult) => void
   onDelete?: (doc: DocumentResult) => void
 }) {
-  const [showExcluded, setShowExcluded] = useState(false)
   const f = FUERZA_CFG[doc.fuerza as keyof typeof FUERZA_CFG]
-  const excluded = doc.fechas_descartadas ?? []
   const category = getCategoryForTipo(doc.tipo)
   const catCfg = category ? CATEGORY_BADGE_CFG[category] : null
 
@@ -107,31 +104,6 @@ function DocRow({
           )}
         </div>
       </div>
-
-      {excluded.length > 0 && (
-        <div className="bg-muted/20">
-          <button
-            type="button"
-            onClick={() => setShowExcluded((v) => !v)}
-            className="w-full flex items-center gap-1.5 px-4 py-1.5 text-left hover:bg-muted/40 transition-colors"
-          >
-            <ChevronDown className={cn("h-3 w-3 text-muted-foreground/60 shrink-0 transition-transform duration-150", showExcluded && "rotate-180")} />
-            <span className="text-[10px] text-muted-foreground/70">
-              {excluded.length} fecha{excluded.length > 1 ? "s" : ""} excluida{excluded.length > 1 ? "s" : ""}
-            </span>
-          </button>
-          {showExcluded && (
-            <ul className="px-4 pb-2.5 space-y-1">
-              {excluded.map(({ fecha, motivo }, i) => (
-                <li key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground/70">
-                  <span className="font-mono shrink-0">{fecha}</span>
-                  <span>— {motivo}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
     </div>
   )
 }

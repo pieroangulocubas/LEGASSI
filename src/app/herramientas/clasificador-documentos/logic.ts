@@ -168,7 +168,7 @@ export function getCategoryForTipo(tipo: string): string | null {
     "recibo de alquiler":       "Domicilio",
     "nómina":                   "Laboral",
     "certificado empresa":      "Laboral",
-    "contrato":                 "Laboral",
+    "contrato":                 "Domicilio",
     "historial médico":         "Sanitaria",
     "extracto bancario":        "Económica",
     "factura de servicios":     "Vida Diaria",

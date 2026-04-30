@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { X, Download, Info } from "lucide-react"
+import { X, Download, Info, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatFechasRange, getCriterioPorTipo } from "../logic"
 import type { DocumentResult } from "../types"
@@ -16,7 +16,9 @@ export function PreviewModal({
   onClose: () => void
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [showExcluded, setShowExcluded] = useState(false)
   const isImage = file ? /\.(jpe?g|png)$/i.test(file.name) : false
+  const excluded = doc.fechas_descartadas ?? []
 
   // Create object URL once and clean up on unmount / file change
   useEffect(() => {
@@ -94,6 +96,28 @@ export function PreviewModal({
                   <span className="font-semibold text-primary/80">Criterio aplicado: </span>
                   {getCriterioPorTipo(doc.tipo)}
                 </p>
+              </div>
+            )}
+            {excluded.length > 0 && (
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowExcluded((v) => !v)}
+                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground/70 hover:text-foreground transition-colors"
+                >
+                  <ChevronDown className={cn("h-3 w-3 transition-transform duration-150", showExcluded && "rotate-180")} />
+                  {excluded.length} fecha{excluded.length > 1 ? "s" : ""} excluida{excluded.length > 1 ? "s" : ""}
+                </button>
+                {showExcluded && (
+                  <ul className="mt-1.5 space-y-1 pl-1">
+                    {excluded.map(({ fecha, motivo }, i) => (
+                      <li key={i} className="flex items-start gap-1.5 text-[10px] text-muted-foreground/60">
+                        <span className="font-mono shrink-0">{fecha}</span>
+                        <span>— {motivo}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
           </div>

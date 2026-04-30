@@ -113,6 +113,10 @@ INSTRUCCIONES:
 Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
 
 "tipo": nómina|contrato|padrón|empadronamiento histórico|extracto bancario|factura de servicios|recibo de alquiler|historial médico|matrícula|certificado empresa|otro
+  Usa "certificado empresa" para: certificado de empresa, informe de vida laboral, vida laboral,
+  informe de cotizaciones, certificado de cotizaciones, certificado SEPE, certificado de empleo,
+  y cualquier documento emitido por la Seguridad Social o empresa que acredite actividad laboral.
+  Usa "contrato" exclusivamente para contratos de trabajo o contratos de arrendamiento/alquiler.
 
 "fechas": array YYYY-MM de los meses que prueban presencia física en España.
 
