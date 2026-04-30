@@ -75,6 +75,49 @@ export function formatFechasRange(fechas: string[]): string {
   return sorted.map(shortMonthLabel).join(", ")
 }
 
+// Card summary:
+//   consecutive          → "Sep 24 – Abr 26"
+//   non-consecutive ≤ 4  → "Nov 24, Ene 25, Mar 25"
+//   non-consecutive > 4  → "Sep 24 – Abr 26 · 17m"
+export function formatFechasCompact(fechas: string[]): string {
+  if (fechas.length === 0) return "—"
+  if (fechas.length === 1) return shortMonthLabel(fechas[0])
+  const sorted = [...fechas].sort()
+  if (areConsecutive(sorted)) {
+    return `${shortMonthLabel(sorted[0])} – ${shortMonthLabel(sorted[sorted.length - 1])}`
+  }
+  if (sorted.length <= 4) return sorted.map(shortMonthLabel).join(", ")
+  return `${shortMonthLabel(sorted[0])} – ${shortMonthLabel(sorted[sorted.length - 1])} · ${sorted.length}m`
+}
+
+// Groups consecutive months into runs: [[Sep24,Oct24,...,Ene25],[Feb25],[Abr25,...]]
+export function groupConsecutiveMonths(fechas: string[]): string[][] {
+  if (fechas.length === 0) return []
+  const sorted = [...fechas].sort()
+  const groups: string[][] = []
+  let current: string[] = [sorted[0]]
+  for (let i = 1; i < sorted.length; i++) {
+    const [py, pm] = sorted[i - 1].split("-").map(Number)
+    const ey = pm === 12 ? py + 1 : py
+    const em = pm === 12 ? 1 : pm + 1
+    if (sorted[i] === `${ey}-${String(em).padStart(2, "0")}`) {
+      current.push(sorted[i])
+    } else {
+      groups.push(current)
+      current = [sorted[i]]
+    }
+  }
+  groups.push(current)
+  return groups
+}
+
+// Formats a group of consecutive months as "Sep 24 – Ene 25" or "Feb 25"
+export function formatGroupLabel(group: string[]): string {
+  if (group.length === 0) return "—"
+  if (group.length === 1) return shortMonthLabel(group[0])
+  return `${shortMonthLabel(group[0])} – ${shortMonthLabel(group[group.length - 1])}`
+}
+
 export function runRulesEngine(
   geminiResults: DocumentResult[],
   presentationMonth: PresentationMonth
@@ -175,31 +218,33 @@ export const CATEGORY_BADGE_CFG: Record<string, { bg: string; text: string; labe
   "Económica":      { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-300", label: "Económica" },
   "Vida Diaria":    { bg: "bg-amber-100 dark:bg-amber-900/30",  text: "text-amber-700 dark:text-amber-300",   label: "Vida Diaria" },
   "Administración": { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-300", label: "Administración" },
+  "Social":         { bg: "bg-teal-100 dark:bg-teal-900/30",    text: "text-teal-700 dark:text-teal-300",     label: "Social" },
 }
 
-export function getCategoryForTipo(tipo: string): string | null {
-  const cats: Record<string, string> = {
-    "padrón":                   "Domicilio",
-    "empadronamiento histórico":"Domicilio",
-    "recibo de alquiler":       "Domicilio",
-    "contrato de alquiler":     "Domicilio",
-    "contrato":                 "Domicilio",
-    "nómina":                   "Laboral",
-    "certificado empresa":      "Laboral",
-    "contrato de trabajo":      "Laboral",
-    "historial médico":         "Sanitaria",
-    "extracto bancario":        "Económica",
-    "factura de servicios":     "Vida Diaria",
-    "matrícula":                "Administración",
+export function getCategoryForTipo(tipo: string): string[] {
+  const cats: Record<string, string[]> = {
+    "padrón":                   ["Domicilio"],
+    "empadronamiento histórico":["Domicilio"],
+    "recibo de alquiler":       ["Domicilio"],
+    "contrato de alquiler":     ["Domicilio"],
+    "contrato":                 ["Domicilio"],
+    "nómina":                   ["Laboral"],
+    "certificado empresa":      ["Laboral"],
+    "contrato de trabajo":      ["Laboral"],
+    "historial médico":         ["Sanitaria"],
+    "extracto bancario":        ["Económica"],
+    "factura de servicios":     ["Vida Diaria"],
+    "matrícula":                ["Administración", "Social"],
+    "otro":                     ["Administración"],
   }
-  return cats[tipo] ?? null
+  return cats[tipo] ?? ["Administración"]
 }
 
 // Returns a suggestion if a month's docs don't have 2+ different categories
 export function getMonthSuggestion(docs: DocumentResult[]): string | null {
   if (docs.length === 0) return null
-  const cats = [...new Set(docs.map((d) => getCategoryForTipo(d.tipo)).filter(Boolean))]
-  if (cats.length < 2) return "Refuerza con un documento de otra categoría"
+  const cats = new Set(docs.flatMap((d) => getCategoryForTipo(d.tipo)))
+  if (cats.size < 2) return "Refuerza con un documento de otra categoría"
   return null
 }
 

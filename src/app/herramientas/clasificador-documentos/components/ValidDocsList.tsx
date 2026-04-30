@@ -68,8 +68,7 @@ export function ValidDocsList({
               globalIndex++
               const idx = globalIndex
               const fuerza = FUERZA_CFG[doc.fuerza as keyof typeof FUERZA_CFG]
-              const category = getCategoryForTipo(doc.tipo)
-              const catCfg = category ? CATEGORY_BADGE_CFG[category] : null
+              const categories = getCategoryForTipo(doc.tipo)
 
               return (
                 <div
@@ -96,11 +95,14 @@ export function ValidDocsList({
                     </div>
                   </button>
 
-                  {catCfg && (
-                    <span className={cn("shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none", catCfg.bg, catCfg.text)}>
-                      {catCfg.label}
-                    </span>
-                  )}
+                  {categories.map((cat) => {
+                    const cfg = CATEGORY_BADGE_CFG[cat]
+                    return cfg ? (
+                      <span key={cat} className={cn("shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none", cfg.bg, cfg.text)}>
+                        {cfg.label}
+                      </span>
+                    ) : null
+                  })}
                   {fuerza && (
                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none ${fuerza.bg} ${fuerza.text}`}>
                       {fuerza.label}

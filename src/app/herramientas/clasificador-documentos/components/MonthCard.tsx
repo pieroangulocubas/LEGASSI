@@ -2,7 +2,7 @@
 
 import { FileText, Eye, Trash2, Lightbulb } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { formatFechasRange, getCategoryForTipo, CATEGORY_BADGE_CFG, getMonthSuggestion } from "../logic"
+import { formatFechasCompact, getCategoryForTipo, CATEGORY_BADGE_CFG, getMonthSuggestion } from "../logic"
 import type { MonthCoverage, DocumentResult } from "../types"
 
 const STATUS_CFG = {
@@ -45,8 +45,7 @@ function DocRow({
   onDelete?: (doc: DocumentResult) => void
 }) {
   const f = FUERZA_CFG[doc.fuerza as keyof typeof FUERZA_CFG]
-  const category = getCategoryForTipo(doc.tipo)
-  const catCfg = category ? CATEGORY_BADGE_CFG[category] : null
+  const categories = getCategoryForTipo(doc.tipo)
 
   return (
     <div className="divide-y divide-border/60">
@@ -65,14 +64,17 @@ function DocRow({
             <div className="flex items-center gap-1.5 flex-wrap">
               {doc.fechas.length > 0 && (
                 <p className="text-[11px] text-muted-foreground">
-                  {formatFechasRange(doc.fechas)}
+                  {formatFechasCompact(doc.fechas)}
                 </p>
               )}
-              {catCfg && (
-                <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none", catCfg.bg, catCfg.text)}>
-                  {catCfg.label}
-                </span>
-              )}
+              {categories.map((cat) => {
+                const cfg = CATEGORY_BADGE_CFG[cat]
+                return cfg ? (
+                  <span key={cat} className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none", cfg.bg, cfg.text)}>
+                    {cfg.label}
+                  </span>
+                ) : null
+              })}
             </div>
           </div>
         </button>

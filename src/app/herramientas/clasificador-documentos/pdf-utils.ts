@@ -368,7 +368,7 @@ async function addCoverageIndexPages(
     const descLines    = wrapText(d.descripcion_breve, helveticaBold, textColW, 9)
     const descH        = descLines.length * 12.5
     const fileLabel    = buildFileLabel(d)
-    const category     = getCategoryForTipo(d.tipo) ?? d.tipo
+    const category     = getCategoryForTipo(d.tipo).join(" · ")
     const criterio     = getCriterioPorTipo(d.tipo) ?? "Fecha de emisión incluida como prueba de presencia en España."
     const criterioLines = wrapText(`Criterio: ${criterio}`, helvetica, textColW, 7)
     const criterioH    = criterioLines.length * 9.5
@@ -681,8 +681,8 @@ async function addCompactDocDivider(
   })
 
   // Tipo + categoría (below description, still in band)
-  const category = getCategoryForTipo(docResult.tipo)
-  const tipoLine = safe(category ? `${docResult.tipo}  ·  ${category}` : docResult.tipo)
+  const category = getCategoryForTipo(docResult.tipo).join("  ·  ")
+  const tipoLine = safe(`${docResult.tipo}  ·  ${category}`)
   page.drawText(tipoLine, {
     x: margin, y: height - bandH + 18,
     size: 8.5, font: helvetica, color: rgb(0.65, 0.70, 0.90),
@@ -816,8 +816,8 @@ async function addMonthDividerPage(
     const descH = descLines.length * 14
 
     // Category + criterio
-    const docCategory = getCategoryForTipo(d.tipo)
-    const docCatLine  = safe(docCategory ? `${d.tipo}  ·  ${docCategory}` : d.tipo)
+    const docCategory = getCategoryForTipo(d.tipo).join("  ·  ")
+    const docCatLine  = safe(`${d.tipo}  ·  ${docCategory}`)
     page.drawText(docCatLine, {
       x: margin + 14, y: y - descH,
       size: 7, font: helveticaBold, color: rgb(0.25, 0.35, 0.65),

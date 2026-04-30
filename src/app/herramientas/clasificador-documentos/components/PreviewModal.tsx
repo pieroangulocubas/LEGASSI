@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { X, Download, Info, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { formatFechasRange, getCriterioPorTipo } from "../logic"
+import { formatFechasRange, getCriterioPorTipo, groupConsecutiveMonths, formatGroupLabel } from "../logic"
 import type { DocumentResult } from "../types"
 
 export function PreviewModal({
@@ -77,9 +77,6 @@ export function PreviewModal({
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               <span className="text-xs text-muted-foreground">{doc.tipo}</span>
               <span className="text-muted-foreground/40">·</span>
-              <span className="text-xs text-muted-foreground">
-                {formatFechasRange(doc.fechas)}
-              </span>
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-[10px] font-medium",
@@ -89,6 +86,18 @@ export function PreviewModal({
                 {doc.fuerza}
               </span>
             </div>
+            {doc.fechas.length > 0 && (() => {
+              const groups = groupConsecutiveMonths(doc.fechas)
+              return (
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {groups.map((g, i) => (
+                    <span key={i} className="rounded-full px-2 py-0.5 text-[10px] font-mono bg-muted text-muted-foreground">
+                      {formatGroupLabel(g)}
+                    </span>
+                  ))}
+                </div>
+              )
+            })()}
             {getCriterioPorTipo(doc.tipo) && (
               <div className="flex items-start gap-1.5 mt-2 rounded-md bg-primary/5 border border-primary/15 px-2.5 py-2">
                 <Info className="h-3 w-3 shrink-0 mt-px text-primary/60" />
