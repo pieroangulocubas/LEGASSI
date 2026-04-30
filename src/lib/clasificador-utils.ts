@@ -193,7 +193,7 @@ Devuelve un array JSON, un objeto por documento, mismo orden. Campos:
       y fecha de baja por empresa, régimen o situación de cotización):
         · Por cada fila con fecha de alta Y fecha de baja explícitas: incluye el rango completo de
           meses entre fecha_alta y fecha_baja (ambos meses inclusive).
-        · Para la última fila que NO tenga fecha de baja (situación vigente / activa / "en alta"):
+        · Por cada fila que NO tenga fecha de baja (situación vigente / activa / "en alta"):
           incluye el rango desde su fecha_alta hasta el mes de emisión del documento (inclusive).
         · No rellenes meses entre situaciones distintas; pueden existir periodos sin actividad.
       Además del rango anterior, el mes de emisión del documento siempre se incluye de forma
@@ -303,12 +303,12 @@ export function parseDateToYearMonth(raw: string): string | null {
   // Already YYYY-MM
   if (/^\d{4}-\d{2}$/.test(s)) return s
 
-  // YYYY-MM-DD or YYYY/MM/DD
-  const isoFull = s.match(/^(\d{4})[-/](\d{1,2})[-/]\d{1,2}$/)
+  // YYYY-MM-DD or YYYY/MM/DD or YYYY.MM.DD
+  const isoFull = s.match(/^(\d{4})[-/.](\d{1,2})[-/.]\d{1,2}$/)
   if (isoFull) return `${isoFull[1]}-${isoFull[2].padStart(2, "0")}`
 
-  // DD/MM/YYYY or DD-MM-YYYY or D/M/YYYY
-  const dmy = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/)
+  // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY or D/M/YYYY
+  const dmy = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/)
   if (dmy) return `${dmy[3]}-${dmy[2].padStart(2, "0")}`
 
   // "15 de marzo de 2024" / "15 marzo 2024"
@@ -337,7 +337,8 @@ const RANGE_TIPOS = new Set([
   "contrato",
   "contrato de trabajo",
   "contrato de alquiler",
-  "certificado empresa",
+  // "certificado empresa" excluido: Gemini ya expande cada fila por separado;
+  // rellenar el hueco entre filas no consecutivas produciría meses incorrectos.
   "recibo de alquiler",
   "matrícula",
 ])
