@@ -1,7 +1,7 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb, PageSizes } from "pdf-lib"
 import QRCode from "qrcode"
 import type { AnalysisResult, DocumentResult, MonthCoverage } from "./types"
-import { getCategoryForTipo, getCriterioPorTipo, getMonthSuggestion } from "./logic"
+import { getCategoryForTipo, getCriterioPorTipo } from "./logic"
 
 // ─── Text safety ──────────────────────────────────────────────────────────────
 // pdf-lib standard fonts use WinAnsi — keep Latin-1 range, strip the rest
@@ -316,8 +316,7 @@ async function addCoverageIndexPages(
     const docNames = month.docs.map((d) => d.descripcion_breve).join("  ·  ")
     const docsText = docNames || "—"
     const docsLines = wrapText(docsText, helvetica, docsColW, 7.5)
-    const suggestion = getMonthSuggestion(month.docs)
-    const rowH  = Math.max(docsLines.length * 10.5, 12) + (suggestion ? 11 : 0)
+    const rowH  = Math.max(docsLines.length * 10.5, 12)
 
     if (y - rowH < margin + 20) { ;({ page, y } = newPage()) }
 
@@ -327,14 +326,6 @@ async function addCoverageIndexPages(
     docsLines.forEach((line, li) => {
       page.drawText(line, { x: cDocs, y: y - li * 10.5, size: 7.5, font: helvetica, color: rgb(0.35, 0.35, 0.35) })
     })
-
-    // Suggestion note below docs column
-    if (suggestion) {
-      page.drawText(safe(`* ${suggestion}`), {
-        x: cDocs, y: y - docsLines.length * 10.5,
-        size: 6.5, font: helvetica, color: rgb(0.65, 0.45, 0.05),
-      })
-    }
 
     y -= rowH + 4
     page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 0.15, color: rgb(0.93, 0.93, 0.93) })
@@ -444,32 +435,30 @@ async function addCoverageIndexPages(
   y -= 14
 
   const METODOLOGIA_LINES = [
-    "Este expediente ha sido elaborado aplicando los siguientes principios:",
+    "Este expediente ha sido elaborado aplicando los siguientes criterios de seleccion documental:",
     "",
-    "REGLA UNIVERSAL DE EMISION: La fecha de emision de cualquier documento es siempre",
-    "prueba valida de presencia fisica en Espana, ya que obtener o solicitar un documento",
-    "implica necesariamente que la persona se encontraba en territorio espanol ese mes.",
+    "REGLA DE EMISION: La fecha de emision de cualquier documento acredita presencia fisica en",
+    "Espana en ese mes, dado que obtener o solicitar un documento implica que la persona se",
+    "encontraba en territorio espanol en esa fecha.",
     "",
-    "FUERZA PROBATORIA: Los documentos se clasifican en tres niveles:",
-    "  Fuerte — nominas, extractos bancarios, padron, contratos: prueba directa e inequivoca.",
-    "  Media  — facturas de servicios, recibos de alquiler, historial medico: prueba indirecta solida.",
-    "  Debil  — tickets, recargos, documentos sin identificacion clara del titular.",
+    "FUERZA PROBATORIA: Los documentos se clasifican segun su valor acreditativo:",
+    "  Fuerte — nominas, extractos bancarios, padron, contratos: vinculo directo e inequivoco con",
+    "           Espana en el periodo indicado.",
+    "  Media  — facturas de servicios, recibos de alquiler, historial medico: prueba indirecta solida",
+    "           de residencia habitual o atencion en Espana.",
+    "  Debil  — documentos complementarios que por si solos no son suficientes.",
     "",
-    "COBERTURA OPTIMA: Se recomienda acreditar cada mes con al menos 2 documentos",
-    "de categorias distintas (Domicilio, Laboral, Sanitaria, Economica, Vida Diaria,",
-    "Administracion) para reforzar la solidez del expediente.",
-    "",
-    "CRITERIOS POR TIPO DE DOCUMENTO:",
-    "  Nomina              - Mes del periodo retributivo indicado.",
-    "  Extracto bancario   - Solo meses con transacciones reales del titular.",
-    "  Contrato            - Periodo entre fecha de inicio y fin (o inicio si es indefinido).",
+    "CRITERIOS DE INCLUSION POR TIPO DE DOCUMENTO:",
+    "  Nomina              - Mes del periodo retributivo indicado en la nomina.",
+    "  Extracto bancario   - Meses con transacciones reales del titular y mes de emision.",
+    "  Contrato de trabajo - Periodo entre fecha de inicio y fin (o inicio si es indefinido).",
     "  Padron              - Fecha de expedicion, alta en padron y/o alta en vivienda.",
     "  Empadronamiento     - Cada accion registral explicita: alta, modificacion o baja.",
-    "  Factura de servicios- Mes del periodo de servicio facturado.",
+    "  Factura de servicios- Mes del periodo de servicio facturado y mes de emision.",
     "  Recibo de alquiler  - Periodo arrendado indicado en el recibo.",
-    "  Historial medico    - Solo meses con citas o visitas registradas.",
+    "  Historial medico    - Meses con citas o visitas registradas y mes de emision.",
     "  Matricula           - Periodo academico entre fechas de inicio y fin.",
-    "  Certificado empresa - Periodo de actividad laboral declarado.",
+    "  Certificado empresa - Periodo de actividad laboral declarado en el certificado.",
   ]
 
   for (const line of METODOLOGIA_LINES) {
@@ -798,18 +787,6 @@ async function addMonthDividerPage(
       x: (width - optW) / 2,
       y: monthY - 44,
       size: 8, font: helvetica, color: rgb(0.65, 0.70, 0.90),
-    })
-  }
-
-  // ── Coverage suggestion ──
-  const monthSuggestion = getMonthSuggestion(month.docs)
-  if (monthSuggestion) {
-    const sugText = safe(`* ${monthSuggestion}`)
-    const sugW    = helvetica.widthOfTextAtSize(sugText, 7.5)
-    page.drawText(sugText, {
-      x: (width - sugW) / 2,
-      y: monthY - (month.isOptional ? 58 : 44),
-      size: 7.5, font: helvetica, color: rgb(0.65, 0.45, 0.05),
     })
   }
 
