@@ -441,13 +441,6 @@ async function addCoverageIndexPages(
     "Espana en ese mes, dado que obtener o solicitar un documento implica que la persona se",
     "encontraba en territorio espanol en esa fecha.",
     "",
-    "FUERZA PROBATORIA: Los documentos se clasifican segun su valor acreditativo:",
-    "  Fuerte — nominas, extractos bancarios, padron, contratos: vinculo directo e inequivoco con",
-    "           Espana en el periodo indicado.",
-    "  Media  — facturas de servicios, recibos de alquiler, historial medico: prueba indirecta solida",
-    "           de residencia habitual o atencion en Espana.",
-    "  Debil  — documentos complementarios que por si solos no son suficientes.",
-    "",
     "CRITERIOS DE INCLUSION POR TIPO DE DOCUMENTO:",
     "  Nomina              - Mes del periodo retributivo indicado en la nomina.",
     "  Extracto bancario   - Meses con transacciones reales del titular y mes de emision.",
@@ -458,7 +451,7 @@ async function addCoverageIndexPages(
     "  Recibo de alquiler  - Periodo arrendado indicado en el recibo.",
     "  Historial medico    - Meses con citas o visitas registradas y mes de emision.",
     "  Matricula           - Periodo academico entre fechas de inicio y fin.",
-    "  Certificado empresa - Periodo de actividad laboral declarado en el certificado.",
+    "  Certificado empresa - Por cada situacion laboral: rango entre fecha de alta y baja.",
   ]
 
   for (const line of METODOLOGIA_LINES) {
@@ -466,7 +459,7 @@ async function addCoverageIndexPages(
     if (line === "") { y -= 5; continue }
     page.drawText(safe(line), {
       x: margin, y, size: 7, font: line.startsWith("  ") ? helvetica : helveticaBold,
-      color: line.startsWith("REGLA") || line.startsWith("FUERZA") || line.startsWith("COBERTURA") || line.startsWith("CRITERIOS")
+      color: line.startsWith("REGLA") || line.startsWith("CRITERIOS")
         ? rgb(0.08, 0.08, 0.08)
         : rgb(0.30, 0.30, 0.30),
     })

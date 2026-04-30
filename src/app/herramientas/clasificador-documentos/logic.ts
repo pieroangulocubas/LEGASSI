@@ -207,7 +207,7 @@ export function runRulesEngine(
   return { veredicto, months, observadoDocs, invalidDocs, validDocs }
 }
 
-const EMISION_NOTA = "Además, el mes en que se emitió este documento siempre se incluye como prueba de presencia: recoger o solicitar un documento acredita que la persona estaba físicamente en España ese mes."
+const EMISION_NOTA = "Mes de emisión incluido."
 
 // ─── Category mapping ─────────────────────────────────────────────────────────
 
@@ -253,29 +253,29 @@ export function getMonthSuggestion(docs: DocumentResult[]): string | null {
 export function getCriterioPorTipo(tipo: string): string | null {
   const criterios: Record<string, string> = {
     "nómina":
-      `Se toma el mes del periodo retributivo indicado en la nómina (el mes al que corresponde el salario, no necesariamente el mes de pago). ${EMISION_NOTA}`,
+      `Mes del periodo retributivo al que corresponde el salario. ${EMISION_NOTA}`,
     "extracto bancario":
-      `Se incluyen únicamente los meses en que aparecen transacciones, cargos o abonos reales realizados por el titular: uso de la cuenta en España. No se infiere presencia entre dos fechas. ${EMISION_NOTA}`,
+      `Meses con transacciones reales del titular. No se infiere presencia entre fechas. ${EMISION_NOTA}`,
     "contrato de trabajo":
-      `Se incluye el periodo completo entre la fecha de inicio y la fecha de fin del contrato laboral. Si el contrato no tiene fecha de fin o es de duración indefinida, se toma solo el mes de inicio y se marca como indefinido. ${EMISION_NOTA}`,
+      `Periodo entre fecha de inicio y fin del contrato laboral. Si es indefinido, solo el mes de inicio. ${EMISION_NOTA}`,
     "contrato de alquiler":
-      `Se incluye el periodo completo entre la fecha de inicio y la fecha de fin del contrato de arrendamiento. Si el contrato no tiene fecha de fin o es de duración indefinida, se toma solo el mes de inicio y se marca como indefinido. ${EMISION_NOTA}`,
+      `Periodo arrendado entre fecha de inicio y fin. Si es indefinido, solo el mes de inicio. ${EMISION_NOTA}`,
     "contrato":
-      `Se incluye el periodo completo entre la fecha de inicio y la fecha de fin del contrato. Si el contrato no tiene fecha de fin o es de duración indefinida, se toma solo el mes de inicio y se marca como indefinido. ${EMISION_NOTA}`,
+      `Periodo entre fecha de inicio y fin del contrato. Si es indefinido, solo el mes de inicio. ${EMISION_NOTA}`,
     "certificado empresa":
-      `Se toma el periodo de actividad laboral declarado en el certificado (desde cuándo hasta cuándo ha trabajado la persona en esa empresa). ${EMISION_NOTA}`,
+      `Por cada situación laboral: rango entre fecha de alta y fecha de baja. Si la situación está activa (sin fecha de baja), el rango llega hasta el mes de emisión.`,
     "padrón":
-      `Se toman exclusivamente las fechas concretas que aparecen: fecha de expedición del certificado, fecha de alta en padrón y/o fecha de alta en vivienda. No se rellena el rango entre ninguna de estas fechas.`,
+      `Fechas concretas del documento: expedición, alta en padrón y/o alta en vivienda. No se rellena el rango entre ellas.`,
     "empadronamiento histórico":
-      `Se toma el mes exacto de cada acción registral explícitamente listada: alta, modificación o baja. No se infieren meses entre una acción y la siguiente. ${EMISION_NOTA}`,
+      `Mes de cada acción registral explícita: alta, modificación o baja. No se infieren meses intermedios. ${EMISION_NOTA}`,
     "factura de servicios":
-      `Se toma el mes del periodo de servicio facturado (el mes al que corresponde el consumo o servicio, no el mes de emisión de la factura). ${EMISION_NOTA}`,
+      `Mes del periodo de servicio facturado. ${EMISION_NOTA}`,
     "recibo de alquiler":
-      `Se incluye el periodo arrendado que indica el recibo. Si cubre varios meses, se incluyen todos. ${EMISION_NOTA}`,
+      `Periodo arrendado indicado en el recibo. ${EMISION_NOTA}`,
     "historial médico":
-      `Se incluyen únicamente los meses en que hay una cita, visita o atención médica explícitamente registrada. No se rellena el rango entre la primera y la última visita. ${EMISION_NOTA}`,
+      `Meses con citas o visitas explícitamente registradas. No se rellena entre visitas. ${EMISION_NOTA}`,
     "matrícula":
-      `Se incluye el periodo académico completo entre la fecha de inicio y la fecha de fin del curso o matrícula. ${EMISION_NOTA}`,
+      `Periodo académico completo entre fecha de inicio y fin. ${EMISION_NOTA}`,
   }
-  return criterios[tipo] ?? `Mes de emisión del documento incluido como prueba de presencia. ${EMISION_NOTA}`
+  return criterios[tipo] ?? `Mes de emisión incluido como prueba de presencia.`
 }
