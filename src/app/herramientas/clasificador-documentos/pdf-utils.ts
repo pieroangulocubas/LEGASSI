@@ -1,6 +1,7 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb, PageSizes } from "pdf-lib"
 import QRCode from "qrcode"
 import type { AnalysisResult, DocumentResult, MonthCoverage } from "./types"
+import { getCategoryForTipo, getCriterioPorTipo, getMonthSuggestion } from "./logic"
 
 // ─── Text safety ──────────────────────────────────────────────────────────────
 // pdf-lib standard fonts use WinAnsi — keep Latin-1 range, strip the rest
@@ -315,15 +316,25 @@ async function addCoverageIndexPages(
     const docNames = month.docs.map((d) => d.descripcion_breve).join("  ·  ")
     const docsText = docNames || "—"
     const docsLines = wrapText(docsText, helvetica, docsColW, 7.5)
-    const rowH  = Math.max(docsLines.length * 10.5, 12)
+    const suggestion = getMonthSuggestion(month.docs)
+    const rowH  = Math.max(docsLines.length * 10.5, 12) + (suggestion ? 11 : 0)
+
+    if (y - rowH < margin + 20) { ;({ page, y } = newPage()) }
 
     page.drawText(safe(month.label),  { x: cMes,    y, size: 8.5, font: helveticaBold, color: rgb(0.1, 0.1, 0.1) })
     page.drawText(safe(st.label),     { x: cEstado, y, size: 7.5, font: helvetica,     color: rgb(st.r, st.g, st.b) })
 
-    // Draw each wrapped line of docs column
     docsLines.forEach((line, li) => {
       page.drawText(line, { x: cDocs, y: y - li * 10.5, size: 7.5, font: helvetica, color: rgb(0.35, 0.35, 0.35) })
     })
+
+    // Suggestion note below docs column
+    if (suggestion) {
+      page.drawText(safe(`* ${suggestion}`), {
+        x: cDocs, y: y - docsLines.length * 10.5,
+        size: 6.5, font: helvetica, color: rgb(0.65, 0.45, 0.05),
+      })
+    }
 
     y -= rowH + 4
     page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 0.15, color: rgb(0.93, 0.93, 0.93) })
@@ -366,18 +377,19 @@ async function addCoverageIndexPages(
     const descLines    = wrapText(d.descripcion_breve, helveticaBold, textColW, 9)
     const descH        = descLines.length * 12.5
     const fileLabel    = buildFileLabel(d)
+    const category     = getCategoryForTipo(d.tipo) ?? d.tipo
+    const criterio     = getCriterioPorTipo(d.tipo) ?? "Fecha de emisión incluida como prueba de presencia en España."
+    const criterioLines = wrapText(`Criterio: ${criterio}`, helvetica, textColW, 7)
+    const criterioH    = criterioLines.length * 9.5
     const monthsLabel  = coveredMonths.length === 1
       ? coveredMonths[0].label
       : coveredMonths.length === 2
         ? `${coveredMonths[0].label}  ·  ${coveredMonths[1].label}`
         : `${coveredMonths[0].label} - ${coveredMonths[coveredMonths.length - 1].label} (${coveredMonths.length} meses)`
 
-    const cardH = descH + 12 + 12 + 14  // desc + file line + month line + gap
+    const cardH = descH + 11 + 11 + criterioH + 14
 
-    // Overflow to new page
-    if (y - cardH < margin + 20) {
-      ;({ page, y } = newPage())
-    }
+    if (y - cardH < margin + 20) { ;({ page, y } = newPage()) }
 
     // Number
     page.drawText(`${i + 1}.`, {
@@ -390,9 +402,10 @@ async function addCoverageIndexPages(
     })
     const afterDesc = y - descH
 
-    // Suggested filename
-    page.drawText(safe(`Archivo: ${fileLabel}`), {
-      x: textCol, y: afterDesc, size: 7.5, font: helvetica, color: rgb(0.42, 0.42, 0.42),
+    // Category + tipo row
+    const catLabel = safe(`${category}  ·  ${d.tipo}`)
+    page.drawText(catLabel, {
+      x: textCol, y: afterDesc, size: 7, font: helveticaBold, color: rgb(0.25, 0.35, 0.65),
     })
 
     // Months covered
@@ -400,12 +413,73 @@ async function addCoverageIndexPages(
       x: textCol, y: afterDesc - 11, size: 7.5, font: helvetica, color: rgb(0.35, 0.35, 0.55),
     })
 
+    // Criteria text (deontological note for reviewer)
+    criterioLines.forEach((line, li) => {
+      page.drawText(line, {
+        x: textCol, y: afterDesc - 22 - li * 9.5,
+        size: 7, font: helvetica, color: rgb(0.38, 0.38, 0.38),
+      })
+    })
 
-    y = afterDesc - 11 - 12  // move cursor below card content
+    y = afterDesc - 22 - criterioH - 10
 
     page.drawLine({
       start: { x: margin, y }, end: { x: width - margin, y },
       thickness: 0.2, color: rgb(0.90, 0.90, 0.90),
+    })
+    y -= 10
+  }
+
+  // ═══════════════════════════════════════════════════════
+  // SECTION C — Metodología y criterios de selección
+  // ═══════════════════════════════════════════════════════
+  y -= 16
+  if (y < margin + 120) { ;({ page, y } = newPage()) }
+
+  page.drawText(safe("Metodologia y criterios de seleccion"), {
+    x: margin, y, size: 11, font: helveticaBold, color: rgb(0.08, 0.08, 0.08),
+  })
+  y -= 7
+  page.drawLine({ start: { x: margin, y }, end: { x: width - margin, y }, thickness: 0.5, color: rgb(0.78, 0.71, 0.42) })
+  y -= 14
+
+  const METODOLOGIA_LINES = [
+    "Este expediente ha sido elaborado aplicando los siguientes principios:",
+    "",
+    "REGLA UNIVERSAL DE EMISION: La fecha de emision de cualquier documento es siempre",
+    "prueba valida de presencia fisica en Espana, ya que obtener o solicitar un documento",
+    "implica necesariamente que la persona se encontraba en territorio espanol ese mes.",
+    "",
+    "FUERZA PROBATORIA: Los documentos se clasifican en tres niveles:",
+    "  Fuerte — nominas, extractos bancarios, padron, contratos: prueba directa e inequivoca.",
+    "  Media  — facturas de servicios, recibos de alquiler, historial medico: prueba indirecta solida.",
+    "  Debil  — tickets, recargos, documentos sin identificacion clara del titular.",
+    "",
+    "COBERTURA OPTIMA: Se recomienda acreditar cada mes con al menos 2 documentos",
+    "de categorias distintas (Domicilio, Laboral, Sanitaria, Economica, Vida Diaria,",
+    "Administracion) para reforzar la solidez del expediente.",
+    "",
+    "CRITERIOS POR TIPO DE DOCUMENTO:",
+    "  Nomina              - Mes del periodo retributivo indicado.",
+    "  Extracto bancario   - Solo meses con transacciones reales del titular.",
+    "  Contrato            - Periodo entre fecha de inicio y fin (o inicio si es indefinido).",
+    "  Padron              - Fecha de expedicion, alta en padron y/o alta en vivienda.",
+    "  Empadronamiento     - Cada accion registral explicita: alta, modificacion o baja.",
+    "  Factura de servicios- Mes del periodo de servicio facturado.",
+    "  Recibo de alquiler  - Periodo arrendado indicado en el recibo.",
+    "  Historial medico    - Solo meses con citas o visitas registradas.",
+    "  Matricula           - Periodo academico entre fechas de inicio y fin.",
+    "  Certificado empresa - Periodo de actividad laboral declarado.",
+  ]
+
+  for (const line of METODOLOGIA_LINES) {
+    if (y < margin + 20) { ;({ page, y } = newPage()) }
+    if (line === "") { y -= 5; continue }
+    page.drawText(safe(line), {
+      x: margin, y, size: 7, font: line.startsWith("  ") ? helvetica : helveticaBold,
+      color: line.startsWith("REGLA") || line.startsWith("FUERZA") || line.startsWith("COBERTURA") || line.startsWith("CRITERIOS")
+        ? rgb(0.08, 0.08, 0.08)
+        : rgb(0.30, 0.30, 0.30),
     })
     y -= 10
   }
@@ -617,8 +691,10 @@ async function addCompactDocDivider(
     })
   })
 
-  // Tipo (below description, still in band)
-  page.drawText(safe(docResult.tipo), {
+  // Tipo + categoría (below description, still in band)
+  const category = getCategoryForTipo(docResult.tipo)
+  const tipoLine = safe(category ? `${docResult.tipo}  ·  ${category}` : docResult.tipo)
+  page.drawText(tipoLine, {
     x: margin, y: height - bandH + 18,
     size: 8.5, font: helvetica, color: rgb(0.65, 0.70, 0.90),
   })
@@ -637,6 +713,20 @@ async function addCompactDocDivider(
       size: 9.5, font: helvetica, color: rgb(0.10, 0.10, 0.10),
     })
     y -= 16
+  }
+
+  // Criteria (deontological note)
+  const criterio = getCriterioPorTipo(docResult.tipo)
+  if (criterio && y > margin + 55) {
+    const criterioLines = wrapText(`Criterio: ${criterio}`, helvetica, innerW, 7)
+    criterioLines.forEach((line, li) => {
+      if (y - li * 10 > margin + 55) {
+        page.drawText(safe(line), {
+          x: margin, y: y - li * 10,
+          size: 7, font: helvetica, color: rgb(0.40, 0.40, 0.40),
+        })
+      }
+    })
   }
 
   // Filename (bottom)
@@ -700,14 +790,26 @@ async function addMonthDividerPage(
     size: 11, font: helvetica, color: rgb(st.r, st.g, st.b),
   })
 
-  // ── Optional month badge ──
+  // ── Optional / recommended month badge ──
   if (month.isOptional) {
-    const optText = safe("Mes opcional")
+    const optText = safe("Mes recomendable")
     const optW    = helvetica.widthOfTextAtSize(optText, 8)
     page.drawText(optText, {
       x: (width - optW) / 2,
       y: monthY - 44,
       size: 8, font: helvetica, color: rgb(0.65, 0.70, 0.90),
+    })
+  }
+
+  // ── Coverage suggestion ──
+  const monthSuggestion = getMonthSuggestion(month.docs)
+  if (monthSuggestion) {
+    const sugText = safe(`* ${monthSuggestion}`)
+    const sugW    = helvetica.widthOfTextAtSize(sugText, 7.5)
+    page.drawText(sugText, {
+      x: (width - sugW) / 2,
+      y: monthY - (month.isOptional ? 58 : 44),
+      size: 7.5, font: helvetica, color: rgb(0.65, 0.45, 0.05),
     })
   }
 
@@ -736,25 +838,46 @@ async function addMonthDividerPage(
     })
     const descH = descLines.length * 14
 
+    // Category + criterio
+    const docCategory = getCategoryForTipo(d.tipo)
+    const docCatLine  = safe(docCategory ? `${d.tipo}  ·  ${docCategory}` : d.tipo)
+    page.drawText(docCatLine, {
+      x: margin + 14, y: y - descH,
+      size: 7, font: helveticaBold, color: rgb(0.25, 0.35, 0.65),
+    })
+    const docCriterio = getCriterioPorTipo(d.tipo)
+    let criterioExtraH = 0
+    if (docCriterio) {
+      const cLines = wrapText(`Criterio: ${docCriterio}`, helvetica, innerW - 16, 7)
+      cLines.forEach((line, li) => {
+        if (y - descH - 10 - li * 9 > margin + 20) {
+          page.drawText(safe(line), {
+            x: margin + 14, y: y - descH - 10 - li * 9,
+            size: 7, font: helvetica, color: rgb(0.40, 0.40, 0.40),
+          })
+        }
+      })
+      criterioExtraH = cLines.length * 9
+    }
+
     // Filename (grey)
     page.drawText(safe(`Archivo: ${buildFileLabel(d)}`), {
-      x: margin + 14, y: y - descH,
+      x: margin + 14, y: y - descH - 10 - criterioExtraH,
       size: 7.5, font: helvetica, color: rgb(0.48, 0.48, 0.48),
     })
 
-
     // Cross-month note: document is physically embedded in a different section
-    let extraH = 0
+    let extraH = criterioExtraH + 10
     if (alreadyIn) {
       const noteText = safe(`-> Documento incluido en la seccion de ${alreadyIn}`)
       page.drawText(noteText, {
-        x: margin + 14, y: y - descH - 12,
+        x: margin + 14, y: y - descH - extraH - 12,
         size: 7.5, font: helvetica, color: rgb(0.35, 0.45, 0.75),
       })
-      extraH = 14
+      extraH += 14
     }
 
-    y -= descH + 12 + 12 + extraH
+    y -= descH + 12 + extraH
 
     page.drawLine({
       start: { x: margin, y }, end: { x: width - margin, y },

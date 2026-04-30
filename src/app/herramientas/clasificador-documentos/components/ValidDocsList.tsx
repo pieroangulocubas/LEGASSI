@@ -1,6 +1,8 @@
 "use client"
 
 import { FileText, Eye, BookOpen, Trash2 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { getCategoryForTipo, CATEGORY_BADGE_CFG } from "../logic"
 import type { DocumentResult, MonthCoverage } from "../types"
 
 const FUERZA_CFG = {
@@ -66,6 +68,8 @@ export function ValidDocsList({
               globalIndex++
               const idx = globalIndex
               const fuerza = FUERZA_CFG[doc.fuerza as keyof typeof FUERZA_CFG]
+              const category = getCategoryForTipo(doc.tipo)
+              const catCfg = category ? CATEGORY_BADGE_CFG[category] : null
 
               return (
                 <div
@@ -92,6 +96,11 @@ export function ValidDocsList({
                     </div>
                   </button>
 
+                  {catCfg && (
+                    <span className={cn("shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none", catCfg.bg, catCfg.text)}>
+                      {catCfg.label}
+                    </span>
+                  )}
                   {fuerza && (
                     <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none ${fuerza.bg} ${fuerza.text}`}>
                       {fuerza.label}

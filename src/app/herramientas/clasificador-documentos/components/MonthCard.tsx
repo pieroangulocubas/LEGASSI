@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { FileText, Eye, ChevronDown, Trash2 } from "lucide-react"
+import { FileText, Eye, ChevronDown, Trash2, Lightbulb } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { formatFechasRange } from "../logic"
+import { formatFechasRange, getCategoryForTipo, CATEGORY_BADGE_CFG, getMonthSuggestion } from "../logic"
 import type { MonthCoverage, DocumentResult } from "../types"
 
 const STATUS_CFG = {
@@ -48,6 +48,8 @@ function DocRow({
   const [showExcluded, setShowExcluded] = useState(false)
   const f = FUERZA_CFG[doc.fuerza as keyof typeof FUERZA_CFG]
   const excluded = doc.fechas_descartadas ?? []
+  const category = getCategoryForTipo(doc.tipo)
+  const catCfg = category ? CATEGORY_BADGE_CFG[category] : null
 
   return (
     <div className="divide-y divide-border/60">
@@ -63,11 +65,18 @@ function DocRow({
             <p className="text-xs font-semibold text-foreground leading-snug truncate">
               {doc.descripcion_breve}
             </p>
-            {doc.fechas.length > 0 && (
-              <p className="text-[11px] text-muted-foreground">
-                {formatFechasRange(doc.fechas)}
-              </p>
-            )}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {doc.fechas.length > 0 && (
+                <p className="text-[11px] text-muted-foreground">
+                  {formatFechasRange(doc.fechas)}
+                </p>
+              )}
+              {catCfg && (
+                <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none", catCfg.bg, catCfg.text)}>
+                  {catCfg.label}
+                </span>
+              )}
+            </div>
           </div>
         </button>
 
@@ -137,6 +146,7 @@ export function MonthCard({
   onDelete?: (doc: DocumentResult) => void
 }) {
   const s = STATUS_CFG[month.status]
+  const suggestion = getMonthSuggestion(month.docs)
 
   return (
     <div className={cn("rounded-xl border overflow-hidden", s.border)}>
@@ -165,6 +175,14 @@ export function MonthCard({
           )}
         </div>
       </div>
+
+      {/* Suggestion: add a second doc type */}
+      {suggestion && month.docs.length > 0 && (
+        <div className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-50/60 dark:bg-amber-950/10 border-b border-amber-100 dark:border-amber-900/30">
+          <Lightbulb className="h-3 w-3 shrink-0 text-amber-500" />
+          <p className="text-[10px] text-amber-700 dark:text-amber-400">{suggestion}</p>
+        </div>
+      )}
 
       {/* Document list */}
       {month.docs.length > 0 ? (

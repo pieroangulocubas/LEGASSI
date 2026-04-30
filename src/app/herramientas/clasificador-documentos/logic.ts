@@ -150,6 +150,43 @@ export function runRulesEngine(
 
 const EMISION_NOTA = "Además, el mes en que se emitió este documento siempre se incluye como prueba de presencia: recoger o solicitar un documento acredita que la persona estaba físicamente en España ese mes."
 
+// ─── Category mapping ─────────────────────────────────────────────────────────
+
+export const CATEGORY_BADGE_CFG: Record<string, { bg: string; text: string; label: string }> = {
+  "Domicilio":      { bg: "bg-blue-100 dark:bg-blue-900/30",    text: "text-blue-700 dark:text-blue-300",     label: "Domicilio" },
+  "Laboral":        { bg: "bg-indigo-100 dark:bg-indigo-900/30", text: "text-indigo-700 dark:text-indigo-300", label: "Laboral" },
+  "Sanitaria":      { bg: "bg-rose-100 dark:bg-rose-900/30",    text: "text-rose-700 dark:text-rose-300",     label: "Sanitaria" },
+  "Económica":      { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-300", label: "Económica" },
+  "Vida Diaria":    { bg: "bg-amber-100 dark:bg-amber-900/30",  text: "text-amber-700 dark:text-amber-300",   label: "Vida Diaria" },
+  "Administración": { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-300", label: "Administración" },
+}
+
+export function getCategoryForTipo(tipo: string): string | null {
+  const cats: Record<string, string> = {
+    "padrón":                   "Domicilio",
+    "empadronamiento histórico":"Domicilio",
+    "recibo de alquiler":       "Domicilio",
+    "nómina":                   "Laboral",
+    "certificado empresa":      "Laboral",
+    "contrato":                 "Laboral",
+    "historial médico":         "Sanitaria",
+    "extracto bancario":        "Económica",
+    "factura de servicios":     "Vida Diaria",
+    "matrícula":                "Administración",
+  }
+  return cats[tipo] ?? null
+}
+
+// Returns a suggestion if a month's docs don't have 2+ different categories
+export function getMonthSuggestion(docs: DocumentResult[]): string | null {
+  if (docs.length === 0) return null
+  const cats = [...new Set(docs.map((d) => getCategoryForTipo(d.tipo)).filter(Boolean))]
+  if (cats.length < 2) return "Refuerza con un documento de otra categoría"
+  return null
+}
+
+// ─── Criteria by type ────────────────────────────────────────────────────────
+
 export function getCriterioPorTipo(tipo: string): string | null {
   const criterios: Record<string, string> = {
     "nómina":
