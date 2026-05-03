@@ -17,8 +17,8 @@
   --secondary-foreground: oklch(1 0 0);
   --muted: oklch(0.98 0 0);
   --muted-foreground: oklch(0.55 0.02 258); /* slate-500 */
-  --accent: oklch(0.63 0.115 78); /* amber accent */
-  --accent-foreground: oklch(0.12 0.02 258);
+  --accent: oklch(0.95 0.03 80);       /* light warm amber — hover surfaces */
+  --accent-foreground: oklch(0.25 0.05 78); /* dark amber text on accent bg */
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.92 0 0);
@@ -54,7 +54,7 @@
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.25 0.010 62);        /* third surface layer */
   --muted-foreground: oklch(0.63 0.014 72);
-  --accent: oklch(0.72 0.13 78);
+  --accent: oklch(0.80 0.11 82);       /* lighter amber — visible as text + hover */
   --accent-foreground: oklch(0.10 0.01 62);
   --destructive: oklch(0.48 0.19 27);
   --destructive-foreground: oklch(0.98 0 0);

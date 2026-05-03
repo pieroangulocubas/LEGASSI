@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Zap, Shield, Users, Award, Clock, HeartHandshake, ArrowRight } from "lucide-react"
 import Link from "next/link"
 
@@ -81,15 +82,16 @@ export function WhyChooseUsSection() {
         </div>
 
         <div className="text-center">
-          <Link
-            href="https://wa.me/34672297468?text=Hola%2C%20me%20gustar%C3%ADa%20saber%20m%C3%A1s%20sobre%20sus%20servicios."
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary/20 hover:shadow-primary/35 hover:scale-[1.02] hover:brightness-110 active:scale-[0.99] transition-all duration-200"
-          >
-            Habla con un Asesor Ahora
-            <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
+          <Button variant="cta" size="lg" asChild className="group text-base">
+            <Link
+              href="https://wa.me/34672297468?text=Hola%2C%20me%20gustar%C3%ADa%20saber%20m%C3%A1s%20sobre%20sus%20servicios."
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Habla con un Asesor Ahora
+              <ArrowRight className="size-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </Button>
         </div>
       </div>
     </section>

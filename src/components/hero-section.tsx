@@ -1,6 +1,7 @@
 import { ArrowRight, Scale, Brain, Users, FileSearch, CheckCircle, Sparkles, Shield } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { Button } from "@/components/ui/button"
 
 export function HeroSection() {
   return (
@@ -44,22 +45,22 @@ export function HeroSection() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 mb-9 w-full sm:w-auto items-center lg:items-start">
-              <Link
-                href="https://wa.me/34672297468?text=Hola,%20quisiera%20agendar%20una%20consulta%20completa%20para%20el%20tr%C3%A1mite%20de%20"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Habla con un asesor por WhatsApp"
-                className="group inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-primary/20 hover:shadow-primary/35 hover:scale-[1.02] hover:brightness-110 active:scale-[0.99] transition-all duration-200"
-              >
-                Asesórate con un experto
-                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="#servicios"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border/80 bg-background/70 backdrop-blur-sm px-7 py-3.5 text-base font-semibold text-foreground hover:border-primary/50 hover:bg-muted/60 transition-all duration-200"
-              >
-                Nuestros servicios
-              </Link>
+              <Button variant="cta" size="lg" asChild className="group text-base">
+                <Link
+                  href="https://wa.me/34672297468?text=Hola,%20quisiera%20agendar%20una%20consulta%20completa%20para%20el%20tr%C3%A1mite%20de%20"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Habla con un asesor por WhatsApp"
+                >
+                  Asesórate con un experto
+                  <ArrowRight className="size-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild className="rounded-xl text-base bg-background/70 backdrop-blur-sm border-border/80">
+                <Link href="#servicios">
+                  Nuestros servicios
+                </Link>
+              </Button>
             </div>
 
             {/* Feature pills */}

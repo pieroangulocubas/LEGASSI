@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 import { FileText, Shield, Globe, MoreHorizontal, Clock, Users, HeartHandshake, ArrowRight, Flame, CalendarClock, CheckCircle, Expand, X } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { Button } from "@/components/ui/button"
 
 const services = [
   {
@@ -200,13 +201,12 @@ export function ServicesSection() {
               </div>
 
               <div className="shrink-0 flex flex-row min-[854px]:flex-col min-[854px]:items-end gap-2">
-                <Link
-                  href="/herramientas/clasificador-documentos"
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-4 min-[854px]:px-5 py-2 min-[854px]:py-2.5 text-xs min-[854px]:text-sm font-bold text-white shadow-md shadow-primary/20 hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] transition-all duration-200 whitespace-nowrap"
-                >
-                  Verificar documentos
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+                <Button variant="cta" size="sm" asChild className="whitespace-nowrap">
+                  <Link href="/herramientas/clasificador-documentos">
+                    Verificar documentos
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                </Button>
                 <Link
                   href="https://wa.me/34672297468?text=Hola,%20quiero%20información%20sobre%20la%20Regularización%20Extraordinaria%202026"
                   target="_blank"

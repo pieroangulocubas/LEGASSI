@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Phone, Mail, MessageCircle, ArrowRight, CheckCircle } from "lucide-react"
 import Link from "next/link"
 
@@ -82,29 +83,29 @@ export function CTASection() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            {/* WhatsApp express — secondary */}
-            <Link
-              href="https://wa.me/34672297468?text=Hola%2C%20me%20gustar%C3%ADa%20saber%20m%C3%A1s%20sobre%20sus%20servicios."
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Consulta express (WhatsApp)"
-              className="inline-flex items-center gap-2.5 rounded-xl border border-border/80 bg-background/80 backdrop-blur-sm px-8 py-4 text-base font-semibold text-foreground hover:border-primary/50 hover:bg-muted/60 transition-all duration-200"
-            >
-              <MessageCircle className="h-5 w-5 text-primary" />
-              Consulta express (WhatsApp)
-            </Link>
+            <Button variant="outline" size="lg" asChild className="rounded-xl text-base bg-background/80 backdrop-blur-sm border-border/80">
+              <Link
+                href="https://wa.me/34672297468?text=Hola%2C%20me%20gustar%C3%ADa%20saber%20m%C3%A1s%20sobre%20sus%20servicios."
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Consulta express (WhatsApp)"
+              >
+                <MessageCircle className="size-5 text-primary" />
+                Consulta express (WhatsApp)
+              </Link>
+            </Button>
 
-            {/* Main CTA — amber gradient */}
-            <Link
-              href="https://wa.me/34672297468?text=Hola,%20quisiera%20agendar%20una%20consulta%20completa%20para%20el%20tr%C3%A1mite%20de%20"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Habla con un asesor por WhatsApp"
-              className="group inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary/20 hover:shadow-primary/35 hover:scale-[1.02] hover:brightness-110 active:scale-[0.99] transition-all duration-200"
-            >
-              Solicitar asesoría completa
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            <Button variant="cta" size="lg" asChild className="group text-base">
+              <Link
+                href="https://wa.me/34672297468?text=Hola,%20quisiera%20agendar%20una%20consulta%20completa%20para%20el%20tr%C3%A1mite%20de%20"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Habla con un asesor por WhatsApp"
+              >
+                Solicitar asesoría completa
+                <ArrowRight className="size-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </Button>
           </div>
 
           {/* Trust badges */}
