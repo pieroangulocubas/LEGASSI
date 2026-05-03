@@ -20,7 +20,7 @@ export function CTASection() {
           {/* Section label */}
           <p className="text-xs uppercase tracking-widest text-primary font-bold mb-4">Contáctanos</p>
 
-          <h2 className="text-3xl md:text-5xl font-playfair font-bold mb-6 tracking-tight">
+          <h2 className="text-3xl md:text-5xl font-heading font-bold mb-6 tracking-tight">
             ¿Listo para comenzar tu{" "}
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               nueva vida

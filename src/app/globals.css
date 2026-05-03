@@ -4,17 +4,17 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* LEGASSI brand colors: amber #B8941F (deep) as primary, bronze #885D07 secondary */
+  /* Paleta semántica — amber como primary, bronce como secondary */
   --background: oklch(1 0 0);
   --foreground: oklch(0.15 0.02 258); /* slate-900 equivalent */
   --card: oklch(0.99 0 0);
   --card-foreground: oklch(0.15 0.02 258);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0.02 258);
-  --primary: oklch(0.63 0.115 78); /* #B8941F deep amber — same brand, less alarming */
-  --primary-foreground: oklch(0.12 0.02 258); /* dark text on amber */
-  --secondary: oklch(0.45 0.08 65); /* #885D07 bronze */
-  --secondary-foreground: oklch(1 0 0); /* white text on bronze */
+  --primary: oklch(0.63 0.115 78); /* amber */
+  --primary-foreground: oklch(0.12 0.02 258);
+  --secondary: oklch(0.45 0.08 65); /* bronze */
+  --secondary-foreground: oklch(1 0 0);
   --muted: oklch(0.98 0 0);
   --muted-foreground: oklch(0.55 0.02 258); /* slate-500 */
   --accent: oklch(0.63 0.115 78); /* amber accent */
@@ -38,13 +38,6 @@
   --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.92 0 0);
   --sidebar-ring: oklch(0.75 0.12 85 / 0.5);
-
-  /* Added LEGASSI brand-specific CSS variables */
-  --brand-primary: #fdb525;
-  --brand-secondary: #885d07;
-  --brand-gradient: linear-gradient(180deg, #fdb525 25%, #885d07 100%);
-  --bg-light: #ffffff;
-  --bg-dark: #0b0b0c;
 }
 
 .dark {
@@ -84,12 +77,8 @@
 }
 
 @theme inline {
-  /* Updated font variables to use Manrope */
   --font-sans: var(--font-manrope);
-
-  /* Added brand color utilities for Tailwind */
-  --color-brand-primary: var(--brand-primary);
-  --color-brand-secondary: var(--brand-secondary);
+  --font-heading: var(--font-montserrat);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -164,10 +153,9 @@
   }
 }
 
-/* Added utility classes for LEGASSI brand gradients and spacing */
 @layer utilities {
   .brand-gradient {
-    background: var(--brand-gradient);
+    background: linear-gradient(to right, var(--primary), var(--secondary));
   }
 
   .text-balance {

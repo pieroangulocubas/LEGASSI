@@ -140,7 +140,7 @@ export function ServicesSection() {
         {/* Header */}
         <div className="mb-14">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Qué hacemos</p>
-          <h2 className="text-3xl md:text-4xl font-playfair font-bold tracking-tight">
+          <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight">
             Servicios especializados en{" "}
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               extranjería
@@ -182,7 +182,7 @@ export function ServicesSection() {
                       <CalendarClock className="h-3 w-3 shrink-0" /> Hasta el 30 de junio de 2026
                     </span>
                   </div>
-                  <h3 className="font-playfair font-bold text-base min-[854px]:text-lg leading-tight mb-1">
+                  <h3 className="font-heading font-bold text-base min-[854px]:text-lg leading-tight mb-1">
                     Regularización Extraordinaria 2026
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
@@ -237,7 +237,7 @@ export function ServicesSection() {
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                   {service.label}
                 </p>
-                <h3 className="text-lg font-playfair font-bold mb-2">{service.title}</h3>
+                <h3 className="text-lg font-heading font-bold mb-2">{service.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{service.description}</p>
               </div>
 
@@ -270,7 +270,7 @@ export function ServicesSection() {
         {/* Why choose us */}
         <div id="por-que-elegirnos" className="rounded-2xl border border-border/40 bg-muted/30 px-5 sm:px-8 py-6 sm:py-8">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">Por qué elegirnos</p>
-          <h3 className="text-xl font-playfair font-bold mb-8">Lo que nos diferencia</h3>
+          <h3 className="text-xl font-heading font-bold mb-8">Lo que nos diferencia</h3>
 
           <div className="grid sm:grid-cols-3 gap-8">
             {differentiators.map((d, i) => (

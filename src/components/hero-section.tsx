@@ -24,7 +24,7 @@ export function HeroSection() {
             </div>
 
             {/* Heading */}
-            <h1 className="text-4xl md:text-5xl lg:text-[3.25rem] xl:text-6xl font-playfair font-bold text-balance mb-5 tracking-tight leading-[1.1]">
+            <h1 className="text-4xl md:text-5xl lg:text-[3.25rem] xl:text-6xl font-heading font-bold text-balance mb-5 tracking-tight leading-[1.1]">
               Tu{" "}
               <span className="relative inline-block">
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">

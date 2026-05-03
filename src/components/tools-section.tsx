@@ -80,7 +80,7 @@ export function ToolsSection() {
                 <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Equipo LegalTech</span>
               </div>
             </div>
-            <h2 className="text-3xl md:text-4xl font-playfair font-bold tracking-tight">
+            <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight">
               Herramientas que{" "}
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 desarrollamos internamente

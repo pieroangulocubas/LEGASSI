@@ -6,7 +6,7 @@ export function MissionSection() {
     <section id="mision" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-playfair font-bold mb-4">
+          <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
             Nuestra <span className="text-primary">Misión</span> y <span className="text-secondary">Visión</span>
           </h2>
         </div>
@@ -17,7 +17,7 @@ export function MissionSection() {
               <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
                 <Target className="h-8 w-8 text-primary" />
               </div>
-              <CardTitle className="text-2xl font-playfair">Nuestra Misión</CardTitle>
+              <CardTitle className="text-2xl font-heading">Nuestra Misión</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-base leading-relaxed text-pretty">
@@ -34,7 +34,7 @@ export function MissionSection() {
               <div className="mx-auto mb-4 w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center">
                 <Eye className="h-8 w-8 text-secondary" />
               </div>
-              <CardTitle className="text-2xl font-playfair">Nuestra Visión</CardTitle>
+              <CardTitle className="text-2xl font-heading">Nuestra Visión</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-base leading-relaxed text-pretty">
@@ -51,7 +51,7 @@ export function MissionSection() {
           <Card className="max-w-4xl mx-auto bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
             <CardContent className="p-8">
               <Heart className="h-12 w-12 text-primary mx-auto mb-6" />
-              <h3 className="text-xl font-playfair font-semibold mb-4">Nuestro Compromiso Contigo</h3>
+              <h3 className="text-xl font-heading font-semibold mb-4">Nuestro Compromiso Contigo</h3>
               <p className="text-base leading-relaxed text-pretty">
                 No somos solo otro despacho de abogados. Somos tu aliado en este camino hacia un futuro mejor. Te
                 acompañamos en cada paso, desde la primera consulta hasta la celebración de tu éxito. Porque creemos que

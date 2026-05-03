@@ -126,7 +126,7 @@ export function TestimonialsSection() {
       <div className="container relative z-10 mx-auto px-6 sm:px-10 lg:px-16">
         <div className="text-center mb-14">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Testimonios</p>
-          <h2 className="text-3xl md:text-4xl font-playfair font-bold tracking-tight">
+          <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight">
             Lo que dicen nuestros{" "}
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">clientes</span>
           </h2>
