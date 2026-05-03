@@ -26,9 +26,9 @@
   --ring: oklch(0.63 0.115 78 / 0.4); /* amber ring */
   --chart-1: oklch(0.63 0.115 78); /* amber */
   --chart-2: oklch(0.45 0.08 65); /* bronze */
-  --chart-3: oklch(0.98 0 0);
-  --chart-4: oklch(0.15 0.02 258);
-  --chart-5: oklch(1 0 0);
+  --chart-3: oklch(0.62 0.09 155); /* teal */
+  --chart-4: oklch(0.15 0.02 258); /* dark slate */
+  --chart-5: oklch(0.60 0.12 40);  /* terracota */
   --radius: 1rem; /* 2xl corners as specified */
   --sidebar: oklch(0.98 0 0);
   --sidebar-foreground: oklch(0.15 0.02 258);
@@ -79,6 +79,12 @@
 @theme inline {
   --font-sans: var(--font-manrope);
   --font-heading: var(--font-montserrat);
+
+  /* Escala tipográfica semántica */
+  --text-display: clamp(2.25rem, 4vw + 1rem, 4rem);
+  --text-display--line-height: 1.1;
+  --text-section: clamp(1.875rem, 1vw + 1.5rem, 2.25rem);
+  --text-section--line-height: 1.2;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

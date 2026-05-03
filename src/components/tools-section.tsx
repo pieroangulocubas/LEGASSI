@@ -65,8 +65,8 @@ export function ToolsSection() {
       {/* Dark gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.03] via-primary/5 to-secondary/5" aria-hidden="true" />
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute -top-20 right-0 w-[500px] h-[500px] bg-primary/6 rounded-full blur-[140px]" />
-        <div className="absolute bottom-0 -left-20 w-[400px] h-[400px] bg-secondary/6 rounded-full blur-[120px]" />
+        <div className="absolute -top-20 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[140px]" />
+        <div className="absolute bottom-0 -left-20 w-[400px] h-[400px] bg-secondary/5 rounded-full blur-[120px]" />
       </div>
 
       <div className="container relative z-10 mx-auto px-6 sm:px-10 lg:px-16">
@@ -75,12 +75,12 @@ export function ToolsSection() {
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-14">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-3 py-1">
+              <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1">
                 <Cpu className="h-3 w-3 text-primary" />
                 <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Equipo LegalTech</span>
               </div>
             </div>
-            <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight">
+            <h2 className="text-section font-heading font-bold tracking-tight">
               Herramientas que{" "}
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 desarrollamos internamente
@@ -106,7 +106,7 @@ export function ToolsSection() {
             <Link
               key={tool.title}
               href={tool.href}
-              className="group relative block rounded-2xl border border-primary/25 bg-gradient-to-r from-primary/8 via-card to-secondary/5 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 overflow-hidden"
+              className="group relative block rounded-2xl border border-primary/25 bg-gradient-to-r from-primary/10 via-card to-secondary/5 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 overflow-hidden"
             >
               {/* Shine effect */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/3 to-transparent" />

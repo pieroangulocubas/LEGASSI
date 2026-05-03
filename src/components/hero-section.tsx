@@ -8,8 +8,8 @@ export function HeroSection() {
     <section className="relative min-h-[calc(100vh-4rem)] flex items-center overflow-hidden bg-gradient-to-b from-background via-background to-muted/30">
       {/* Ambient blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute -top-40 right-0 w-[700px] h-[700px] bg-primary/6 rounded-full blur-[130px]" />
-        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-secondary/6 rounded-full blur-[110px]" />
+        <div className="absolute -top-40 right-0 w-[700px] h-[700px] bg-primary/5 rounded-full blur-[130px]" />
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[110px]" />
       </div>
 
       <div className="container mx-auto relative z-10 px-6 sm:px-10 lg:px-16 py-16 md:py-20 w-full">
@@ -19,19 +19,19 @@ export function HeroSection() {
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left max-w-xl mx-auto lg:mx-0">
 
             {/* Trust badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/8 px-4 py-1.5 text-sm font-semibold text-primary mb-7 shadow-sm shadow-primary/10">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary mb-7 shadow-sm shadow-primary/10">
               <Sparkles className="h-3.5 w-3.5 shrink-0" />
               <span>Centro de Extranjería líder en España</span>
             </div>
 
             {/* Heading */}
-            <h1 className="text-4xl md:text-5xl lg:text-[3.25rem] xl:text-6xl font-heading font-bold text-balance mb-5 tracking-tight leading-[1.1]">
+            <h1 className="text-display font-heading font-bold text-balance mb-5 tracking-tight">
               Tu{" "}
               <span className="relative inline-block">
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                   Centro de Confianza
                 </span>
-                <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
               </span>
               {" "}en{" "}
               <span className="text-secondary">Extranjería</span>
@@ -105,7 +105,7 @@ export function HeroSection() {
             <div className="absolute inset-6 bg-primary/10 rounded-3xl blur-3xl" />
 
             {/* Image container with fixed aspect ratio */}
-            <div className="relative rounded-3xl overflow-hidden border border-primary/15 shadow-2xl shadow-black/10" style={{ height: "580px" }}>
+            <div className="relative rounded-3xl overflow-hidden border border-primary/15 shadow-2xl shadow-black/10 h-[580px]">
               <Image
                 src="/espaldas.png"
                 alt="Persona mirando su futuro en España"
@@ -148,7 +148,7 @@ export function HeroSection() {
           <div className="lg:hidden">
             <Link
               href="/herramientas/clasificador-documentos"
-              className="group block rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/8 via-primary/4 to-transparent hover:border-primary/50 transition-all duration-300 p-5 shadow-sm"
+              className="group block rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent hover:border-primary/50 transition-all duration-300 p-5 shadow-sm"
             >
               <div className="flex items-start gap-4">
                 <div className="shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/25 flex items-center justify-center">

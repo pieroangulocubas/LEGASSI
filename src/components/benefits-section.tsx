@@ -35,8 +35,8 @@ export function BenefitsSection() {
     <section className="relative py-20 overflow-hidden bg-gradient-to-b from-muted/20 via-background to-background">
       {/* Ambient blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute top-10 -right-40 w-80 h-80 bg-primary/8 rounded-full blur-[100px]" />
-        <div className="absolute bottom-10 -left-40 w-80 h-80 bg-secondary/8 rounded-full blur-[90px]" />
+        <div className="absolute top-10 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-[100px]" />
+        <div className="absolute bottom-10 -left-40 w-80 h-80 bg-secondary/10 rounded-full blur-[90px]" />
       </div>
 
       <div className="container relative z-10 mx-auto px-4">

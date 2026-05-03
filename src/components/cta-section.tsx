@@ -7,12 +7,12 @@ export function CTASection() {
   return (
     <section
       id="contacto"
-      className="relative py-24 overflow-hidden bg-gradient-to-br from-primary/6 via-background to-secondary/6"
+      className="relative py-24 overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5"
     >
       {/* Ambient blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute -top-32 right-0 w-[500px] h-[500px] bg-primary/8 rounded-full blur-[120px]" />
-        <div className="absolute -bottom-32 left-0 w-[400px] h-[400px] bg-secondary/8 rounded-full blur-[100px]" />
+        <div className="absolute -top-32 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px]" />
+        <div className="absolute -bottom-32 left-0 w-[400px] h-[400px] bg-secondary/10 rounded-full blur-[100px]" />
       </div>
 
       <div className="container relative z-10 mx-auto px-4">
@@ -59,7 +59,7 @@ export function CTASection() {
                 key={title}
                 className={`text-center transition-all duration-200 hover:scale-[1.02] hover:shadow-xl ${
                   highlight
-                    ? "border-primary/40 bg-gradient-to-b from-primary/8 to-transparent shadow-lg shadow-primary/10"
+                    ? "border-primary/40 bg-gradient-to-b from-primary/10 to-transparent shadow-lg shadow-primary/10"
                     : "hover:border-border/80"
                 }`}
               >

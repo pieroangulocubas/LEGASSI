@@ -141,7 +141,7 @@ export function ServicesSection() {
         {/* Header */}
         <div className="mb-14">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Qué hacemos</p>
-          <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight">
+          <h2 className="text-section font-heading font-bold tracking-tight">
             Servicios especializados en{" "}
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               extranjería
@@ -150,28 +150,28 @@ export function ServicesSection() {
         </div>
 
         {/* Regularización Extraordinaria 2026 — featured offer */}
-        <div className="relative rounded-2xl overflow-hidden border border-primary/30 bg-gradient-to-r from-primary/10 via-card to-secondary/8 mb-8">
+        <div className="relative rounded-2xl overflow-hidden border border-primary/30 bg-gradient-to-r from-primary/10 via-card to-secondary/10 mb-8">
           {/* Stripe accent left */}
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-secondary rounded-l-2xl" />
 
-          <div className="flex flex-col min-[854px]:flex-row min-[854px]:items-stretch">
+          <div className="flex flex-col md:flex-row md:items-stretch">
 
             {/* Image — fila 1 en ≤853px, columna izquierda en >853px */}
             <button
               onClick={() => setImgOpen(true)}
-              className="group relative shrink-0 w-full min-[854px]:w-44 lg:w-48 h-52 min-[854px]:h-auto min-[854px]:self-stretch rounded-t-2xl min-[854px]:rounded-l-2xl min-[854px]:rounded-tr-none overflow-hidden border-b min-[854px]:border-b-0 min-[854px]:border-r border-primary/20 bg-muted/40"
+              className="group relative shrink-0 w-full md:w-44 lg:w-48 h-52 md:h-auto md:self-stretch rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none overflow-hidden border-b md:border-b-0 md:border-r border-primary/20 bg-muted/40"
               aria-label="Ver imagen completa"
             >
-              <Image src="/oferta-reg2026.png" alt="Oferta Regularización 2026" fill sizes="(max-width: 854px) 100vw, 12rem" className="object-cover" />
+              <Image src="/oferta-reg2026.png" alt="Oferta Regularización 2026" fill sizes="(max-width: 768px) 100vw, 12rem" className="object-cover" />
               <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Expand className="h-5 w-5 text-white" />
               </div>
             </button>
 
             {/* Content — fila 2 en ≤853px, columna derecha en >853px */}
-            <div className="px-4 sm:px-6 min-[854px]:px-7 py-5 min-[854px]:py-6 flex flex-col min-[854px]:flex-row min-[854px]:items-center gap-4 min-[854px]:gap-5 flex-1 min-w-0">
+            <div className="px-4 sm:px-6 md:px-7 py-5 md:py-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-5 flex-1 min-w-0">
               <div className="flex items-start gap-3 flex-1 min-w-0">
-                <div className="shrink-0 w-9 h-9 min-[854px]:w-10 min-[854px]:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md shadow-primary/20">
+                <div className="shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md shadow-primary/20">
                   <Flame className="h-4 w-4 text-white" />
                 </div>
                 <div className="min-w-0">
@@ -183,7 +183,7 @@ export function ServicesSection() {
                       <CalendarClock className="h-3 w-3 shrink-0" /> Hasta el 30 de junio de 2026
                     </span>
                   </div>
-                  <h3 className="font-heading font-bold text-base min-[854px]:text-lg leading-tight mb-1">
+                  <h3 className="font-heading font-bold text-base md:text-lg leading-tight mb-1">
                     Regularización Extraordinaria 2026
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
@@ -200,7 +200,7 @@ export function ServicesSection() {
                 </div>
               </div>
 
-              <div className="shrink-0 flex flex-row min-[854px]:flex-col min-[854px]:items-end gap-2">
+              <div className="shrink-0 flex flex-row md:flex-col md:items-end gap-2">
                 <Button variant="cta" size="sm" asChild className="whitespace-nowrap">
                   <Link href="/herramientas/clasificador-documentos">
                     Verificar documentos

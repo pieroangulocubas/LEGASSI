@@ -6,7 +6,7 @@ export function MissionSection() {
     <section id="mision" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
+          <h2 className="text-section font-heading font-bold mb-4">
             Nuestra <span className="text-primary">Misión</span> y <span className="text-secondary">Visión</span>
           </h2>
         </div>

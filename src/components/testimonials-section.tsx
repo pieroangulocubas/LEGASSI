@@ -126,7 +126,7 @@ export function TestimonialsSection() {
       <div className="container relative z-10 mx-auto px-6 sm:px-10 lg:px-16">
         <div className="text-center mb-14">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Testimonios</p>
-          <h2 className="text-3xl md:text-4xl font-heading font-bold tracking-tight">
+          <h2 className="text-section font-heading font-bold tracking-tight">
             Lo que dicen nuestros{" "}
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">clientes</span>
           </h2>
@@ -146,8 +146,8 @@ export function TestimonialsSection() {
               </div>
             </div>
           ) : (
-            <div className="relative rounded-2xl border border-primary/15 bg-gradient-to-br from-card via-card to-primary/3 shadow-xl shadow-primary/5 p-5 sm:p-8 md:p-12">
-              <Quote className="absolute top-6 right-8 h-14 w-14 text-primary/8 rotate-180" aria-hidden="true" />
+            <div className="relative rounded-2xl border border-primary/15 bg-gradient-to-br from-card via-card to-primary/5 shadow-xl shadow-primary/5 p-5 sm:p-8 md:p-12">
+              <Quote className="absolute top-6 right-8 h-14 w-14 text-primary/10 rotate-180" aria-hidden="true" />
 
               <Stars count={item.rating} />
 
