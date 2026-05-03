@@ -34,16 +34,9 @@ export function Navbar() {
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <Image
-                src="/logo-legassi.svg"
-                alt="Logo de LEGASSI"
-                width={40}
-                height={40}
-                className="h-10 w-auto"
-                priority
-              />
-              <span className="font-bold text-xl text-foreground">LEGASSI</span>
+            <Link href="/" aria-label="Ir a inicio — LEGASSI">
+              <Image src="/imagotipo_ligth.svg" alt="LEGASSI" width={150} height={40} className="h-9 w-auto block dark:hidden" priority />
+              <Image src="/imagotipo_dark.svg"  alt="LEGASSI" width={150} height={40} className="h-9 w-auto hidden dark:block" priority />
             </Link>
 
             {/* Desktop Navigation */}
@@ -87,16 +80,9 @@ export function Navbar() {
                 <SheetContent side="right" className="w-[300px] sm:w-[400px] px-5">
                   <SheetTitle className="sr-only">menu mobile</SheetTitle>
                   <nav className="flex flex-col space-y-4 mt-8 gap-y-2">
-                    <Link href="/" className="flex items-center  space-x-2 mb-10">
-                      <Image
-                        src="/logo-legassi.svg"
-                        alt="LEGASSI — LegalTech de Extranjería"
-                        width={40}
-                        height={40}
-                        className="h-10 w-auto"
-                        priority
-                      />
-                      <span className="font-bold text-xl text-foreground">LEGASSI</span>
+                    <Link href="/" className="mb-10 inline-block" aria-label="Ir a inicio — LEGASSI">
+                      <Image src="/imagotipo_ligth.svg" alt="LEGASSI" width={150} height={40} className="h-9 w-auto block dark:hidden" priority />
+                      <Image src="/imagotipo_dark.svg"  alt="LEGASSI" width={150} height={40} className="h-9 w-auto hidden dark:block" priority />
                     </Link>
                     {navItems.map((item) => (
                       <Link
