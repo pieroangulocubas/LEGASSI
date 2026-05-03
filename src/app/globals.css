@@ -4,73 +4,99 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Paleta semántica — amber como primary, bronce como secondary */
+  /* ── Primitivas: escala amber (hue 78) ── */
+  --amber-50:  oklch(0.98 0.010 80);
+  --amber-100: oklch(0.95 0.030 80);
+  --amber-200: oklch(0.88 0.065 80);
+  --amber-300: oklch(0.80 0.110 80);
+  --amber-400: oklch(0.72 0.130 78);
+  --amber-500: oklch(0.63 0.115 78);
+  --amber-600: oklch(0.54 0.100 77);
+  --amber-700: oklch(0.45 0.085 76);
+  --amber-800: oklch(0.35 0.065 75);
+  --amber-900: oklch(0.25 0.050 78);
+  --amber-950: oklch(0.16 0.030 75);
+
+  /* ── Primitivas: escala bronze (hue 65) ── */
+  --bronze-50:  oklch(0.97 0.010 65);
+  --bronze-100: oklch(0.93 0.025 65);
+  --bronze-200: oklch(0.85 0.045 65);
+  --bronze-300: oklch(0.68 0.065 65);
+  --bronze-400: oklch(0.50 0.090 65);
+  --bronze-500: oklch(0.45 0.080 65);
+  --bronze-600: oklch(0.38 0.065 65);
+  --bronze-700: oklch(0.30 0.048 65);
+  --bronze-800: oklch(0.23 0.033 65);
+  --bronze-900: oklch(0.16 0.020 65);
+  --bronze-950: oklch(0.11 0.012 65);
+
+  /* ── Semántica — modo claro ── */
   --background: oklch(1 0 0);
-  --foreground: oklch(0.15 0.02 258); /* slate-900 equivalent */
+  --foreground: oklch(0.15 0.02 258);
   --card: oklch(0.99 0 0);
   --card-foreground: oklch(0.15 0.02 258);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0.02 258);
-  --primary: oklch(0.63 0.115 78); /* amber */
+  --primary: var(--amber-500);
   --primary-foreground: oklch(0.12 0.02 258);
-  --secondary: oklch(0.45 0.08 65); /* bronze */
+  --secondary: var(--bronze-500);
   --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.98 0 0);
-  --muted-foreground: oklch(0.55 0.02 258); /* slate-500 */
-  --accent: oklch(0.95 0.03 80);       /* light warm amber — hover surfaces */
-  --accent-foreground: oklch(0.25 0.05 78); /* dark amber text on accent bg */
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.55 0.02 258);
+  --accent: var(--amber-100);
+  --accent-foreground: var(--amber-900);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.92 0 0);
   --input: oklch(0.98 0 0);
-  --ring: oklch(0.63 0.115 78 / 0.4); /* amber ring */
-  --chart-1: oklch(0.63 0.115 78); /* amber */
-  --chart-2: oklch(0.45 0.08 65); /* bronze */
-  --chart-3: oklch(0.62 0.09 155); /* teal */
-  --chart-4: oklch(0.15 0.02 258); /* dark slate */
-  --chart-5: oklch(0.60 0.12 40);  /* terracota */
-  --radius: 1rem; /* 2xl corners as specified */
+  --ring: oklch(0.63 0.115 78 / 0.4);
+  --chart-1: var(--amber-500);
+  --chart-2: var(--bronze-500);
+  --chart-3: oklch(0.62 0.09 155);
+  --chart-4: oklch(0.15 0.02 258);
+  --chart-5: oklch(0.60 0.12 40);
+  --radius: 1rem;
   --sidebar: oklch(0.98 0 0);
   --sidebar-foreground: oklch(0.15 0.02 258);
-  --sidebar-primary: oklch(0.75 0.12 85);
+  --sidebar-primary: var(--amber-400);
   --sidebar-primary-foreground: oklch(0.15 0.02 258);
-  --sidebar-accent: oklch(0.45 0.08 65);
+  --sidebar-accent: var(--bronze-500);
   --sidebar-accent-foreground: oklch(1 0 0);
   --sidebar-border: oklch(0.92 0 0);
-  --sidebar-ring: oklch(0.75 0.12 85 / 0.5);
+  --sidebar-ring: oklch(0.63 0.115 78 / 0.5);
 }
 
 .dark {
-  /* Rich dark mode — warm charcoal, clearly not pure black, 3 visible surface layers */
-  --background: oklch(0.17 0.014 62);   /* warm dark charcoal — visible warmth */
-  --foreground: oklch(0.95 0.006 80);   /* soft off-white */
-  --card: oklch(0.21 0.012 62);         /* card — noticeably lighter than bg */
+  /* ── Semántica — modo oscuro ── */
+  --background: oklch(0.17 0.014 62);
+  --foreground: oklch(0.95 0.006 80);
+  --card: oklch(0.21 0.012 62);
   --card-foreground: oklch(0.95 0.006 80);
   --popover: oklch(0.19 0.013 62);
   --popover-foreground: oklch(0.95 0.006 80);
-  --primary: oklch(0.72 0.13 78);       /* amber — vivid on dark */
+  --primary: var(--amber-400);
   --primary-foreground: oklch(0.10 0.01 62);
-  --secondary: oklch(0.50 0.09 65);     /* bronze */
+  --secondary: var(--bronze-400);
   --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.25 0.010 62);        /* third surface layer */
+  --muted: oklch(0.25 0.010 62);
   --muted-foreground: oklch(0.63 0.014 72);
-  --accent: oklch(0.80 0.11 82);       /* lighter amber — visible as text + hover */
+  --accent: var(--amber-300);
   --accent-foreground: oklch(0.10 0.01 62);
   --destructive: oklch(0.48 0.19 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.29 0.012 62);       /* clearly visible borders */
+  --border: oklch(0.29 0.012 62);
   --input: oklch(0.24 0.011 62);
   --ring: oklch(0.72 0.13 78 / 0.45);
-  --chart-1: oklch(0.72 0.13 78);
-  --chart-2: oklch(0.50 0.09 65);
+  --chart-1: var(--amber-400);
+  --chart-2: var(--bronze-400);
   --chart-3: oklch(0.25 0.010 62);
   --chart-4: oklch(0.95 0.006 80);
   --chart-5: oklch(0.17 0.014 62);
   --sidebar: oklch(0.19 0.013 62);
   --sidebar-foreground: oklch(0.95 0.006 80);
-  --sidebar-primary: oklch(0.72 0.13 78);
+  --sidebar-primary: var(--amber-400);
   --sidebar-primary-foreground: oklch(0.10 0.01 62);
-  --sidebar-accent: oklch(0.50 0.09 65);
+  --sidebar-accent: var(--bronze-400);
   --sidebar-accent-foreground: oklch(0.98 0 0);
   --sidebar-border: oklch(0.27 0.012 62);
   --sidebar-ring: oklch(0.72 0.13 78 / 0.5);
@@ -86,6 +112,33 @@
   --text-section: clamp(1.875rem, 1vw + 1.5rem, 2.25rem);
   --text-section--line-height: 1.2;
 
+  /* Escala primitiva amber — disponible como bg-amber-*, text-amber-*, etc. */
+  --color-amber-50:  var(--amber-50);
+  --color-amber-100: var(--amber-100);
+  --color-amber-200: var(--amber-200);
+  --color-amber-300: var(--amber-300);
+  --color-amber-400: var(--amber-400);
+  --color-amber-500: var(--amber-500);
+  --color-amber-600: var(--amber-600);
+  --color-amber-700: var(--amber-700);
+  --color-amber-800: var(--amber-800);
+  --color-amber-900: var(--amber-900);
+  --color-amber-950: var(--amber-950);
+
+  /* Escala primitiva bronze — disponible como bg-bronze-*, text-bronze-*, etc. */
+  --color-bronze-50:  var(--bronze-50);
+  --color-bronze-100: var(--bronze-100);
+  --color-bronze-200: var(--bronze-200);
+  --color-bronze-300: var(--bronze-300);
+  --color-bronze-400: var(--bronze-400);
+  --color-bronze-500: var(--bronze-500);
+  --color-bronze-600: var(--bronze-600);
+  --color-bronze-700: var(--bronze-700);
+  --color-bronze-800: var(--bronze-800);
+  --color-bronze-900: var(--bronze-900);
+  --color-bronze-950: var(--bronze-950);
+
+  /* Tokens semánticos */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
