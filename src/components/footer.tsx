@@ -9,9 +9,9 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8">
           {/* Logo and description */}
           <div className="md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
-              <Image src="/logo-legassi.svg" alt="Logo de LEGASSI" className="h-8 w-auto" width={20} height={20} />
-              <span className="text-xl font-bold text-primary">LEGASSI</span>
+            <div className="mb-4">
+              <Image src="/imagotipo_ligth.svg" alt="LEGASSI" width={130} height={35} className="h-8 w-auto block dark:hidden" />
+              <Image src="/imagotipo_dark.svg"  alt="LEGASSI" width={130} height={35} className="h-8 w-auto hidden dark:block" />
             </div>
             <p className="text-muted-foreground mb-4 text-pretty">
               Tu centro de confianza en servicios de extranjería. Democratizamos los trámites migratorios con tecnología
