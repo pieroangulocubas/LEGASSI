@@ -186,7 +186,7 @@ export function FileDropzone({
       <button
         type="button"
         onClick={() => setShowCamera(true)}
-        className="group relative w-full flex items-center gap-3 rounded-xl bg-[#1a1a2e] px-4 py-3 hover:bg-[#1a1a2e]/90 transition-all duration-200 overflow-hidden shadow-md shadow-[#1a1a2e]/20"
+        className="group relative w-full flex items-center gap-3 rounded-xl bg-[#1a1a2e] px-4 py-3 hover:bg-[#1a1a2e]/90 transition-all duration-normal overflow-hidden shadow-md shadow-[#1a1a2e]/20"
       >
         {/* Subtle sweep on hover */}
         <span

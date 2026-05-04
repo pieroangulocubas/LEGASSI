@@ -70,7 +70,7 @@ export function WhyChooseUsSection() {
           {reasons.map((reason, index) => (
             <div
               key={index}
-              className="group relative rounded-2xl border border-border/60 bg-gradient-to-b from-card to-card/80 p-6 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+              className="group relative rounded-2xl border border-border/60 bg-gradient-to-b from-card to-card/80 p-6 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-slow"
             >
               <div className="w-12 h-12 bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 rounded-xl flex items-center justify-center mb-4 group-hover:from-primary/25 transition-colors">
                 <reason.icon className="w-6 h-6 text-primary" />

@@ -113,7 +113,7 @@ export function ResolucionesFavorablesSection() {
             <button
               key={i}
               onClick={() => setSelected(res)}
-              className="group snap-start shrink-0 w-[75%] sm:w-[calc(33.333%-11px)] lg:w-[calc(25%-12px)] rounded-xl overflow-hidden border border-border/60 bg-card shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-left"
+              className="group snap-start shrink-0 w-[75%] sm:w-[calc(33.333%-11px)] lg:w-[calc(25%-12px)] rounded-xl overflow-hidden border border-border/60 bg-card shadow-card hover:shadow-lg hover:-translate-y-0.5 transition-all duration-normal text-left"
             >
               <div className="relative aspect-[3/4] overflow-hidden">
                 <Image
@@ -121,7 +121,7 @@ export function ResolucionesFavorablesSection() {
                   alt={res.alt}
                   fill
                   sizes="(max-width: 640px) 75vw, (max-width: 1024px) 33vw, 25vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="object-cover transition-transform duration-slow group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <div className="w-9 h-9 rounded-full bg-white/90 flex items-center justify-center shadow-lg">

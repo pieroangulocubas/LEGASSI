@@ -106,13 +106,13 @@ export function ToolsSection() {
             <Link
               key={tool.title}
               href={tool.href}
-              className="group relative block rounded-2xl border border-primary/25 bg-gradient-to-r from-primary/10 via-card to-secondary/5 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 overflow-hidden"
+              className="group relative block rounded-2xl border border-primary/25 bg-gradient-to-r from-primary/10 via-card to-secondary/5 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-slow overflow-hidden"
             >
               {/* Shine effect */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-transparent via-white/3 to-transparent" />
 
               <div className="relative p-4 sm:p-6 md:p-7 flex items-start gap-4 sm:gap-6">
-                <div className="shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
+                <div className="shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-brand">
                   <tool.icon className="h-7 w-7 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -128,7 +128,7 @@ export function ToolsSection() {
                   <p className="text-muted-foreground text-sm leading-relaxed max-w-lg">{tool.description}</p>
                 </div>
                 <div className="shrink-0 self-center">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary group-hover:border-primary transition-colors duration-200">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary group-hover:border-primary transition-colors duration-normal">
                     <ArrowRight className="h-4 w-4 text-primary group-hover:text-white group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </div>

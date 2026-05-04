@@ -57,7 +57,7 @@ export function CTASection() {
             ].map(({ icon: Icon, title, sub, note, highlight }) => (
               <Card
                 key={title}
-                className={`text-center transition-all duration-200 hover:scale-[1.02] hover:shadow-xl ${
+                className={`text-center transition-all duration-normal hover:scale-[1.02] hover:shadow-xl ${
                   highlight
                     ? "border-primary/40 bg-gradient-to-b from-primary/10 to-transparent shadow-lg shadow-primary/10"
                     : "hover:border-border/80"

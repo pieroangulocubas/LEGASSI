@@ -114,7 +114,7 @@ export function PreviewModal({
                   onClick={() => setShowExcluded((v) => !v)}
                   className="flex items-center gap-1.5 text-[11px] text-muted-foreground/70 hover:text-foreground transition-colors"
                 >
-                  <ChevronDown className={cn("h-3 w-3 transition-transform duration-150", showExcluded && "rotate-180")} />
+                  <ChevronDown className={cn("h-3 w-3 transition-transform duration-fast", showExcluded && "rotate-180")} />
                   {excluded.length} fecha{excluded.length > 1 ? "s" : ""} excluida{excluded.length > 1 ? "s" : ""}
                 </button>
                 {showExcluded && (

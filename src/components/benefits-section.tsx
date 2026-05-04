@@ -56,7 +56,7 @@ export function BenefitsSection() {
           {benefits.map((benefit) => (
             <div
               key={benefit.number}
-              className="group relative rounded-2xl border border-border/60 bg-gradient-to-b from-card to-card/80 p-6 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+              className="group relative rounded-2xl border border-border/60 bg-gradient-to-b from-card to-card/80 p-6 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-slow"
             >
               {/* Faint background number */}
               <span className="absolute top-4 right-5 text-5xl font-black text-border/40 select-none group-hover:text-primary/10 transition-colors">

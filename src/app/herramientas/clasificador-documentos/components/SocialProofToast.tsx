@@ -63,7 +63,7 @@ export function SocialProofToast() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="flex items-start gap-2.5 rounded-xl border border-border bg-background/95 backdrop-blur-sm shadow-lg px-4 py-3 animate-in slide-in-from-left-4 fade-in duration-300"
+          className="flex items-start gap-2.5 rounded-xl border border-border bg-background/95 backdrop-blur-sm shadow-float px-4 py-3 animate-in slide-in-from-left-4 fade-in duration-slow"
         >
           <CheckCircle className="h-4 w-4 shrink-0 text-green-500 mt-0.5" />
           <p className="text-xs text-foreground leading-snug">{t.text}</p>

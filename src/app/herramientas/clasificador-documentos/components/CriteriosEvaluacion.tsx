@@ -90,7 +90,7 @@ export function CriteriosEvaluacion() {
           <Info className="h-4 w-4 text-primary shrink-0" />
           <span className="text-sm font-semibold text-foreground">¿Qué documentos y fechas se aceptan como prueba?</span>
         </div>
-        <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200", open && "rotate-180")} />
+        <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-normal", open && "rotate-180")} />
       </button>
 
       {open && (

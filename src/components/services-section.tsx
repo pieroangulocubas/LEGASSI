@@ -228,7 +228,7 @@ export function ServicesSection() {
           {services.map((service, i) => (
             <div
               key={i}
-              className="group relative rounded-2xl border border-border/50 bg-card p-6 flex flex-col gap-5 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+              className="group relative rounded-2xl border border-border/50 bg-card p-6 flex flex-col gap-5 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-slow"
             >
               <div>
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/15 flex items-center justify-center mb-4 group-hover:from-primary/25 transition-colors">

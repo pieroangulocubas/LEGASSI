@@ -801,7 +801,7 @@ export default function ClasificadorPage() {
                 return (
                   <div
                     key={i}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-300 ${
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-slow ${
                       done
                         ? "bg-green-50 dark:bg-green-950/20"
                         : current
@@ -1250,7 +1250,7 @@ export default function ClasificadorPage() {
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full font-bold text-base py-6 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-700/25 hover:shadow-green-700/40 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+                  className="w-full font-bold text-base py-6 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-700/25 hover:shadow-green-700/40 transition-all duration-normal hover:-translate-y-0.5 active:translate-y-0"
                   disabled={
                     !nombre.trim() ||
                     (creditsRemaining === null ? !email.trim() || !telefono.trim() : false) ||

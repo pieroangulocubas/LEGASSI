@@ -95,7 +95,7 @@ function VideoCard({ item }: { item: Extract<TestimonialItem, { type: "video" }>
             className="absolute inset-0 flex items-center justify-center group"
             aria-label="Reproducir video"
           >
-            <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-200">
+            <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-normal">
               <Play className="h-6 w-6 fill-primary text-primary ml-1" />
             </div>
           </button>
@@ -182,7 +182,7 @@ export function TestimonialsSection() {
                   key={i}
                   onClick={() => setCurrentIndex(i)}
                   aria-label={`Testimonio ${i + 1}`}
-                  className={`rounded-full transition-all duration-200 ${
+                  className={`rounded-full transition-all duration-normal ${
                     i === currentIndex ? "w-6 h-2.5 bg-primary" : "w-2.5 h-2.5 bg-border hover:bg-primary/40"
                   }`}
                 />

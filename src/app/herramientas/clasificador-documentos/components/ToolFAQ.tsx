@@ -53,7 +53,7 @@ export function ToolFAQ() {
               <span>{faq.q}</span>
               <ChevronDown
                 className={cn(
-                  "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                  "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-normal",
                   open === i && "rotate-180"
                 )}
               />

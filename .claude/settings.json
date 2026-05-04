@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m 'feat\\(design-system\\): fase 2 — variante cta, CTAs unificados y accent separado *)"
+    ]
+  }
+}

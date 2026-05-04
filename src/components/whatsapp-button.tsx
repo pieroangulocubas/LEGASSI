@@ -23,11 +23,11 @@ export function WhatsAppButton() {
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 transition-opacity duration-300 ${isVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+      className={`fixed bottom-6 right-6 z-50 transition-opacity duration-slow ${isVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
     >
       <Button
         size="lg"
-        className="rounded-full w-14 h-14 bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse"
+        className="rounded-full w-14 h-14 bg-green-500 hover:bg-green-600 shadow-lg hover:shadow-xl transition-all duration-slow animate-pulse"
         asChild
       >
         <Link

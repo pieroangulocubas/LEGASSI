@@ -54,7 +54,7 @@ export function RegularizacionBanner() {
           <div className="flex items-center gap-2 shrink-0 pl-10 sm:pl-0">
             <Link
               href="/herramientas/clasificador-documentos"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 sm:px-4 py-2 text-xs font-bold text-primary shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 sm:px-4 py-2 text-xs font-bold text-primary shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-normal whitespace-nowrap"
             >
               Verificar documentos
               <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
@@ -63,7 +63,7 @@ export function RegularizacionBanner() {
               href="https://wa.me/34672297468?text=Hola,%20quiero%20información%20sobre%20la%20Regularización%20Extraordinaria%202026"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-white/15 border border-white/30 px-4 py-2 text-xs font-bold text-white hover:bg-white/25 active:scale-[0.98] transition-all duration-200 whitespace-nowrap"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-white/15 border border-white/30 px-4 py-2 text-xs font-bold text-white hover:bg-white/25 active:scale-[0.98] transition-all duration-normal whitespace-nowrap"
             >
               Hablar con asesor
             </Link>

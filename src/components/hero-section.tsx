@@ -105,7 +105,7 @@ export function HeroSection() {
             <div className="absolute inset-6 bg-primary/10 rounded-3xl blur-3xl" />
 
             {/* Image container with fixed aspect ratio */}
-            <div className="relative rounded-3xl overflow-hidden border border-primary/15 shadow-2xl shadow-black/10 h-[580px]">
+            <div className="relative rounded-3xl overflow-hidden border border-primary/15 shadow-float h-[580px]">
               <Image
                 src="/espaldas.png"
                 alt="Persona mirando su futuro en España"
@@ -121,7 +121,7 @@ export function HeroSection() {
             {/* Floating tool card */}
             <Link
               href="/herramientas/clasificador-documentos"
-              className="group absolute -bottom-5 inset-x-6 rounded-2xl border border-primary/25 bg-background/95 backdrop-blur-md shadow-xl shadow-black/10 p-4 hover:border-primary/50 hover:shadow-primary/15 transition-all duration-300"
+              className="group absolute -bottom-5 inset-x-6 rounded-2xl border border-primary/25 bg-background/95 backdrop-blur-md shadow-float p-4 hover:border-primary/50 hover:shadow-primary/15 transition-all duration-slow"
             >
               <div className="flex items-start gap-3">
                 <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/25 flex items-center justify-center">
@@ -148,7 +148,7 @@ export function HeroSection() {
           <div className="lg:hidden">
             <Link
               href="/herramientas/clasificador-documentos"
-              className="group block rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent hover:border-primary/50 transition-all duration-300 p-5 shadow-sm"
+              className="group block rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent hover:border-primary/50 transition-all duration-slow p-5 shadow-card"
             >
               <div className="flex items-start gap-4">
                 <div className="shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/25 flex items-center justify-center">

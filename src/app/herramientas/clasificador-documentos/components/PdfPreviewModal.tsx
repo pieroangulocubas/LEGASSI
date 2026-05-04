@@ -234,7 +234,7 @@ export function PdfPreviewModal({
 
                         {/* Page number — visually rotated to preview orientation */}
                         <span
-                          className={cn("text-sm font-bold transition-transform duration-200", marked && "line-through")}
+                          className={cn("text-sm font-bold transition-transform duration-normal", marked && "line-through")}
                           style={{ transform: `rotate(${rotation}deg)` }}
                         >
                           {pageNum}
@@ -313,8 +313,8 @@ export function PdfPreviewModal({
                 onClick={handleDownload}
                 disabled={processing || remaining === 0}
                 className={cn(
-                  "w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-all duration-200",
-                  "bg-gradient-to-r from-primary to-secondary shadow-lg shadow-primary/25",
+                  "w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-all duration-normal",
+                  "bg-gradient-to-r from-primary to-secondary shadow-brand",
                   "hover:brightness-110 hover:scale-[1.01] active:scale-[0.99]",
                   "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:brightness-100"
                 )}
