@@ -72,17 +72,9 @@ export function FreemiumUpgradeModal({ nombre, onPay, onClose }: FreemiumUpgrade
             <p className="text-2xl font-bold text-primary">7,90 €</p>
           </div>
 
-          <button
-            onClick={onPay}
-            className="w-full h-12 rounded-xl text-base font-bold text-white shadow-lg transition-all duration-200
-                       bg-gradient-to-r from-amber-500 to-yellow-500
-                       hover:from-amber-600 hover:to-yellow-600
-                       hover:shadow-amber-300/40 hover:scale-[1.02]
-                       active:scale-[0.99]
-                       dark:shadow-amber-900/30"
-          >
+          <Button variant="cta" size="lg" className="w-full" onClick={onPay}>
             Conseguir 7 análisis · 7,90 € →
-          </button>
+          </Button>
 
           <p className="text-center text-xs text-muted-foreground">
             Sin cuotas mensuales. Sin sorpresas. Pago único.

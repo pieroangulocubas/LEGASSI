@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { CheckCircle, AlertCircle, Loader2, X, CreditCard, Lock, ShieldCheck, Users, Mail, User } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { saveFilesToIDB } from "../idb"
 
 export function PaymentModal({
@@ -204,29 +205,25 @@ export function PaymentModal({
           )}
 
           {/* CTA */}
-          <button
+          <Button
+            variant="cta"
+            size="lg"
+            className="w-full"
             onClick={handlePay}
             disabled={loading}
-            className="w-full h-12 rounded-xl text-base font-bold text-white shadow-lg transition-all duration-200
-                       bg-gradient-to-r from-amber-500 to-yellow-500
-                       hover:from-amber-600 hover:to-yellow-600
-                       hover:shadow-amber-300/40 hover:scale-[1.02]
-                       active:scale-[0.99]
-                       disabled:opacity-60 disabled:pointer-events-none
-                       dark:shadow-amber-900/30"
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2 className="size-4 animate-spin" />
                 Redirigiendo al pago…
-              </span>
+              </>
             ) : (
-              <span className="flex items-center justify-center gap-2">
-                <CreditCard className="h-4 w-4" />
+              <>
+                <CreditCard className="size-4" />
                 Pagar 7,90 € y conseguir 7 análisis
-              </span>
+              </>
             )}
-          </button>
+          </Button>
 
           <div className="flex items-center justify-center gap-5 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">

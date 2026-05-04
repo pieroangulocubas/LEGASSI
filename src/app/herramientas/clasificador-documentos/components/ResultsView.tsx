@@ -386,29 +386,29 @@ export function ResultsView({
             </p>
           </div>
           {pdfError && <p className="text-xs text-destructive">{pdfError}</p>}
-          <button
-            type="button"
+          <Button
+            variant="cta"
             onClick={handleOpenPreview}
             disabled={pdfGenerating}
-            className="group inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:brightness-110 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:brightness-100"
+            className="gap-2.5"
           >
             {pdfGenerating ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
                 Generando PDF…
               </>
             ) : pdfError ? (
               <>
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className="size-4" />
                 Reintentar generación
               </>
             ) : (
               <>
-                <Download className="h-4 w-4" />
+                <Download className="size-4" />
                 Previsualizar y descargar expediente
               </>
             )}
-          </button>
+          </Button>
         </div>
       ) : result.veredicto === "CUMPLE_PARCIALMENTE" ? (
         <div className="space-y-3">
@@ -427,24 +427,24 @@ export function ResultsView({
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
+              <Button
+                variant="cta"
                 onClick={handleOpenPreview}
                 disabled={pdfGenerating}
-                className="group inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-primary to-secondary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:brightness-110 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:brightness-100"
+                className="gap-2.5"
               >
                 {pdfGenerating ? (
                   <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <RefreshCw className="size-4 animate-spin" />
                     Generando PDF…
                   </>
                 ) : (
                   <>
-                    <Download className="h-4 w-4" />
+                    <Download className="size-4" />
                     Previsualizar y descargar expediente
                   </>
                 )}
-              </button>
+              </Button>
               <Button variant="outline" onClick={onReset} className="w-full sm:w-auto">
                 <ArrowLeft className="h-4 w-4" />
                 Volver a evaluar con nuevos documentos
@@ -487,7 +487,7 @@ export function ResultsView({
                 </p>
               </div>
             </div>
-            <Button onClick={onReset} className="w-full sm:w-auto">
+            <Button variant="outline" onClick={onReset} className="w-full sm:w-auto">
               <ArrowLeft className="h-4 w-4" />
               Volver a evaluar con nuevos documentos
             </Button>

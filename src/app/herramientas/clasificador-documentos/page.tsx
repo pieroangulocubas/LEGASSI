@@ -875,8 +875,8 @@ export default function ClasificadorPage() {
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
+                variant="cta"
                 onClick={() => handleReset()}
-                className="gap-2 bg-gradient-to-r from-primary to-secondary text-white hover:brightness-110 font-semibold"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Reintentar análisis
@@ -896,15 +896,14 @@ export default function ClasificadorPage() {
             {/* Pay option when email conflict */}
             {errorMsg.includes("ya fue usado") && (
               <div className="text-center">
-                <button
+                <Button
                   type="button"
+                  variant="cta"
                   onClick={() => { handleReset(); setPaymentModal({ open: true, reason: "first_time" }) }}
-                  className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white
-                             bg-gradient-to-r from-primary to-secondary shadow-sm hover:brightness-110 transition-all"
                 >
-                  <CreditCard className="h-4 w-4" />
+                  <CreditCard className="size-4" />
                   Conseguir 7 análisis · 7,90 €
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -1014,10 +1013,11 @@ export default function ClasificadorPage() {
                 </div>
                 <Button
                   type="button"
+                  variant="cta"
                   onClick={() => setPaymentModal({ open: true, reason: isFreemium ? "first_time" : "exhausted" })}
-                  className="shrink-0 w-full sm:w-auto  bg-gradient-to-r from-primary to-secondary px-5 py-3 text-base font-bold text-white shadow-md shadow-primary/20 hover:brightness-110 transition-all duration-200"
+                  className="shrink-0 w-full sm:w-auto"
                 >
-                  <CreditCard className="h-4 w-4 mr-2" />
+                  <CreditCard className="size-4" />
                   Conseguir 7 análisis · 7,90 €
                 </Button>
               </div>
