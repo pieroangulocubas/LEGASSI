@@ -29,7 +29,7 @@ import { FuerzaLegend } from "./FuerzaLegend"
 type SecondaryTab = "por-confirmar" | "invalidos" | "eliminados"
 
 export function ResultsView({
-  result: _initialResult,
+  result: _initialResult, // eslint-disable-line @typescript-eslint/no-unused-vars
   rawResults,
   formData,
   files,
