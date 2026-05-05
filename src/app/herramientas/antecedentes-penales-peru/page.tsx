@@ -343,7 +343,6 @@ export default function AntecedentesPenalesPage() {
       {showModal && (
         <CelebrationModal
           dni={submittedDni}
-          onClose={() => setShowModal(false)}
         />
       )}
     </>

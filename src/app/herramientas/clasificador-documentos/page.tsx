@@ -7,7 +7,6 @@ import { Navbar } from "@/components/navbar"
 import {
   CheckCircle,
   AlertCircle,
-  XCircle,
   Loader2,
   FileText,
   ArrowLeft,
@@ -736,10 +735,6 @@ export default function ClasificadorPage() {
       {showRecoverModal && (
         <RecoverModal
           onClose={() => setShowRecoverModal(false)}
-          onPayAgain={() => {
-            setShowRecoverModal(false)
-            setPaymentModal({ open: true, reason: "exhausted" })
-          }}
         />
       )}
 

@@ -176,6 +176,7 @@ export function CameraScanner({
           <canvas ref={canvasRef} className="hidden" />
 
           {status === "captured" && capturedDataUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={capturedDataUrl}
               alt="Escaneo capturado"

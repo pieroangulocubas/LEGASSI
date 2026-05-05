@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { X, Download, Info, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { formatFechasRange, getCriterioPorTipo, groupConsecutiveMonths, formatGroupLabel } from "../logic"
+import { getCriterioPorTipo, groupConsecutiveMonths, formatGroupLabel } from "../logic"
 import type { DocumentResult } from "../types"
 
 export function PreviewModal({

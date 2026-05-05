@@ -35,7 +35,7 @@ function generatePieces(n: number): Piece[] {
   }))
 }
 
-export function CelebrationModal({ dni, onClose }: { dni: string; onClose: () => void }) {
+export function CelebrationModal({ dni }: { dni: string }) {
   const router = useRouter()
   const [pieces] = useState(() => generatePieces(80))
   const [visible, setVisible] = useState(false)

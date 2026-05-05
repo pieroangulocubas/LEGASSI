@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useCallback, useEffect } from "react"
+import { useRef, useState, useEffect } from "react"
 import { Upload, X, FileText, Camera, CheckCircle2, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { CameraScanner } from "@/components/camera-scanner"
@@ -104,14 +104,11 @@ export function FileDropzone({
     onAdd(clipped)
   }
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      setDragging(false)
-      validateAndAdd(e.dataTransfer.files)
-    },
-    [onAdd]
-  )
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    validateAndAdd(e.dataTransfer.files)
+  }
 
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`
@@ -284,6 +281,7 @@ export function FileDropzone({
                 {/* Thumbnail area */}
                 <div className="aspect-square w-full overflow-hidden bg-muted relative">
                   {previews[i] && f.type.startsWith("image/") ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={previews[i]}
                       alt={f.name}

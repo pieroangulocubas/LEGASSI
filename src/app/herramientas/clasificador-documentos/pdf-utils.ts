@@ -367,7 +367,6 @@ async function addCoverageIndexPages(
 
     const descLines    = wrapText(d.descripcion_breve, helveticaBold, textColW, 9)
     const descH        = descLines.length * 12.5
-    const fileLabel    = buildFileLabel(d)
     const category     = getCategoryForTipo(d.tipo).join(" · ")
     const criterio     = getCriterioPorTipo(d.tipo) ?? "Fecha de emisión incluida como prueba de presencia en España."
     const criterioLines = wrapText(`Criterio: ${criterio}`, helvetica, textColW, 7)

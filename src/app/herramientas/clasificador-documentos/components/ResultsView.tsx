@@ -15,7 +15,6 @@ import {
   FileText,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { generatePDF, addQRToFirstPage, addPageNumbers, compressPdfIfNeeded } from "../pdf-utils"
 import type { AnalysisResult, ClasificadorFormData, DocumentResult, PresentationMonth } from "../types"
 import { runRulesEngine, PRESENTATION_MONTH_LABELS } from "../logic"
 import { PreviewModal } from "./PreviewModal"
@@ -141,6 +140,7 @@ export function ResultsView({
   }
 
   async function handleFinalDownload(finalBytes: Uint8Array) {
+    const { addQRToFirstPage, addPageNumbers, compressPdfIfNeeded } = await import("../pdf-utils")
     const token = typeof window !== "undefined" ? localStorage.getItem("clasificador_token") : null
     const { signedUrl, publicUrl } = token ? await prepareUpload(token) : {}
 
@@ -167,6 +167,7 @@ export function ResultsView({
     setPdfGenerating(true)
     setPdfError(null)
     try {
+      const { generatePDF } = await import("../pdf-utils")
       const pdfBytes = await generatePDF(
         result,
         files,

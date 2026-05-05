@@ -6,10 +6,8 @@ import { CheckCircle, AlertCircle, Loader2, X, Mail, CreditCard } from "lucide-r
 
 export function RecoverModal({
   onClose,
-  onPayAgain,
 }: {
   onClose: () => void
-  onPayAgain: () => void
 }) {
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
