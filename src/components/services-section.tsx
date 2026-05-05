@@ -1,10 +1,5 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { createPortal } from "react-dom"
-import { FileText, Shield, Globe, MoreHorizontal, Clock, Users, HeartHandshake, ArrowRight, Flame, CalendarClock, CheckCircle, Expand, X } from "lucide-react"
+import { FileText, Shield, Globe, MoreHorizontal, Clock, Users, HeartHandshake, ArrowRight, Flame, CalendarClock, CheckCircle } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 
 const services = [
@@ -97,35 +92,6 @@ const differentiators = [
 ]
 
 export function ServicesSection() {
-  const [imgOpen, setImgOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
-
-  const modal = mounted && imgOpen ? createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6"
-      onClick={() => setImgOpen(false)}
-    >
-      <div className="relative max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
-        <button
-          onClick={() => setImgOpen(false)}
-          className="absolute -top-9 right-0 text-white/70 hover:text-white flex items-center gap-1.5 text-sm"
-          aria-label="Cerrar"
-        >
-          <X className="h-4 w-4" /> Cerrar
-        </button>
-        <Image
-          src="/oferta-reg2026.png"
-          alt="Oferta Regularización Extraordinaria 2026"
-          width={1200}
-          height={800}
-          className="w-full max-h-[65vh] object-contain rounded-2xl shadow-2xl"
-        />
-      </div>
-    </div>,
-    document.body
-  ) : null
-
   return (
     <section
       id="servicios"
@@ -154,22 +120,7 @@ export function ServicesSection() {
           {/* Stripe accent left */}
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-secondary rounded-l-2xl" />
 
-          <div className="flex flex-col md:flex-row md:items-stretch">
-
-            {/* Image — fila 1 en ≤853px, columna izquierda en >853px */}
-            <button
-              onClick={() => setImgOpen(true)}
-              className="group relative shrink-0 w-full md:w-44 lg:w-48 h-52 md:h-auto md:self-stretch rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none overflow-hidden border-b md:border-b-0 md:border-r border-primary/20 bg-muted/40"
-              aria-label="Ver imagen completa"
-            >
-              <Image src="/oferta-reg2026.png" alt="Oferta Regularización 2026" fill sizes="(max-width: 768px) 100vw, 12rem" className="object-cover" />
-              <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Expand className="h-5 w-5 text-white" />
-              </div>
-            </button>
-
-            {/* Content — fila 2 en ≤853px, columna derecha en >853px */}
-            <div className="px-4 sm:px-6 md:px-7 py-5 md:py-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-5 flex-1 min-w-0">
+          <div className="px-5 sm:px-6 md:px-7 py-5 md:py-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-5">
               <div className="flex items-start gap-3 flex-1 min-w-0">
                 <div className="shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-md shadow-primary/20">
                   <Flame className="h-4 w-4 text-white" />
@@ -217,11 +168,8 @@ export function ServicesSection() {
                   <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
-            </div>
           </div>
         </div>
-
-        {modal}
 
         {/* Service panels — 2 cols on md, 4 on xl */}
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5 mb-20">
