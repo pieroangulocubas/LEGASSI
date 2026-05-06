@@ -6,7 +6,6 @@ import type { PersonalData } from "@/app/herramientas/evaluador-regularizacion/t
 
 export const maxDuration = 60
 
-// Sub-form file names per pathway (indexed by annex id "02".."05")
 const ANNEX_FILES: Record<"DA20" | "DA21", Record<string, string>> = {
   DA20: {
     "02": "EX31_02_Datos_Menor_Representado_y_Firma.pdf",
@@ -37,14 +36,37 @@ function setCheckBox(form: ReturnType<PDFDocument["getForm"]>, name: string, che
   } catch { /* campo no existente */ }
 }
 
+// ─── Payload types ────────────────────────────────────────────────────────────
+
+interface RepresentanteData {
+  nombre: string; primerApellido: string; segundoApellido: string; nif: string
+  domicilio: string; piso: string; localidad: string; provincia: string; cp: string
+  telefono: string; email: string
+}
+
+interface NotifData {
+  domicilio: string; piso: string; localidad: string; provincia: string; cp: string
+}
+
+interface FillPayload {
+  persons: PersonalData[]
+  pathway: "DA20" | "DA21"
+  annexes: string[]
+  hasRepresentante?: boolean
+  representante?: RepresentanteData | null
+  notifData?: NotifData | null
+  consiento?: boolean
+}
+
+// ─── PDF builder ──────────────────────────────────────────────────────────────
+
 async function buildPersonDoc(
   data: PersonalData,
   pathway: "DA20" | "DA21",
   annexes: string[],
+  opts?: { representante?: RepresentanteData | null; notifData?: NotifData | null; consiento?: boolean },
 ): Promise<PDFDocument> {
   const formDir = path.join(process.cwd(), "public", "forms", pathway)
-
-  // ── Load and fill main form ──────────────────────────────────────────────────
   const mainBytes = await readFile(path.join(formDir, MAIN_FILE[pathway]))
   const mainDoc = await PDFDocument.load(mainBytes)
   const form = mainDoc.getForm()
@@ -52,7 +74,7 @@ async function buildPersonDoc(
   // Parse YYYY-MM-DD
   const [year = "", month = "", day = ""] = (data.fechaNacimiento || "").split("-")
 
-  // Sección 1: datos personales (mismos campos EX31/EX32)
+  // Sección 1: datos personales
   setText(form, "Texto1",  data.pasaporte)
   setText(form, "Texto3",  data.nie)
   setText(form, "Texto5",  data.primerApellido)
@@ -75,47 +97,65 @@ async function buildPersonDoc(
   setText(form, "Texto23", data.email)
 
   if (pathway === "DA20") {
-    // Sexo
     setCheckBox(form, "Casilla de verificación141", data.sexo === "H")
     setCheckBox(form, "Casilla de verificación142", data.sexo === "M")
-    // Estado civil
     setCheckBox(form, "Casilla de verificación143", data.estadoCivil === "S")
     setCheckBox(form, "Casilla de verificación144", data.estadoCivil === "C")
     setCheckBox(form, "Casilla de verificación145", data.estadoCivil === "V")
     setCheckBox(form, "Casilla de verificación146", data.estadoCivil === "D")
     setCheckBox(form, "Casilla de verificación147", data.estadoCivil === "Sp")
-    // Tipo autorización — DA20 siempre marca "Solicitante PI"
     setCheckBox(form, "Casilla de verificación148", true)
-    // Nº expediente
     setText(form, "Texto50", data.numExpedientePi)
   } else {
-    // Sexo
     setCheckBox(form, "Casilla de verificación165", data.sexo === "H")
     setCheckBox(form, "Casilla de verificación166", data.sexo === "M")
-    // Estado civil
     setCheckBox(form, "Casilla de verificación167", data.estadoCivil === "S")
     setCheckBox(form, "Casilla de verificación168", data.estadoCivil === "C")
     setCheckBox(form, "Casilla de verificación169", data.estadoCivil === "V")
     setCheckBox(form, "Casilla de verificación170", data.estadoCivil === "D")
     setCheckBox(form, "Casilla de verificación171", data.estadoCivil === "Sp")
-    // Tipo — DA21 siempre marca situación irregular
     setCheckBox(form, "Casilla de verificación172", true)
-    // Supuesto
     const sup = data.da21Supuesto
     setCheckBox(form, "Casilla de verificación173", sup.includes("work_history") || sup.includes("job_offer") || sup.includes("self_employed"))
     setCheckBox(form, "Casilla de verificación174", sup.includes("family"))
     setCheckBox(form, "Casilla de verificación175", sup.includes("vulnerability"))
   }
 
-  // Flatten so filled text becomes permanent page content
+  // Sección 2: representante (best-guess field names, fails silently if wrong)
+  const rep = opts?.representante
+  if (rep) {
+    setText(form, "Texto24", rep.nombre)
+    setText(form, "Texto25", rep.primerApellido)
+    setText(form, "Texto26", rep.segundoApellido)
+    setText(form, "Texto27", rep.nif)
+    setText(form, "Texto28", rep.domicilio)
+    setText(form, "Texto29", rep.piso)
+    setText(form, "Texto30", rep.localidad)
+    setText(form, "Texto31", rep.cp)
+    setText(form, "Texto32", rep.provincia)
+    setText(form, "Texto33", rep.telefono)
+    setText(form, "Texto34", rep.email)
+  }
+
+  // Sección 3: domicilio a efectos de notificaciones
+  const notif = opts?.notifData
+  if (notif) {
+    setText(form, "Texto36", notif.domicilio)
+    setText(form, "Texto37", notif.piso)
+    setText(form, "Texto38", notif.localidad)
+    setText(form, "Texto39", notif.cp)
+    setText(form, "Texto40", notif.provincia)
+  }
+
+  // Consiento
+  setCheckBox(form, "Casilla de verificación176", opts?.consiento ?? true)
+
   form.flatten()
 
-  // ── Merge into per-person doc ─────────────────────────────────────────────────
   const personDoc = await PDFDocument.create()
   const mainPages = await personDoc.copyPages(mainDoc, mainDoc.getPageIndices())
   mainPages.forEach((p) => personDoc.addPage(p))
 
-  // ── Append selected annexes ───────────────────────────────────────────────────
   const annexMap = ANNEX_FILES[pathway]
   for (const id of annexes) {
     const fileName = annexMap[id]
@@ -133,12 +173,6 @@ async function buildPersonDoc(
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 
-interface FillPayload {
-  persons: PersonalData[]
-  pathway: "DA20" | "DA21"
-  annexes: string[] // e.g. ["03", "04"]
-}
-
 export async function POST(req: NextRequest) {
   let body: FillPayload
   try {
@@ -147,7 +181,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Petición no válida." }, { status: 400 })
   }
 
-  const { persons, pathway, annexes = [] } = body
+  const { persons, pathway, annexes = [], hasRepresentante, representante, notifData, consiento = true } = body
 
   if (!persons || persons.length === 0) {
     return NextResponse.json({ error: "Se requiere al menos una persona." }, { status: 400 })
@@ -160,7 +194,11 @@ export async function POST(req: NextRequest) {
     const mergedDoc = await PDFDocument.create()
 
     for (const person of persons) {
-      const personDoc = await buildPersonDoc(person, pathway, annexes)
+      const personDoc = await buildPersonDoc(person, pathway, annexes, {
+        representante: hasRepresentante ? representante : null,
+        notifData,
+        consiento,
+      })
       const pages = await mergedDoc.copyPages(personDoc, personDoc.getPageIndices())
       pages.forEach((p) => mergedDoc.addPage(p))
     }

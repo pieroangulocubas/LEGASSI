@@ -11,32 +11,42 @@ interface ExtractPayload {
 }
 
 function buildPrompt(pathway: "DA20" | "DA21", docHint?: string): string {
-  return `Eres un experto en documentación de extranjería española especializado en el RD 316/2026 (Regularización Extraordinaria 2026).
+  return `Eres un experto en documentación de extranjería española especializado en el RD 316/2026 (Regularización Extraordinaria 2026). Fecha de referencia: ${new Date().toISOString().slice(0, 10)}.
 
 VÍA: ${pathway === "DA20" ? "DA20 — Solicitante de Protección Internacional (EX31)" : "DA21 — Extranjero en situación irregular (EX32)"}
 ${docHint ? `CONTEXTO DEL DOCUMENTO: ${docHint}` : ""}
 
-TAREA 1 — VALIDACIÓN para el expediente de regularización:
-Valida el documento según los criterios del RD 316/2026:
-- Pasaporte: debe estar vigente, legible, con nombre, nº, nacionalidad y fecha de nacimiento visibles.
-- Doc. PI (tarjeta roja, resguardo OAR, resolución, recurso): válido en cualquier estado si fecha anterior a 01/01/2026.
-- Antecedentes penales España: emitido por Registro Central de Penados, sin anotaciones activas.
-- Antecedentes penales extranjero: debe tener apostilla o legalización + traducción jurada si no está en español.
-- Certificado vulnerabilidad: sello de entidad + número RECEX obligatorios.
-- Modelo 790-052: código 052 explícito, importe correcto (38,28€ adulto / 10,94€ menor), sello/validación.
-- Contratos/nóminas: nominativos, ≥90 días/año, con CIF español.
-- Libro de familia / certificados nacimiento: válidos si muestran la filiación.
-- Empadronamiento: válido si es reciente y nominativo.
-- Si no se puede identificar: "no_identificado".
+TAREA 1 — VALIDACIÓN Y AUTENTICIDAD:
+Valida el documento según los criterios del RD 316/2026. Detecta:
+- CADUCIDAD: compara la fecha de vencimiento visible con la fecha de referencia. Si está caducado o caduca en <30 días, anótalo.
+- AUTENTICIDAD: detecta si parece fotocopia, escaneado de fotocopia, imagen degradada, sin sellos/firmas esperados, o alteraciones.
+- APOSTILLA/LEGALIZACIÓN: para documentos extranjeros, ¿tiene apostilla del Convenio de La Haya o legalización consular?
+- TRADUCCIÓN JURADA: si el documento no está en español, ¿va acompañado de traducción jurada?
+- SELLOS/REGISTROS OBLIGATORIOS: antecedentes penales (Registro Central de Penados), certificado vulnerabilidad (sello RECEX + número), modelo 790-052 (código 052 + importe correcto).
+- CONTRADICCIONES: si hay datos que parecen inconsistentes (nombre diferente en dos partes, fechas imposibles, etc.).
+
+Criterios de validez por tipo:
+- Pasaporte: vigente, legible, nombre/nº/nacionalidad/nacimiento visibles.
+- Doc. PI (tarjeta roja, resguardo OAR, resolución, recurso): válido si fecha anterior a 01/01/2026.
+- Antecedentes penales España: Registro Central de Penados, sin anotaciones activas.
+- Antecedentes penales extranjero: apostilla + traducción jurada si no está en español.
+- Certificado vulnerabilidad: sello entidad + número RECEX obligatorios.
+- Modelo 790-052: código 052 explícito, importe 38,28€ (adulto) o 10,94€ (menor), sello/validación bancaria.
+- Contratos/nóminas: nominativos, ≥90 días/año, CIF español.
+- Empadronamiento: reciente, nominativo.
 
 TAREA 2 — EXTRACCIÓN de datos personales visibles:
-Extrae TODOS los datos que veas en el documento. Para fechas usa formato YYYY-MM-DD. Para sexo usa "H" o "M". Si un dato no está visible, usa null.
+Extrae TODOS los datos visibles. Fechas en formato YYYY-MM-DD. Sexo como "H" o "M". Usa null si no está visible.
 
 Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta (sin texto adicional, sin markdown):
 {
   "tipoDocumento": "nombre en español del tipo de documento",
   "estado": "valido|valido_con_observaciones|invalido|no_identificado",
-  "observaciones": ["problema concreto si lo hay"],
+  "observaciones": ["descripción concreta del problema si lo hay"],
+  "alertasValidez": [
+    "alerta específica sobre validez, caducidad o autenticidad. Ej: 'Pasaporte caducado el 2025-03-15 — renuévalo antes de presentar'. Ej: 'Parece ser fotocopia — lleva el original'. Ej: 'Falta apostilla del Convenio de La Haya'. Dejar vacío si no hay alertas."
+  ],
+  "fechaVencimiento": null,
   "sugerencias_presencial": ["qué mejorar para presentar presencialmente"],
   "extractedData": {
     "nombre": null,
@@ -81,7 +91,7 @@ export async function POST(req: NextRequest) {
   try {
     const ai = new GoogleGenAI({ apiKey })
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-3-flash-preview",
       contents: [{
         role: "user",
         parts: [

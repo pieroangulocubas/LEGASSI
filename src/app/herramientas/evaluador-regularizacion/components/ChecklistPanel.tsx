@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react"
 import Link from "next/link"
 import {
   CheckCircle2, XCircle, AlertTriangle, Info, ExternalLink, Scan,
-  Upload, Loader2, Sparkles, Check,
+  Upload, Loader2, Sparkles, Check, CalendarX2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ChecklistItem, ChecklistStatus, DocStatus, ExtractDocResult, PersonalData } from "../types"
@@ -126,6 +126,22 @@ function UploadSlot({ item, pathway, onResult, onDone, onUndo }: UploadSlotProps
             cambiar
           </button>
         </div>
+        {result.fechaVencimiento && (
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <CalendarX2 className="h-3 w-3 shrink-0" />
+            <span>Vence: {result.fechaVencimiento}</span>
+          </div>
+        )}
+        {result.alertasValidez && result.alertasValidez.length > 0 && (
+          <ul className="text-[11px] text-amber-700 dark:text-amber-400 flex flex-col gap-0.5">
+            {result.alertasValidez.map((a, i) => (
+              <li key={i} className="flex items-start gap-1">
+                <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
+                <span>{a}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         {result.observaciones.length > 0 && (
           <ul className="text-[11px] text-rose-600 dark:text-rose-400 flex flex-col gap-0.5">
             {result.observaciones.map((o, i) => <li key={i}>• {o}</li>)}
@@ -171,9 +187,10 @@ interface ChecklistPanelProps {
   pathway: "DA20" | "DA21"
   onDataExtracted?: (data: Partial<PersonalData>) => void
   onAllRequiredDone?: (done: boolean) => void
+  externalDoneIds?: string[]
 }
 
-export function ChecklistPanel({ items, pathway, onDataExtracted, onAllRequiredDone }: ChecklistPanelProps) {
+export function ChecklistPanel({ items, pathway, onDataExtracted, onAllRequiredDone, externalDoneIds = [] }: ChecklistPanelProps) {
   const [doneIds, setDoneIds] = useState<Set<string>>(() => {
     const initial = new Set<string>()
     for (const item of items) {
@@ -181,6 +198,15 @@ export function ChecklistPanel({ items, pathway, onDataExtracted, onAllRequiredD
     }
     return initial
   })
+
+  useEffect(() => {
+    if (externalDoneIds.length === 0) return
+    setDoneIds(prev => {
+      const next = new Set(prev)
+      for (const id of externalDoneIds) next.add(id)
+      return next
+    })
+  }, [externalDoneIds])
 
   const requiredItems = items.filter(i => !isInitiallyDone(i))
   const allDone = requiredItems.length === 0 || requiredItems.every(i => doneIds.has(i.id))

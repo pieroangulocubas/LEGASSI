@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 import { Button } from "@/components/ui/button"
@@ -204,6 +204,38 @@ function DeadlineBadge({ days }: { days: number }) {
   )
 }
 
+// ─── Confetti ─────────────────────────────────────────────────────────────────
+
+function launchConfetti() {
+  if (typeof window === "undefined") return
+  const canvas = document.createElement("canvas")
+  canvas.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9999"
+  document.body.appendChild(canvas)
+  canvas.width = window.innerWidth
+  canvas.height = window.innerHeight
+  const ctx = canvas.getContext("2d")!
+  const COLORS = ["#1a50c8", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4"]
+  const particles = Array.from({ length: 130 }, () => ({
+    x: Math.random() * canvas.width, y: Math.random() * -150 - 20,
+    vx: (Math.random() - 0.5) * 5, vy: Math.random() * 4 + 2,
+    r: Math.random() * 6 + 3, color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    angle: Math.random() * Math.PI * 2, omega: (Math.random() - 0.5) * 0.25,
+  }))
+  let frame = 0; let animId: number
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.globalAlpha = frame < 140 ? 1 : Math.max(0, 1 - (frame - 140) / 40)
+    for (const p of particles) {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.angle += p.omega
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle)
+      ctx.fillStyle = p.color; ctx.fillRect(-p.r / 2, -p.r * 0.3, p.r, p.r * 0.6); ctx.restore()
+    }
+    frame++
+    if (frame < 180) { animId = requestAnimationFrame(draw) } else { cancelAnimationFrame(animId); canvas.remove() }
+  }
+  animId = requestAnimationFrame(draw)
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function EvaluadorPage() {
@@ -211,8 +243,17 @@ export default function EvaluadorPage() {
   const [stepIndex, setStepIndex] = useState(0)
   const [completionVisible, setCompletionVisible] = useState(false)
   const [allChecklistDone, setAllChecklistDone] = useState(false)
+  const [formConfirmed, setFormConfirmed] = useState(false)
   const [extractedData, setExtractedData] = useState<Partial<PersonalData>>({})
   const { hasAccess, verifying, checkout } = useEvaluadorAccess()
+
+  const prevAllDone = useRef(false)
+  useEffect(() => {
+    if (allChecklistDone && !prevAllDone.current) {
+      launchConfetti()
+    }
+    prevAllDone.current = allChecklistDone
+  }, [allChecklistDone])
 
   function mergeExtractedData(incoming: Partial<PersonalData>) {
     setExtractedData((prev) => ({ ...prev, ...incoming }))
@@ -240,6 +281,8 @@ export default function EvaluadorPage() {
     setStepIndex(0)
     setCompletionVisible(false)
     setAllChecklistDone(false)
+    setFormConfirmed(false)
+    prevAllDone.current = false
   }
 
   function toggleDA21(supuesto: DA21Supuesto) {
@@ -819,6 +862,7 @@ export default function EvaluadorPage() {
                         pathway={result.pathway as "DA20" | "DA21"}
                         onDataExtracted={mergeExtractedData}
                         onAllRequiredDone={setAllChecklistDone}
+                        externalDoneIds={formConfirmed ? ["form"] : []}
                       />
                       {Object.keys(extractedData).length > 0 && (
                         <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 px-3 py-2">
@@ -889,6 +933,7 @@ export default function EvaluadorPage() {
                             pathway={result.pathway as "DA20" | "DA21"}
                             da21Supuestos={answers.da21Supuestos}
                             extractedData={Object.keys(extractedData).length > 0 ? extractedData : undefined}
+                            onFormCompleted={() => setFormConfirmed(true)}
                           />
                         </div>
                       )}

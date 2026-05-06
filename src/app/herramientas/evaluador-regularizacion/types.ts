@@ -150,6 +150,8 @@ export interface ExtractDocResult {
   tipoDocumento: string
   estado: DocStatus
   observaciones: string[]
+  alertasValidez?: string[]       // validity/authenticity/expiry alerts
+  fechaVencimiento?: string | null // YYYY-MM-DD or null
   sugerencias_presencial: string[]
   extractedData: ExtractedDocData
 }
