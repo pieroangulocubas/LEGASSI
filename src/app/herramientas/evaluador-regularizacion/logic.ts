@@ -454,12 +454,17 @@ export function evaluateEligibility(answers: QuizAnswers): EligibilityResult {
   }
 
   // ── 7. ADMIN ──────────────────────────────────────────────────────────────
+  // DA20 (PI applicants) already have a NIE from their tarjeta roja → can pay tasa now.
+  // DA21 (irregular) may not have a NIE yet → tasa is paid after NIE is assigned.
   checklist.push({
     id: "fee_payment",
     label: "Pago de tasas — Modelo 790 código 052 (38,28 € adulto · 10,94 € menor)",
-    status: "missing",
+    status: pathway === "DA20" ? "missing" : "info",
     section: "admin",
-    detail: "Genera el Modelo 790-052 en la sede electrónica del Ministerio del Interior y págalo en banco colaborador o telemáticamente. Uno por persona (incluidos menores y cónyuge).",
+    optional: pathway !== "DA20",
+    detail: pathway === "DA20"
+      ? "Como solicitante de PI dispones de NIE. Genera el Modelo 790-052 en la sede electrónica del Ministerio del Interior y págalo en banco colaborador o telemáticamente. Uno por persona (incluidos menores y cónyuge)."
+      : "La tasa se paga con el Modelo 790-052. Si aún no tienes NIE, se te asignará en la cita de presentación en la oficina de extranjería — genera y paga la tasa con ese NIE antes de entregar el expediente.",
     uploadable: true,
     uploadHint: "Justificante de pago del Modelo 790 código 052. Verifica: código 052, importe, nombre del solicitante, sello o validación bancaria.",
   })

@@ -68,9 +68,10 @@ interface UploadSlotProps {
   pathway: "DA20" | "DA21"
   onResult: (result: ExtractDocResult) => void
   onDone: () => void
+  onUndo?: () => void
 }
 
-function UploadSlot({ item, pathway, onResult, onDone }: UploadSlotProps) {
+function UploadSlot({ item, pathway, onResult, onDone, onUndo }: UploadSlotProps) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ExtractDocResult | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -119,7 +120,7 @@ function UploadSlot({ item, pathway, onResult, onDone }: UploadSlotProps) {
           <DsIcon className={cn("h-3.5 w-3.5 shrink-0", dsCfg.color)} />
           <span className={cn("text-xs font-semibold", dsCfg.color)}>{result.tipoDocumento}</span>
           <button
-            onClick={() => { setResult(null); setError(null) }}
+            onClick={() => { setResult(null); setError(null); onUndo?.() }}
             className="ml-auto text-[10px] text-muted-foreground hover:text-foreground underline"
           >
             cambiar
@@ -311,22 +312,18 @@ export function ChecklistPanel({ items, pathway, onDataExtracted, onAllRequiredD
                           )
                         )}
 
-                        {/* Upload slot */}
-                        {item.uploadable && !isDone && (
+                        {/* Upload slot — always visible for uploadable items */}
+                        {item.uploadable && (
                           <UploadSlot
                             item={item}
                             pathway={pathway}
                             onResult={(result) => handleResult(item, result)}
                             onDone={() => markDone(item.id)}
+                            onUndo={isRequired
+                              ? () => setDoneIds(prev => { const s = new Set(prev); s.delete(item.id); return s })
+                              : undefined
+                            }
                           />
-                        )}
-                        {item.uploadable && isDone && isRequired && (
-                          <button
-                            onClick={() => setDoneIds(prev => { const s = new Set(prev); s.delete(item.id); return s })}
-                            className="mt-2 text-[10px] text-muted-foreground hover:text-foreground underline"
-                          >
-                            cambiar
-                          </button>
                         )}
 
                         {/* Manual confirm for non-uploadable required items */}
