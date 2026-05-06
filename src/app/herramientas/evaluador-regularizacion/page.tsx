@@ -210,6 +210,7 @@ export default function EvaluadorPage() {
   const [answers, setAnswers] = useState<QuizAnswers>(EMPTY)
   const [stepIndex, setStepIndex] = useState(0)
   const [completionVisible, setCompletionVisible] = useState(false)
+  const [allChecklistDone, setAllChecklistDone] = useState(false)
   const [extractedData, setExtractedData] = useState<Partial<PersonalData>>({})
   const { hasAccess, verifying, checkout } = useEvaluadorAccess()
 
@@ -237,6 +238,8 @@ export default function EvaluadorPage() {
   function reset() {
     setAnswers(EMPTY)
     setStepIndex(0)
+    setCompletionVisible(false)
+    setAllChecklistDone(false)
   }
 
   function toggleDA21(supuesto: DA21Supuesto) {
@@ -815,6 +818,7 @@ export default function EvaluadorPage() {
                         items={result.checklist}
                         pathway={result.pathway as "DA20" | "DA21"}
                         onDataExtracted={mergeExtractedData}
+                        onAllRequiredDone={setAllChecklistDone}
                       />
                       {Object.keys(extractedData).length > 0 && (
                         <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 px-3 py-2">
@@ -824,10 +828,11 @@ export default function EvaluadorPage() {
                           </p>
                         </div>
                       )}
-                      {!completionVisible && (
+                      {allChecklistDone && !completionVisible && (
                         <button
                           onClick={() => setCompletionVisible(true)}
                           className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-emerald-300 dark:border-emerald-700 bg-emerald-50/40 dark:bg-emerald-950/10 py-3 text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors"
+                          style={{ animation: "doccheck-pop 0.4s ease both" }}
                         >
                           <CheckCircle2 className="h-4 w-4" />
                           He reunido todos los documentos — ¿dónde presento?

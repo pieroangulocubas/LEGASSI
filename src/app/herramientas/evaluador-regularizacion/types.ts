@@ -45,6 +45,8 @@ export interface ChecklistItem {
   id: string
   label: string
   status: ChecklistStatus
+  section?: string      // visual grouping key
+  optional?: boolean    // if true, not required for completion button
   detail?: string
   linkLabel?: string
   linkHref?: string
