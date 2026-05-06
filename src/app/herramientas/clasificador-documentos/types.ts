@@ -27,6 +27,7 @@ export interface MonthCoverage {
   status: MonthStatus
   docs: DocumentResult[]
   isOptional: boolean
+  isLimitrofe?: boolean
 }
 
 export interface AnalysisResult {
@@ -35,6 +36,7 @@ export interface AnalysisResult {
   observadoDocs: DocumentResult[] // nombre reconocible pero con discrepancia — requiere revisión
   invalidDocs: DocumentResult[]   // descartados: sin nombre, fecha inválida o fuera de ventana
   validDocs: DocumentResult[]     // valido:true y dentro de la ventana temporal
+  borderDocs: DocumentResult[]    // válidos pero en el mes ±1 justo fuera de la ventana; el usuario puede incluirlos
 }
 
 export interface ClasificadorFormData {

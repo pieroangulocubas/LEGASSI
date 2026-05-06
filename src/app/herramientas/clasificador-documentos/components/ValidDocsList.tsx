@@ -56,7 +56,10 @@ export function ValidDocsList({
               }`}>
                 {month.label}
               </span>
-              {month.isOptional && (
+              {month.isLimitrofe && (
+                <span className="text-[10px] text-violet-600 dark:text-violet-400 font-medium">contexto</span>
+              )}
+              {month.isOptional && !month.isLimitrofe && (
                 <span className="text-[10px] text-muted-foreground/70 font-medium">recomendable</span>
               )}
               <span className="ml-auto text-[10px] text-muted-foreground">

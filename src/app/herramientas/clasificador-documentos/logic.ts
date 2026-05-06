@@ -8,6 +8,7 @@ import type {
 } from "./types"
 
 export const MONTH_LABELS: Record<string, string> = {
+  "2025-10": "Octubre 2025",
   "2025-11": "Noviembre 2025",
   "2025-12": "Diciembre 2025",
   "2026-01": "Enero 2026",
@@ -16,6 +17,7 @@ export const MONTH_LABELS: Record<string, string> = {
   "2026-04": "Abril 2026",
   "2026-05": "Mayo 2026",
   "2026-06": "Junio 2026",
+  "2026-07": "Julio 2026",
 }
 
 export const PRESENTATION_MONTH_LABELS: Record<PresentationMonth, string> = {
@@ -118,48 +120,77 @@ export function formatGroupLabel(group: string[]): string {
   return `${shortMonthLabel(group[0])} – ${shortMonthLabel(group[group.length - 1])}`
 }
 
+function addMonths(ym: string, n: number): string {
+  const [y, m] = ym.split("-").map(Number)
+  const d = new Date(y, m - 1 + n, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+}
+
+export function getBorderMonths(presentationMonth: PresentationMonth): { before: string; after: string } {
+  const w = TEMPORAL_WINDOWS[presentationMonth]
+  const sorted = [...w.required, ...w.optional].sort()
+  return {
+    before: addMonths(sorted[0], -1),
+    after:  addMonths(sorted[sorted.length - 1], 1),
+  }
+}
+
 export function runRulesEngine(
   geminiResults: DocumentResult[],
-  presentationMonth: PresentationMonth
+  presentationMonth: PresentationMonth,
+  includedBorderMonths?: Set<string>
 ): AnalysisResult {
-  const window = TEMPORAL_WINDOWS[presentationMonth] // recoge que meses son obligatorios y cuales son opcionalees para el mes de presentación seleccionado
-  const allMonths = [...window.required, ...window.optional] // los coloca en un solo array
+  const window = TEMPORAL_WINDOWS[presentationMonth]
+  const allWindowMonths = [...window.required, ...window.optional]
+  const includedBorders = includedBorderMonths ?? new Set<string>()
 
-  const monthsMap = new Map<string, DocumentResult[]>() // creamos uno nuevo mapa donde la clave es cada mes y el valor son docuemntos válido que cubren ese mes
+  // ±1 border months (just outside the window)
+  const sortedWindow = [...allWindowMonths].sort()
+  const borderBefore = addMonths(sortedWindow[0], -1)
+  const borderAfter  = addMonths(sortedWindow[sortedWindow.length - 1], 1)
+  const borderMonthSet = new Set([borderBefore, borderAfter])
+
+  // All months in map = window + user-included border months, sorted chronologically
+  const allMonths = [
+    ...allWindowMonths,
+    ...Array.from(includedBorders).filter(m => borderMonthSet.has(m)),
+  ].sort()
+
+  const monthsMap = new Map<string, DocumentResult[]>()
   for (const m of allMonths) {
-    monthsMap.set(m, [])
+    if (!monthsMap.has(m)) monthsMap.set(m, [])
   }
 
   const observadoDocs: DocumentResult[] = []
   const invalidDocs: DocumentResult[] = []
+  const borderDocs: DocumentResult[] = []
 
   for (const doc of geminiResults) {
+    const isContrato = doc.tipo === "contrato" || doc.tipo === "contrato de trabajo" || doc.tipo === "contrato de alquiler"
+
+    // 1. Invalidity check first — a doc cannot appear in two buckets
+    if (!doc.valido) {
+      if (isContrato) observadoDocs.push(doc)
+      else invalidDocs.push(doc)
+      continue
+    }
+
+    // 2. Partial name match — valid doc but name needs manual confirmation
     if (doc.observado) {
-      // Partial name match — shown separately, not counted in coverage until reviewed
       observadoDocs.push(doc)
       continue
     }
 
-    const isContrato = doc.tipo === "contrato" || doc.tipo === "contrato de trabajo" || doc.tipo === "contrato de alquiler"
-
-    if (!doc.valido) {
-      // Contratos nunca van a inválidos: al menos a observados para revisión manual
-      if (isContrato) {
-        observadoDocs.push(doc)
-      } else {
-        invalidDocs.push(doc)
-      }
-      continue
-    }
-
+    // 3. Coverage check
     const coveredMonths = doc.fechas.filter((ym) => monthsMap.has(ym))
     if (coveredMonths.length === 0) {
-      // Válido como documento pero fuera de la ventana temporal
-      // Contratos → observados; resto → inválidos
-      if (isContrato) {
-        observadoDocs.push(doc)
+      // Check if any fecha is in a border month (not yet included → not in monthsMap)
+      const inBorder = doc.fechas.some((ym) => borderMonthSet.has(ym))
+      if (inBorder) {
+        borderDocs.push(doc)
       } else {
-        invalidDocs.push(doc)
+        if (isContrato) observadoDocs.push(doc)
+        else invalidDocs.push(doc)
       }
     } else {
       for (const ym of coveredMonths) {
@@ -170,7 +201,8 @@ export function runRulesEngine(
 
   const months: MonthCoverage[] = allMonths.map((ym) => {
     const docs = monthsMap.get(ym) || []
-    const isOptional = window.optional.includes(ym)
+    const isOptional  = window.optional.includes(ym)
+    const isLimitrofe = includedBorders.has(ym)
 
     let status: MonthStatus = "VACÍO"
     if (docs.length > 0) {
@@ -180,16 +212,11 @@ export function runRulesEngine(
       status = hasFuerteOrMedia ? "CUBIERTO" : "DÉBIL"
     }
 
-    return {
-      yearMonth: ym,
-      label: MONTH_LABELS[ym] || ym,
-      status,
-      docs,
-      isOptional,
-    }
+    return { yearMonth: ym, label: MONTH_LABELS[ym] || ym, status, docs, isOptional, isLimitrofe }
   })
 
-  const requiredMonths = months.filter((m) => !m.isOptional)
+  // Veredicto: only required months (non-optional, non-limítrofe)
+  const requiredMonths = months.filter((m) => !m.isOptional && !m.isLimitrofe)
   let veredicto: Veredicto
   if (requiredMonths.some((m) => m.status === "VACÍO")) {
     veredicto = "NO_CUMPLE"
@@ -199,12 +226,11 @@ export function runRulesEngine(
     veredicto = "CUMPLE"
   }
 
-  // validDocs = solo los que están dentro de la ventana temporal, en orden cronológico
   const validDocs = months
     .flatMap((m) => m.docs)
     .sort((a, b) => (a.fechas[0] ?? "").localeCompare(b.fechas[0] ?? ""))
 
-  return { veredicto, months, observadoDocs, invalidDocs, validDocs }
+  return { veredicto, months, observadoDocs, invalidDocs, validDocs, borderDocs }
 }
 
 const EMISION_NOTA = "Mes de emisión incluido."

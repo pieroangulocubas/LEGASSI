@@ -122,27 +122,39 @@ export function MonthCard({
   const s = STATUS_CFG[month.status]
   const suggestion = getMonthSuggestion(month.docs)
 
+  const borderClass = month.isLimitrofe
+    ? "border-violet-200 dark:border-violet-800"
+    : s.border
+  const headerClass = month.isLimitrofe
+    ? "bg-violet-50 dark:bg-violet-950/20"
+    : s.header
+
   return (
-    <div className={cn("rounded-xl border overflow-hidden", s.border)}>
+    <div className={cn("rounded-xl border overflow-hidden", borderClass)}>
 
       {/* Header */}
-      <div className={cn("flex items-center justify-between gap-2 px-4 py-3", s.header)}>
+      <div className={cn("flex items-center justify-between gap-2 px-4 py-3", headerClass)}>
         <div className="flex items-center gap-2 min-w-0">
-          <span className={cn("h-2 w-2 rounded-full shrink-0", s.dot)} />
+          <span className={cn("h-2 w-2 rounded-full shrink-0", month.isLimitrofe ? "bg-violet-400" : s.dot)} />
           <span className="font-bold text-sm text-foreground truncate">{month.label}</span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          {month.isOptional && month.status === "VACÍO" && (
+          {month.isLimitrofe && (
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+              Contexto adicional
+            </span>
+          )}
+          {!month.isLimitrofe && month.isOptional && month.status === "VACÍO" && (
             <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
               Recomendable
             </span>
           )}
-          {!(month.isOptional && month.status === "VACÍO") && (
+          {!month.isLimitrofe && !(month.isOptional && month.status === "VACÍO") && (
             <span className={cn("rounded-full px-2.5 py-0.5 text-[11px] font-semibold", s.badge)}>
               {s.label}
             </span>
           )}
-          {month.isOptional && month.status !== "VACÍO" && (
+          {!month.isLimitrofe && month.isOptional && month.status !== "VACÍO" && (
             <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
               Recomendable
             </span>

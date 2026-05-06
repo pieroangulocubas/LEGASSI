@@ -13,10 +13,12 @@ import {
   RefreshCw,
   RotateCcw,
   FileText,
+  CheckCircle2,
+  PlusCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { AnalysisResult, ClasificadorFormData, DocumentResult, PresentationMonth } from "../types"
-import { runRulesEngine, PRESENTATION_MONTH_LABELS } from "../logic"
+import { runRulesEngine, PRESENTATION_MONTH_LABELS, MONTH_LABELS, getBorderMonths, formatFechasRange } from "../logic"
 import { PreviewModal } from "./PreviewModal"
 import { PdfPreviewModal } from "./PdfPreviewModal"
 import { VeredictoBanner } from "./VeredictoBanner"
@@ -26,7 +28,7 @@ import { ObservadoList } from "./ObservadoList"
 import { ValidDocsList } from "./ValidDocsList"
 import { FuerzaLegend } from "./FuerzaLegend"
 
-type SecondaryTab = "por-confirmar" | "invalidos" | "eliminados"
+type SecondaryTab = "por-confirmar" | "invalidos" | "eliminados" | "limitrofes"
 
 export function ResultsView({
   result: _initialResult, // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -46,11 +48,24 @@ export function ResultsView({
   const [activeMonth, setActiveMonth] = useState<PresentationMonth>(formData.mesPresentation)
   const [approvedIndices, setApprovedIndices] = useState<Set<number>>(new Set())
   const [deletedIndices, setDeletedIndices] = useState<Set<number>>(new Set())
+  const [includedBorderIndices, setIncludedBorderIndices] = useState<Set<number>>(new Set())
   const [activeSecondaryTab, setActiveSecondaryTab] = useState<SecondaryTab>("por-confirmar")
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfError, setPdfError] = useState<string | null>(null)
   const [previewDoc, setPreviewDoc] = useState<DocumentResult | null>(null)
   const [pdfPreviewBytes, setPdfPreviewBytes] = useState<Uint8Array | null>(null)
+
+  // Border month set for the current presentation month
+  const { before: borderBefore, after: borderAfter } = getBorderMonths(activeMonth)
+  const borderMonthSet = new Set([borderBefore, borderAfter])
+
+  // Compute which border months to include in the window based on user-included docs
+  const includedBorderMonths = new Set<string>()
+  rawResults.forEach((doc, i) => {
+    if (includedBorderIndices.has(i) && !deletedIndices.has(i)) {
+      doc.fechas.filter(ym => borderMonthSet.has(ym)).forEach(ym => includedBorderMonths.add(ym))
+    }
+  })
 
   // Build effectiveResults + index map in one pass
   const docToRawIndex = new Map<DocumentResult, number>()
@@ -63,10 +78,13 @@ export function ResultsView({
     effectiveResultsList.push(effective)
     docToRawIndex.set(effective, i)
   })
-  const result = runRulesEngine(effectiveResultsList, activeMonth)
+  const result = runRulesEngine(effectiveResultsList, activeMonth, includedBorderMonths)
 
   const allObservadoDocs = rawResults.filter((d, i) => d.observado && !deletedIndices.has(i))
   const deletedDocs = rawResults.map((doc, i) => ({ doc, rawIdx: i })).filter(({ rawIdx }) => deletedIndices.has(rawIdx))
+  const includedBorderDocs = rawResults
+    .map((doc, i) => ({ doc, rawIdx: i }))
+    .filter(({ rawIdx }) => includedBorderIndices.has(rawIdx) && !deletedIndices.has(rawIdx))
 
   function handleDelete(doc: DocumentResult) {
     const rawIdx = docToRawIndex.get(doc) ?? rawResults.indexOf(doc)
@@ -91,6 +109,16 @@ export function ResultsView({
     const idx = rawResults.indexOf(doc)
     if (idx === -1) return
     setApprovedIndices((prev) => { const n = new Set(prev); n.delete(idx); return n })
+  }
+
+  function handleIncludeBorder(doc: DocumentResult) {
+    const rawIdx = docToRawIndex.get(doc) ?? rawResults.indexOf(doc)
+    if (rawIdx === -1 || deletedIndices.has(rawIdx)) return
+    setIncludedBorderIndices((prev) => new Set([...prev, rawIdx]))
+  }
+
+  function handleExcludeBorder(rawIdx: number) {
+    setIncludedBorderIndices((prev) => { const n = new Set(prev); n.delete(rawIdx); return n })
   }
 
   function handlePreview(doc: DocumentResult) { setPreviewDoc(doc) }
@@ -183,12 +211,19 @@ export function ResultsView({
   }
 
   // Tabs config
+  const totalBorderCount = result.borderDocs.length + includedBorderDocs.length
   const secondaryTabs: { id: SecondaryTab; label: string; count: number; color: string }[] = [
     {
       id: "por-confirmar",
       label: "Por confirmar",
       count: allObservadoDocs.length,
       color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    },
+    {
+      id: "limitrofes",
+      label: "Fuera del periodo",
+      count: totalBorderCount,
+      color: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
     },
     {
       id: "invalidos",
@@ -249,7 +284,7 @@ export function ResultsView({
                 <button
                   key={month}
                   type="button"
-                  onClick={() => setActiveMonth(month)}
+                  onClick={() => { setActiveMonth(month); setIncludedBorderIndices(new Set()) }}
                   className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-fast ${
                     activeMonth === month
                       ? "bg-gradient-to-r from-primary to-secondary text-white shadow-sm shadow-primary/20"
@@ -280,10 +315,7 @@ export function ResultsView({
         </div>
       </div>
 
-      {/* Orden del expediente */}
-      <ValidDocsList months={result.months} onPreview={handlePreview} onDelete={handleDelete} />
-
-      {/* Secondary tabs: Por confirmar / Inválidos / Eliminados */}
+      {/* Secondary tabs: Por confirmar / Fuera del periodo / Inválidos / Eliminados */}
       {hasSecondaryContent && (
         <div className="rounded-xl border border-border overflow-hidden">
           {/* Tab bar */}
@@ -322,6 +354,63 @@ export function ResultsView({
               onDesaprobar={handleDesaprobarObservado}
               onDelete={handleDelete}
             />
+          )}
+
+          {activeSecondaryTab === "limitrofes" && (
+            <div>
+              <div className="px-4 py-3 bg-violet-50/50 dark:bg-violet-950/10 border-b border-violet-100 dark:border-violet-900/30">
+                <p className="text-[11px] text-violet-700 dark:text-violet-400 leading-relaxed">
+                  Estos documentos están en el mes justo antes o después de la ventana de permanencia ({MONTH_LABELS[borderBefore] ?? borderBefore} / {MONTH_LABELS[borderAfter] ?? borderAfter}).
+                  Incluirlos no cambia el veredicto obligatorio, pero quedan en el expediente PDF como evidencia de contexto.
+                </p>
+              </div>
+              {totalBorderCount === 0 ? (
+                <p className="px-4 py-6 text-xs text-center text-muted-foreground/60">
+                  No hay documentos en meses limítrofes.
+                </p>
+              ) : (
+                <div className="divide-y divide-border">
+                  {result.borderDocs.map((doc, i) => (
+                    <div key={i} className="flex items-center gap-3 px-4 py-3">
+                      <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-foreground truncate">{doc.descripcion_breve}</p>
+                        <p className="text-[11px] text-muted-foreground">{doc.tipo}{doc.fechas.length > 0 && <> · {formatFechasRange(doc.fechas)}</>}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleIncludeBorder(doc)}
+                        className="shrink-0 inline-flex items-center gap-1 rounded-lg bg-violet-600 hover:bg-violet-700 active:bg-violet-800 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm transition-all"
+                      >
+                        <PlusCircle className="h-3 w-3" />
+                        Incluir
+                      </button>
+                    </div>
+                  ))}
+                  {includedBorderDocs.map(({ doc, rawIdx }) => (
+                    <div key={rawIdx} className="flex items-center gap-3 px-4 py-3 bg-violet-50/30 dark:bg-violet-950/10">
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-400" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-foreground truncate">{doc.descripcion_breve}</p>
+                        <p className="text-[11px] text-muted-foreground">{doc.tipo}{doc.fechas.length > 0 && <> · {formatFechasRange(doc.fechas)}</>}</p>
+                      </div>
+                      <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-violet-100 dark:bg-violet-900/40 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300">
+                        <CheckCircle2 className="h-2.5 w-2.5" />
+                        Incluido
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleExcludeBorder(rawIdx)}
+                        className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-border bg-background hover:bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground transition-all"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                        Excluir
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {activeSecondaryTab === "invalidos" && (
@@ -367,6 +456,9 @@ export function ResultsView({
           )}
         </div>
       )}
+
+      {/* Orden del expediente */}
+      <ValidDocsList months={result.months} onPreview={handlePreview} onDelete={handleDelete} />
 
       {/* PDF preview modal */}
       {pdfPreviewBytes && (
