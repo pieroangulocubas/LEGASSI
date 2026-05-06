@@ -244,6 +244,7 @@ export default function EvaluadorPage() {
   const [completionVisible, setCompletionVisible] = useState(false)
   const [allChecklistDone, setAllChecklistDone] = useState(false)
   const [formConfirmed, setFormConfirmed] = useState(false)
+  const [selectedAnnexes, setSelectedAnnexes] = useState<string[]>([])
   const [extractedData, setExtractedData] = useState<Partial<PersonalData>>({})
   const { hasAccess, verifying, checkout } = useEvaluadorAccess()
 
@@ -276,12 +277,16 @@ export default function EvaluadorPage() {
     setStepIndex((i) => Math.max(i - 1, 0))
   }
 
+  // Anexo I-1 (03) o I-2 (04) seleccionados → criminal_origin se cubre con el anexo
+  const annexExternalDoneIds = selectedAnnexes.some(a => a === "03" || a === "04") ? ["criminal_origin"] : []
+
   function reset() {
     setAnswers(EMPTY)
     setStepIndex(0)
     setCompletionVisible(false)
     setAllChecklistDone(false)
     setFormConfirmed(false)
+    setSelectedAnnexes([])
     prevAllDone.current = false
   }
 
@@ -862,7 +867,10 @@ export default function EvaluadorPage() {
                         pathway={result.pathway as "DA20" | "DA21"}
                         onDataExtracted={mergeExtractedData}
                         onAllRequiredDone={setAllChecklistDone}
-                        externalDoneIds={formConfirmed ? ["form"] : []}
+                        externalDoneIds={[
+                          ...(formConfirmed ? ["form"] : []),
+                          ...annexExternalDoneIds,
+                        ]}
                       />
                       {Object.keys(extractedData).length > 0 && (
                         <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 px-3 py-2">
@@ -934,6 +942,7 @@ export default function EvaluadorPage() {
                             da21Supuestos={answers.da21Supuestos}
                             extractedData={Object.keys(extractedData).length > 0 ? extractedData : undefined}
                             onFormCompleted={() => setFormConfirmed(true)}
+                            onAnnexesChange={setSelectedAnnexes}
                           />
                         </div>
                       )}

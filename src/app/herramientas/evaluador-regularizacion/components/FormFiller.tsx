@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
   FileText, Download, Loader2, ChevronDown, ChevronUp,
   Info, UserPlus, Trash2, Users, Sparkles, CheckCircle2, PenLine,
-  Eye, X, User, MapPin, Bell, ShieldCheck,
+  Eye, X, User, Bell, ShieldCheck,
 } from "lucide-react"
 import type { PersonalData, DA21Supuesto } from "../types"
 
@@ -34,39 +34,25 @@ const ANNEXES_DA21: AnnexDef[] = [
 // ─── Representante data ───────────────────────────────────────────────────────
 
 interface RepresentanteData {
-  nombre: string
-  primerApellido: string
-  segundoApellido: string
-  nif: string        // NIF/NIE/Pasaporte del representante
-  domicilio: string
-  piso: string
-  localidad: string
-  provincia: string
-  cp: string
-  telefono: string
-  email: string
+  nombre: string; primerApellido: string; segundoApellido: string; nif: string
+  domicilio: string; piso: string; localidad: string; provincia: string; cp: string
+  telefono: string; email: string
 }
 
 function emptyRepresentante(): RepresentanteData {
-  return {
-    nombre: "", primerApellido: "", segundoApellido: "", nif: "",
-    domicilio: "", piso: "", localidad: "", provincia: "", cp: "",
-    telefono: "", email: "",
-  }
+  return { nombre: "", primerApellido: "", segundoApellido: "", nif: "", domicilio: "", piso: "", localidad: "", provincia: "", cp: "", telefono: "", email: "" }
 }
 
 // ─── Notification address ─────────────────────────────────────────────────────
 
 interface NotifData {
-  domicilio: string
-  piso: string
-  localidad: string
-  provincia: string
-  cp: string
+  nombre: string; nie: string
+  domicilio: string; piso: string; localidad: string; provincia: string; cp: string
+  telefono: string; email: string
 }
 
 function emptyNotif(): NotifData {
-  return { domicilio: "", piso: "", localidad: "", provincia: "", cp: "" }
+  return { nombre: "", nie: "", domicilio: "", piso: "", localidad: "", provincia: "", cp: "", telefono: "", email: "" }
 }
 
 // ─── Empty person ─────────────────────────────────────────────────────────────
@@ -97,22 +83,17 @@ function Field({
         {label}{required && <span className="text-rose-500 ml-0.5">*</span>}
         {autoFilled && (
           <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-1.5 py-px text-[9px] font-bold text-emerald-700 dark:text-emerald-300">
-            <Sparkles className="h-2 w-2" />
-            Auto
+            <Sparkles className="h-2 w-2" />Auto
           </span>
         )}
       </label>
       <input
-        id={id} type={type} value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
+        id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder} disabled={disabled}
         className={cn(
           "h-9 rounded-lg border px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors",
           disabled && "opacity-60 cursor-not-allowed",
-          autoFilled
-            ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800"
-            : "bg-input border-input",
+          autoFilled ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800" : "bg-input border-input",
           required && !value && !disabled && "border-amber-300 dark:border-amber-700 bg-amber-50/40 dark:bg-amber-950/10"
         )}
       />
@@ -133,8 +114,7 @@ function SelectField({
         {label}{required && <span className="text-rose-500 ml-0.5">*</span>}
         {autoFilled && (
           <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-1.5 py-px text-[9px] font-bold text-emerald-700 dark:text-emerald-300">
-            <Sparkles className="h-2 w-2" />
-            Auto
+            <Sparkles className="h-2 w-2" />Auto
           </span>
         )}
       </label>
@@ -142,15 +122,27 @@ function SelectField({
         id={id} value={value} onChange={(e) => onChange(e.target.value)}
         className={cn(
           "h-9 rounded-lg border px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors",
-          autoFilled
-            ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800"
-            : "bg-input border-input"
+          autoFilled ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800" : "bg-input border-input"
         )}
       >
         <option value="">Seleccionar…</option>
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
     </div>
+  )
+}
+
+// ─── Toggle switch ────────────────────────────────────────────────────────────
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={cn("w-9 h-5 rounded-full transition-colors relative shrink-0", checked ? "bg-primary" : "bg-muted border border-border")}
+    >
+      <span className={cn("absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform", checked ? "translate-x-4" : "translate-x-0.5")} />
+    </button>
   )
 }
 
@@ -165,12 +157,10 @@ function PersonForm({
 }: {
   index: number; data: PersonalData
   onChange: (key: keyof PersonalData, value: string) => void
-  pathway: "DA20" | "DA21"
-  onRemove: () => void; canRemove: boolean
+  pathway: "DA20" | "DA21"; onRemove: () => void; canRemove: boolean
   autoFilledKeys: Set<keyof PersonalData>
 }) {
   const [showExtra, setShowExtra] = useState(false)
-
   function set(key: keyof PersonalData) { return (v: string) => onChange(key, v) }
   function af(key: keyof PersonalData) { return autoFilledKeys.has(key) && !!data[key] }
 
@@ -179,6 +169,7 @@ function PersonForm({
 
   return (
     <div className="rounded-xl border border-border/60 bg-muted/20 overflow-hidden">
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 bg-muted/40">
         <div className="flex items-center gap-2">
           <Users className="h-3.5 w-3.5 text-primary" />
@@ -199,9 +190,7 @@ function PersonForm({
               </span>
           }
           {canRemove && (
-            <button onClick={onRemove} className="p-1 rounded hover:text-rose-500 transition-colors">
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            <button onClick={onRemove} className="p-1 rounded hover:text-rose-500 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
           )}
         </div>
       </div>
@@ -222,6 +211,8 @@ function PersonForm({
             <Field label="Nº Pasaporte / Doc. viaje" id={`pasaporte-${index}`} value={data.pasaporte} onChange={set("pasaporte")} required placeholder="Ej: C12345678" autoFilled={af("pasaporte")} />
             <Field label="Nacionalidad" id={`nacionalidad-${index}`} value={data.nacionalidad} onChange={set("nacionalidad")} required placeholder="Ej: Venezolana" autoFilled={af("nacionalidad")} />
             <Field label="NIE (si dispones)" id={`nie-${index}`} value={data.nie} onChange={set("nie")} placeholder="Ej: X1234567A" autoFilled={af("nie")} />
+            <Field label="Nombre del padre" id={`nombrePadre-${index}`} value={data.nombrePadre} onChange={set("nombrePadre")} placeholder="Nombre completo" autoFilled={af("nombrePadre")} />
+            <Field label="Nombre de la madre" id={`nombreMadre-${index}`} value={data.nombreMadre} onChange={set("nombreMadre")} placeholder="Nombre completo" autoFilled={af("nombreMadre")} />
           </div>
         </div>
 
@@ -248,8 +239,6 @@ function PersonForm({
                 ]}
                 autoFilled={af("estadoCivil")}
               />
-              <Field label="Nombre del padre" id={`nombrePadre-${index}`} value={data.nombrePadre} onChange={set("nombrePadre")} placeholder="Nombre completo" autoFilled={af("nombrePadre")} />
-              <Field label="Nombre de la madre" id={`nombreMadre-${index}`} value={data.nombreMadre} onChange={set("nombreMadre")} placeholder="Nombre completo" autoFilled={af("nombreMadre")} />
               <Field label="Teléfono / WhatsApp" id={`telefono-${index}`} value={data.telefono} onChange={set("telefono")} placeholder="+34 6XX XXX XXX" autoFilled={af("telefono")} />
               <Field label="Correo electrónico" id={`email-${index}`} type="email" value={data.email} onChange={set("email")} placeholder="tu@email.com" autoFilled={af("email")} />
             </div>
@@ -294,8 +283,7 @@ function PersonForm({
 // ─── Representante form ───────────────────────────────────────────────────────
 
 function RepresentanteForm({ data, onChange }: {
-  data: RepresentanteData
-  onChange: (key: keyof RepresentanteData, value: string) => void
+  data: RepresentanteData; onChange: (key: keyof RepresentanteData, value: string) => void
 }) {
   function set(key: keyof RepresentanteData) { return (v: string) => onChange(key, v) }
   return (
@@ -318,153 +306,54 @@ function RepresentanteForm({ data, onChange }: {
   )
 }
 
-// ─── Preview modal ────────────────────────────────────────────────────────────
+// ─── PDF preview modal ────────────────────────────────────────────────────────
 
-function PreviewRow({ label, value }: { label: string; value: string }) {
-  if (!value) return null
-  return (
-    <div className="flex gap-2 text-xs">
-      <span className="text-muted-foreground min-w-[120px] shrink-0">{label}</span>
-      <span className="font-medium">{value}</span>
-    </div>
-  )
-}
-
-interface PreviewModalProps {
-  persons: PersonalData[]
-  hasRepresentante: boolean
-  representante: RepresentanteData
-  notifSameAsMain: boolean
-  notifData: NotifData
-  consiento: boolean
-  selectedAnnexes: string[]
-  availableAnnexes: AnnexDef[]
+interface PdfPreviewModalProps {
+  pdfUrl: string
   formName: string
   loading: boolean
   onClose: () => void
   onConfirm: () => void
 }
 
-function PreviewModal({
-  persons, hasRepresentante, representante, notifSameAsMain, notifData, consiento,
-  selectedAnnexes, availableAnnexes, formName, loading, onClose, onConfirm,
-}: PreviewModalProps) {
-  const mainPerson = persons[0]
-  const notifAddress = notifSameAsMain
-    ? { domicilio: mainPerson.domicilio, piso: mainPerson.piso, localidad: mainPerson.localidad, provincia: mainPerson.provincia, cp: mainPerson.cp }
-    : notifData
-
+function PdfPreviewModal({ pdfUrl, formName, loading, onClose, onConfirm }: PdfPreviewModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-background rounded-2xl border border-border shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-background rounded-2xl border border-border shadow-2xl w-full max-w-3xl h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border/60 shrink-0">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/60 shrink-0">
           <div className="flex items-center gap-2.5">
             <Eye className="h-4 w-4 text-primary" />
             <p className="font-semibold text-sm">Previsualización — formulario {formName}</p>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="overflow-y-auto flex-1 px-5 py-4 flex flex-col gap-5">
-
-          {/* Sección 1 — Solicitante */}
-          {persons.map((p, i) => (
-            <div key={i}>
-              <div className="flex items-center gap-2 mb-2.5">
-                <User className="h-3.5 w-3.5 text-primary" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-primary">
-                  {persons.length > 1 ? `Sección 1 — Solicitante ${i + 1}` : "Sección 1 — Datos del solicitante"}
-                </p>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <PreviewRow label="Nombre completo" value={[p.nombre, p.primerApellido, p.segundoApellido].filter(Boolean).join(" ")} />
-                <PreviewRow label="Pasaporte / Doc." value={p.pasaporte} />
-                <PreviewRow label="NIE" value={p.nie} />
-                <PreviewRow label="Nacionalidad" value={p.nacionalidad} />
-                <PreviewRow label="F. nacimiento" value={p.fechaNacimiento} />
-                <PreviewRow label="Lugar nacimiento" value={[p.lugarNacimiento, p.paisNacimiento].filter(Boolean).join(", ")} />
-                <PreviewRow label="Domicilio" value={[p.domicilio, p.piso].filter(Boolean).join(", ")} />
-                <PreviewRow label="Localidad / CP" value={[p.localidad, p.cp, p.provincia].filter(Boolean).join(", ")} />
-                <PreviewRow label="Teléfono" value={p.telefono} />
-                <PreviewRow label="Email" value={p.email} />
-                {p.numExpedientePi && <PreviewRow label="Expediente PI" value={p.numExpedientePi} />}
-              </div>
-            </div>
-          ))}
-
-          {/* Sección 2 — Representante */}
-          {hasRepresentante && (
-            <div>
-              <div className="flex items-center gap-2 mb-2.5">
-                <Users className="h-3.5 w-3.5 text-primary" />
-                <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Sección 2 — Representante</p>
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <PreviewRow label="Nombre completo" value={[representante.nombre, representante.primerApellido, representante.segundoApellido].filter(Boolean).join(" ")} />
-                <PreviewRow label="NIF / NIE / Pasaporte" value={representante.nif} />
-                <PreviewRow label="Domicilio" value={[representante.domicilio, representante.piso].filter(Boolean).join(", ")} />
-                <PreviewRow label="Localidad / CP" value={[representante.localidad, representante.cp, representante.provincia].filter(Boolean).join(", ")} />
-                <PreviewRow label="Teléfono" value={representante.telefono} />
-                <PreviewRow label="Email" value={representante.email} />
-              </div>
-            </div>
-          )}
-
-          {/* Sección 3 — Notificaciones */}
-          <div>
-            <div className="flex items-center gap-2 mb-2.5">
-              <MapPin className="h-3.5 w-3.5 text-primary" />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Sección 3 — Domicilio a efectos de notificaciones</p>
-            </div>
-            {notifSameAsMain
-              ? <p className="text-xs text-muted-foreground italic">Igual que domicilio principal</p>
-              : (
-                <div className="flex flex-col gap-1.5">
-                  <PreviewRow label="Domicilio" value={[notifAddress.domicilio, notifAddress.piso].filter(Boolean).join(", ")} />
-                  <PreviewRow label="Localidad / CP" value={[notifAddress.localidad, notifAddress.cp, notifAddress.provincia].filter(Boolean).join(", ")} />
-                </div>
-              )
-            }
-          </div>
-
-          {/* Consiento */}
-          <div className="flex items-start gap-2.5 rounded-lg border border-border/40 bg-muted/30 px-3 py-2.5">
-            <ShieldCheck className={cn("h-4 w-4 shrink-0 mt-0.5", consiento ? "text-emerald-600" : "text-rose-500")} />
-            <p className="text-xs leading-relaxed">
-              <strong>Consentimiento de notificación electrónica:</strong>{" "}
-              {consiento ? "Sí, consiente" : "No consiente"}
-            </p>
-          </div>
-
-          {/* Anexos */}
-          {selectedAnnexes.length > 0 && (
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1.5">Anexos incluidos</p>
-              <ul className="flex flex-col gap-0.5">
-                {selectedAnnexes.map(id => {
-                  const a = availableAnnexes.find(x => x.id === id)
-                  return a ? <li key={id} className="text-xs text-muted-foreground">• {a.label}</li> : null
-                })}
-              </ul>
-            </div>
-          )}
+        {/* PDF iframe */}
+        <div className="flex-1 overflow-hidden bg-muted/30">
+          <iframe
+            src={pdfUrl}
+            className="w-full h-full border-0"
+            title={`Previsualización ${formName}`}
+          />
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-border/60 flex items-center justify-end gap-3 shrink-0">
-          <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Volver a editar
-          </button>
-          <Button onClick={onConfirm} disabled={loading} className="gap-2">
-            {loading
-              ? <><Loader2 className="h-4 w-4 animate-spin" />Generando…</>
-              : <><Download className="h-4 w-4" />Confirmar y descargar</>
-            }
-          </Button>
+        <div className="px-5 py-3.5 border-t border-border/60 flex items-center justify-between shrink-0">
+          <p className="text-xs text-muted-foreground">Revisa el formulario antes de confirmar la descarga</p>
+          <div className="flex items-center gap-3">
+            <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Volver a editar
+            </button>
+            <Button onClick={onConfirm} disabled={loading} className="gap-2">
+              {loading
+                ? <><Loader2 className="h-4 w-4 animate-spin" />Descargando…</>
+                : <><Download className="h-4 w-4" />Confirmar y descargar</>
+              }
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -478,9 +367,10 @@ interface FormFillerProps {
   da21Supuestos: DA21Supuesto[]
   extractedData?: Partial<PersonalData>
   onFormCompleted?: () => void
+  onAnnexesChange?: (annexes: string[]) => void
 }
 
-export function FormFiller({ pathway, da21Supuestos, extractedData, onFormCompleted }: FormFillerProps) {
+export function FormFiller({ pathway, da21Supuestos, extractedData, onFormCompleted, onAnnexesChange }: FormFillerProps) {
   const hasExtracted = !!extractedData && Object.keys(extractedData).length > 0
   const [open, setOpen] = useState(hasExtracted)
   const [persons, setPersons] = useState<PersonalData[]>([emptyPerson(da21Supuestos.join(", "))])
@@ -502,28 +392,45 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
     setOpen(true)
   }, [extractedData])
 
-  // Representante (sección 2)
+  // Sección 2 — Representante
   const [hasRepresentante, setHasRepresentante] = useState(false)
   const [representante, setRepresentante] = useState<RepresentanteData>(emptyRepresentante())
 
-  // Notificaciones (sección 3)
+  // Sección 3 — Notificaciones
   const [notifSameAsMain, setNotifSameAsMain] = useState(true)
   const [notifData, setNotifData] = useState<NotifData>(emptyNotif())
 
   // Consiento
   const [consiento, setConsiento] = useState(true)
 
-  // Annexes
+  // Anexos
   const [selectedAnnexes, setSelectedAnnexes] = useState<string[]>(
     pathway === "DA21" && da21Supuestos.includes("vulnerability") ? ["05"] : []
   )
 
-  const [loading, setLoading] = useState(false)
+  // Notify parent when annexes change
+  const prevAnnexes = useRef<string[]>([])
+  useEffect(() => {
+    if (JSON.stringify(selectedAnnexes) !== JSON.stringify(prevAnnexes.current)) {
+      prevAnnexes.current = selectedAnnexes
+      onAnnexesChange?.(selectedAnnexes)
+    }
+  }, [selectedAnnexes, onAnnexesChange])
+
+  // Preview state
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [downloadLoading, setDownloadLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showPreview, setShowPreview] = useState(false)
+
+  // Revoke blob URL on unmount
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl) }
+  }, [previewUrl])
 
   const formName = pathway === "DA20" ? "EX31" : "EX32"
   const availableAnnexes = pathway === "DA20" ? ANNEXES_DA20 : ANNEXES_DA21
+  const totalAutoFilled = autoFilledKeys.size
 
   function updatePerson(index: number, key: keyof PersonalData, value: string) {
     setPersons((ps) => ps.map((p, i) => i === index ? { ...p, [key]: value } : p))
@@ -547,9 +454,7 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
   }
 
   function toggleAnnex(id: string) {
-    setSelectedAnnexes((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
-    )
+    setSelectedAnnexes((prev) => prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id])
   }
 
   function isPersonValid(p: PersonalData) {
@@ -557,69 +462,82 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
   }
 
   const allValid = persons.length > 0 && persons.every(isPersonValid)
-  const totalAutoFilled = autoFilledKeys.size
+  const mainPerson = persons[0]
 
+  // Build notification data (always sends main person's info if notifSameAsMain)
   const notifForFill: NotifData = notifSameAsMain
-    ? { domicilio: persons[0].domicilio, piso: persons[0].piso, localidad: persons[0].localidad, provincia: persons[0].provincia, cp: persons[0].cp }
+    ? {
+        nombre: [mainPerson.nombre, mainPerson.primerApellido, mainPerson.segundoApellido].filter(Boolean).join(" "),
+        nie: mainPerson.nie || mainPerson.pasaporte,
+        domicilio: mainPerson.domicilio,
+        piso: mainPerson.piso,
+        localidad: mainPerson.localidad,
+        provincia: mainPerson.provincia,
+        cp: mainPerson.cp,
+        telefono: mainPerson.telefono,
+        email: mainPerson.email,
+      }
     : notifData
 
-  async function handleDownload() {
+  const buildPayload = useCallback(() => ({
+    persons,
+    pathway,
+    annexes: selectedAnnexes,
+    hasRepresentante,
+    representante: hasRepresentante ? representante : null,
+    notifData: notifForFill,
+    consiento,
+  }), [persons, pathway, selectedAnnexes, hasRepresentante, representante, notifForFill, consiento])
+
+  async function handlePreview() {
     setError(null)
-    setLoading(true)
+    setPreviewLoading(true)
+    if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null) }
     try {
       const res = await fetch("/api/evaluador/fill-form", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          persons,
-          pathway,
-          annexes: selectedAnnexes,
-          hasRepresentante,
-          representante: hasRepresentante ? representante : null,
-          notifData: notifForFill,
-          consiento,
-        }),
+        body: JSON.stringify(buildPayload()),
       })
-
       if (!res.ok) {
         const j = await res.json()
-        setError(j.error ?? "Error al generar el PDF.")
+        setError(j.error ?? "Error al generar la previsualización.")
         return
       }
-
       const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      const suffix = persons.length > 1 ? `_${persons.length}personas` : ""
-      a.download = `solicitud-${formName}${suffix}-legassi.pdf`
-      document.body.appendChild(a); a.click(); document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      setShowPreview(false)
-      onFormCompleted?.()
+      setPreviewUrl(URL.createObjectURL(blob))
     } catch {
       setError("Error de conexión. Inténtalo de nuevo.")
     } finally {
-      setLoading(false)
+      setPreviewLoading(false)
+    }
+  }
+
+  async function handleDownloadConfirm() {
+    if (!previewUrl) return
+    setDownloadLoading(true)
+    try {
+      const a = document.createElement("a")
+      a.href = previewUrl
+      const suffix = persons.length > 1 ? `_${persons.length}personas` : ""
+      a.download = `solicitud-${formName}${suffix}-legassi.pdf`
+      document.body.appendChild(a); a.click(); document.body.removeChild(a)
+      setPreviewUrl(null)
+      onFormCompleted?.()
+    } finally {
+      setDownloadLoading(false)
     }
   }
 
   return (
     <>
-      {showPreview && (
-        <PreviewModal
-          persons={persons}
-          hasRepresentante={hasRepresentante}
-          representante={representante}
-          notifSameAsMain={notifSameAsMain}
-          notifData={notifData}
-          consiento={consiento}
-          selectedAnnexes={selectedAnnexes}
-          availableAnnexes={availableAnnexes}
+      {previewUrl && (
+        <PdfPreviewModal
+          pdfUrl={previewUrl}
           formName={formName}
-          loading={loading}
-          onClose={() => setShowPreview(false)}
-          onConfirm={handleDownload}
+          loading={downloadLoading}
+          onClose={() => { URL.revokeObjectURL(previewUrl); setPreviewUrl(null) }}
+          onConfirm={handleDownloadConfirm}
         />
       )}
 
@@ -648,20 +566,19 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
         {open && (
           <div className="border-t border-border/40 px-5 pb-5 pt-4 flex flex-col gap-5">
 
-            {/* Auto-fill banner */}
+            {/* Banner */}
             {totalAutoFilled > 0 ? (
               <div className="flex gap-2.5 items-start rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-700 px-4 py-3">
                 <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                 <p className="text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
-                  <strong>{totalAutoFilled} campos</strong> se han rellenado automáticamente a partir de los documentos que subiste.
-                  Los campos en verde son los extraídos — revísalos antes de descargar. Completa los que falten.
+                  <strong>{totalAutoFilled} campos</strong> se han rellenado automáticamente. Los campos en verde son los extraídos — revísalos antes de previsualizar.
                 </p>
               </div>
             ) : (
               <div className="flex gap-2.5 items-start rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 px-4 py-3">
                 <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                 <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
-                  Sube tus documentos en el checklist de arriba para que los datos se rellenen automáticamente. O completa el formulario manualmente si lo prefieres.
+                  Sube documentos en el checklist de arriba para auto-rellenar. O completa manualmente si lo prefieres.
                 </p>
               </div>
             )}
@@ -670,9 +587,7 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
             <div className="flex flex-col gap-3">
               {persons.map((person, i) => (
                 <PersonForm
-                  key={i}
-                  index={i}
-                  data={person}
+                  key={i} index={i} data={person}
                   onChange={(key, val) => updatePerson(i, key, val)}
                   pathway={pathway}
                   onRemove={() => removePerson(i)}
@@ -682,12 +597,8 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
               ))}
             </div>
 
-            {/* Add person */}
             {persons.length < 10 && (
-              <button
-                onClick={addPerson}
-                className="flex items-center gap-2 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
-              >
+              <button onClick={addPerson} className="flex items-center gap-2 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
                 <UserPlus className="h-3.5 w-3.5" />
                 Añadir otra persona (presentación simultánea)
               </button>
@@ -707,15 +618,7 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
                     <p className="text-[11px] text-muted-foreground">Sección 2 — Datos del representante</p>
                   </div>
                 </div>
-                <div className={cn(
-                  "w-9 h-5 rounded-full transition-colors relative",
-                  hasRepresentante ? "bg-primary" : "bg-muted border border-border"
-                )}>
-                  <span className={cn(
-                    "absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform",
-                    hasRepresentante ? "translate-x-4" : "translate-x-0.5"
-                  )} />
-                </div>
+                <Toggle checked={hasRepresentante} onChange={setHasRepresentante} />
               </button>
               {hasRepresentante && (
                 <div className="px-4 pb-4">
@@ -734,36 +637,30 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
                     <p className="text-[11px] text-muted-foreground">Sección 3 — Siempre requerido</p>
                   </div>
                 </div>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <span className="text-[11px] text-muted-foreground">Igual que domicilio principal</span>
-                  <button
-                    type="button"
-                    onClick={() => setNotifSameAsMain(!notifSameAsMain)}
-                    className={cn(
-                      "w-9 h-5 rounded-full transition-colors relative shrink-0",
-                      notifSameAsMain ? "bg-primary" : "bg-muted border border-border"
-                    )}
-                  >
-                    <span className={cn(
-                      "absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform",
-                      notifSameAsMain ? "translate-x-4" : "translate-x-0.5"
-                    )} />
-                  </button>
-                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-muted-foreground">Igual al principal</span>
+                  <Toggle checked={notifSameAsMain} onChange={setNotifSameAsMain} />
+                </div>
               </div>
               {notifSameAsMain ? (
                 <div className="px-4 py-3">
                   <p className="text-[11px] text-muted-foreground italic">
-                    Se usará: {[persons[0].domicilio, persons[0].piso, persons[0].localidad, persons[0].cp].filter(Boolean).join(", ") || "— (completa el domicilio principal)"}
+                    Nombre: <strong>{[mainPerson.nombre, mainPerson.primerApellido].filter(Boolean).join(" ") || "—"}</strong>
+                    {" · "}
+                    {[mainPerson.domicilio, mainPerson.piso, mainPerson.localidad, mainPerson.cp].filter(Boolean).join(", ") || "— (completa el domicilio principal)"}
                   </p>
                 </div>
               ) : (
                 <div className="px-4 pb-4 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <Field label="Nombre completo" id="notif-nombre" value={notifData.nombre} onChange={(v) => updateNotif("nombre", v)} placeholder="Para notificaciones" className="sm:col-span-2" />
+                  <Field label="NIE / Pasaporte (acceso Dehú)" id="notif-nie" value={notifData.nie} onChange={(v) => updateNotif("nie", v)} placeholder="NIE o pasaporte" />
+                  <Field label="Teléfono" id="notif-telefono" value={notifData.telefono} onChange={(v) => updateNotif("telefono", v)} placeholder="+34 6XX XXX XXX" />
                   <Field label="Calle y número" id="notif-domicilio" value={notifData.domicilio} onChange={(v) => updateNotif("domicilio", v)} placeholder="Ej: C/ Mayor 10" className="sm:col-span-2" />
                   <Field label="Piso / puerta" id="notif-piso" value={notifData.piso} onChange={(v) => updateNotif("piso", v)} placeholder="Ej: 2º A" />
                   <Field label="Localidad" id="notif-localidad" value={notifData.localidad} onChange={(v) => updateNotif("localidad", v)} placeholder="Ej: Madrid" />
                   <Field label="Provincia" id="notif-provincia" value={notifData.provincia} onChange={(v) => updateNotif("provincia", v)} placeholder="Ej: Madrid" />
                   <Field label="Código postal" id="notif-cp" value={notifData.cp} onChange={(v) => updateNotif("cp", v)} placeholder="Ej: 28001" />
+                  <Field label="E-mail" id="notif-email" type="email" value={notifData.email} onChange={(v) => updateNotif("email", v)} placeholder="tu@email.com" className="sm:col-span-2" />
                 </div>
               )}
             </div>
@@ -771,18 +668,19 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
             {/* Consiento */}
             <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-border/50 bg-muted/10 px-4 py-3 hover:bg-muted/20 transition-colors">
               <input
-                type="checkbox"
-                checked={consiento}
-                onChange={(e) => setConsiento(e.target.checked)}
+                type="checkbox" checked={consiento} onChange={(e) => setConsiento(e.target.checked)}
                 className="mt-0.5 shrink-0 accent-primary h-4 w-4"
               />
               <div>
-                <p className="text-xs font-medium leading-snug">Consiento recibir notificaciones por medios electrónicos</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Casilla de consentimiento — marcada por defecto</p>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className={cn("h-3.5 w-3.5 shrink-0", consiento ? "text-emerald-600" : "text-muted-foreground")} />
+                  <p className="text-xs font-medium leading-snug">Consiento recibir notificaciones electrónicas (Dehú)</p>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Requiere certificado digital o Cl@ve. Recomendado si dispones de NIE.</p>
               </div>
             </label>
 
-            {/* Annexes */}
+            {/* Anexos */}
             <div>
               <p className="text-[10px] font-semibold text-primary uppercase tracking-widest mb-2">Anexos a incluir</p>
               <div className="flex flex-col gap-2">
@@ -810,13 +708,15 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <Button
-                onClick={() => setShowPreview(true)}
-                disabled={!allValid}
+                onClick={handlePreview}
+                disabled={!allValid || previewLoading}
                 variant="outline"
                 className="gap-2"
               >
-                <Eye className="h-4 w-4" />
-                Previsualizar
+                {previewLoading
+                  ? <><Loader2 className="h-4 w-4 animate-spin" />Generando previsualización…</>
+                  : <><Eye className="h-4 w-4" />Previsualizar formulario</>
+                }
               </Button>
               {!allValid && (
                 <p className="text-xs text-muted-foreground">Completa los campos obligatorios (*) marcados en naranja</p>

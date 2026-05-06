@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react"
 import Link from "next/link"
 import {
   CheckCircle2, XCircle, AlertTriangle, Info, ExternalLink, Scan,
-  Upload, Loader2, Sparkles, Check, CalendarX2,
+  Upload, Loader2, Sparkles, Check, CalendarX2, Eye, X, RefreshCw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { ChecklistItem, ChecklistStatus, DocStatus, ExtractDocResult, PersonalData } from "../types"
@@ -61,6 +61,31 @@ function isInitiallyDone(item: ChecklistItem): boolean {
   return item.status === "available" || item.status === "info" || item.optional === true
 }
 
+// ─── Document viewer modal ────────────────────────────────────────────────────
+
+function DocViewerModal({ url, mimeType, name, onClose }: {
+  url: string; mimeType: string; name: string; onClose: () => void
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-background rounded-2xl border border-border shadow-2xl w-full max-w-2xl h-[85vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 shrink-0">
+          <p className="text-sm font-semibold truncate max-w-xs">{name}</p>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors ml-2 shrink-0">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-hidden bg-muted/20">
+          {mimeType === "application/pdf"
+            ? <iframe src={url} className="w-full h-full border-0" title={name} />
+            : <img src={url} alt={name} className="w-full h-full object-contain" />
+          }
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Upload slot per item ──────────────────────────────────────────────────────
 
 interface UploadSlotProps {
@@ -75,9 +100,17 @@ function UploadSlot({ item, pathway, onResult, onDone, onUndo }: UploadSlotProps
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ExtractDocResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [currentFile, setCurrentFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [showViewer, setShowViewer] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  async function handleFile(file: File) {
+  // Clean up blob URL on unmount
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl) }
+  }, [previewUrl])
+
+  async function analyzeFile(file: File) {
     setLoading(true)
     setError(null)
     setResult(null)
@@ -98,10 +131,26 @@ function UploadSlot({ item, pathway, onResult, onDone, onUndo }: UploadSlotProps
       onResult(json)
       onDone()
     } catch {
-      setError("Error al analizar el documento.")
+      setError("Error al analizar el documento. Verifica tu conexión.")
     } finally {
       setLoading(false)
     }
+  }
+
+  function handleFile(file: File) {
+    setCurrentFile(file)
+    // Create a preview URL for the viewer
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(URL.createObjectURL(file))
+    analyzeFile(file)
+  }
+
+  function handleReset() {
+    setResult(null)
+    setError(null)
+    setCurrentFile(null)
+    if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null) }
+    onUndo?.()
   }
 
   if (result) {
@@ -112,53 +161,73 @@ function UploadSlot({ item, pathway, onResult, onDone, onUndo }: UploadSlotProps
       .map(([k]) => k)
 
     return (
-      <div
-        className="mt-2 rounded-lg border border-border/40 bg-card px-3 py-2 flex flex-col gap-1.5"
-        style={{ animation: "doccheck-pop 0.4s ease both" }}
-      >
-        <div className="flex items-center gap-2">
-          <DsIcon className={cn("h-3.5 w-3.5 shrink-0", dsCfg.color)} />
-          <span className={cn("text-xs font-semibold", dsCfg.color)}>{result.tipoDocumento}</span>
-          <button
-            onClick={() => { setResult(null); setError(null); onUndo?.() }}
-            className="ml-auto text-[10px] text-muted-foreground hover:text-foreground underline"
-          >
-            cambiar
-          </button>
+      <>
+        {showViewer && previewUrl && currentFile && (
+          <DocViewerModal
+            url={previewUrl}
+            mimeType={getMimeType(currentFile.name)}
+            name={currentFile.name}
+            onClose={() => setShowViewer(false)}
+          />
+        )}
+        <div
+          className="mt-2 rounded-lg border border-border/40 bg-card px-3 py-2 flex flex-col gap-1.5"
+          style={{ animation: "doccheck-pop 0.4s ease both" }}
+        >
+          <div className="flex items-center gap-2">
+            <DsIcon className={cn("h-3.5 w-3.5 shrink-0", dsCfg.color)} />
+            <span className={cn("text-xs font-semibold", dsCfg.color)}>{result.tipoDocumento}</span>
+            <div className="ml-auto flex items-center gap-2">
+              {previewUrl && (
+                <button
+                  onClick={() => setShowViewer(true)}
+                  className="text-[10px] text-primary hover:text-primary/80 flex items-center gap-1"
+                >
+                  <Eye className="h-3 w-3" />ver
+                </button>
+              )}
+              <button
+                onClick={handleReset}
+                className="text-[10px] text-muted-foreground hover:text-foreground underline"
+              >
+                cambiar
+              </button>
+            </div>
+          </div>
+          {result.fechaVencimiento && (
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <CalendarX2 className="h-3 w-3 shrink-0" />
+              <span>Vence: {result.fechaVencimiento}</span>
+            </div>
+          )}
+          {result.alertasValidez && result.alertasValidez.length > 0 && (
+            <ul className="text-[11px] text-amber-700 dark:text-amber-400 flex flex-col gap-0.5">
+              {result.alertasValidez.map((a, i) => (
+                <li key={i} className="flex items-start gap-1">
+                  <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
+                  <span>{a}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {result.observaciones.length > 0 && (
+            <ul className="text-[11px] text-rose-600 dark:text-rose-400 flex flex-col gap-0.5">
+              {result.observaciones.map((o, i) => <li key={i}>• {o}</li>)}
+            </ul>
+          )}
+          {extractedFields.length > 0 && (
+            <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400">
+              <Sparkles className="h-3 w-3 shrink-0" />
+              <span>Datos extraídos: {extractedFields.join(", ")}</span>
+            </div>
+          )}
         </div>
-        {result.fechaVencimiento && (
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <CalendarX2 className="h-3 w-3 shrink-0" />
-            <span>Vence: {result.fechaVencimiento}</span>
-          </div>
-        )}
-        {result.alertasValidez && result.alertasValidez.length > 0 && (
-          <ul className="text-[11px] text-amber-700 dark:text-amber-400 flex flex-col gap-0.5">
-            {result.alertasValidez.map((a, i) => (
-              <li key={i} className="flex items-start gap-1">
-                <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5" />
-                <span>{a}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {result.observaciones.length > 0 && (
-          <ul className="text-[11px] text-rose-600 dark:text-rose-400 flex flex-col gap-0.5">
-            {result.observaciones.map((o, i) => <li key={i}>• {o}</li>)}
-          </ul>
-        )}
-        {extractedFields.length > 0 && (
-          <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400">
-            <Sparkles className="h-3 w-3 shrink-0" />
-            <span>Datos extraídos: {extractedFields.join(", ")}</span>
-          </div>
-        )}
-      </div>
+      </>
     )
   }
 
   return (
-    <div className="mt-2">
+    <div className="mt-2 flex flex-col gap-1.5">
       <input
         ref={inputRef}
         type="file"
@@ -166,16 +235,58 @@ function UploadSlot({ item, pathway, onResult, onDone, onUndo }: UploadSlotProps
         className="hidden"
         onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
       />
-      {error && <p className="text-[11px] text-rose-500 mb-1">{error}</p>}
-      <button
-        onClick={() => inputRef.current?.click()}
-        disabled={loading}
-        className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary border border-primary/30 rounded-lg px-2.5 py-1.5 hover:bg-primary/5 transition-colors disabled:opacity-50"
-      >
-        {loading
-          ? <><Loader2 className="h-3 w-3 animate-spin" />Verificando…</>
-          : <><Upload className="h-3 w-3" />Subir documento</>}
-      </button>
+      {/* File selected but analyzing */}
+      {loading && currentFile && (
+        <div className="flex items-center gap-2 rounded-lg bg-muted/40 border border-border/40 px-3 py-1.5">
+          <Loader2 className="h-3 w-3 animate-spin text-primary shrink-0" />
+          <span className="text-[11px] text-muted-foreground truncate">{currentFile.name}</span>
+          {previewUrl && (
+            <button onClick={() => setShowViewer(true)} className="ml-auto shrink-0 text-[10px] text-primary flex items-center gap-1">
+              <Eye className="h-3 w-3" />ver
+            </button>
+          )}
+        </div>
+      )}
+      {/* Error with re-analyze option */}
+      {error && (
+        <div className="rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 px-3 py-2 flex flex-col gap-1.5">
+          <p className="text-[11px] text-rose-600 dark:text-rose-400">{error}</p>
+          <div className="flex items-center gap-2">
+            {currentFile && (
+              <button
+                onClick={() => analyzeFile(currentFile)}
+                disabled={loading}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-700 dark:text-rose-400 hover:underline"
+              >
+                <RefreshCw className="h-3 w-3" />Reintentar análisis
+              </button>
+            )}
+            {previewUrl && currentFile && (
+              <button onClick={() => setShowViewer(true)} className="text-[10px] text-primary flex items-center gap-1">
+                <Eye className="h-3 w-3" />ver documento
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      {!loading && (
+        <button
+          onClick={() => inputRef.current?.click()}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary border border-primary/30 rounded-lg px-2.5 py-1.5 hover:bg-primary/5 transition-colors disabled:opacity-50 w-fit"
+        >
+          <Upload className="h-3 w-3" />
+          {error ? "Subir otro archivo" : "Subir documento"}
+        </button>
+      )}
+      {showViewer && previewUrl && currentFile && (
+        <DocViewerModal
+          url={previewUrl}
+          mimeType={getMimeType(currentFile.name)}
+          name={currentFile.name}
+          onClose={() => setShowViewer(false)}
+        />
+      )}
     </div>
   )
 }
