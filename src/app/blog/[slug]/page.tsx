@@ -25,21 +25,38 @@ export async function generateStaticParams() {
   return posts.filter(p => p.slug).map(p => ({ slug: p.slug }))
 }
 
+const BASE = "https://legassi.es"
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const post = await getPostBySlug(slug)
   if (!post) return {}
+
+  const url = `${BASE}/blog/${slug}`
+  const ogImages = post.coverImage
+    ? [{ url: post.coverImage, width: 1200, height: 630, alt: post.title }]
+    : []
+
   return {
     title: `${post.title} – LEGASSI`,
     description: post.excerpt,
+    alternates: { canonical: url },
     openGraph: {
       title: post.title,
       description: post.excerpt,
-      images: post.coverImage ? [{ url: post.coverImage }] : [],
-      url: `https://legassi.es/blog/${slug}`,
+      url,
       type: "article",
       publishedTime: post.publishedAt,
       modifiedTime: post.updatedAt,
+      images: ogImages,
+      siteName: "LEGASSI",
+      locale: "es_ES",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt,
+      images: post.coverImage ? [post.coverImage] : [],
     },
   }
 }
@@ -54,9 +71,39 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   const catColors = CATEGORY_COLORS[post.category]
   const cat = CATEGORIES[post.category]
+  const url = `${BASE}/blog/${slug}`
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    image: post.coverImage ?? undefined,
+    datePublished: post.publishedAt,
+    dateModified: post.updatedAt ?? post.publishedAt,
+    url,
+    inLanguage: "es",
+    timeRequired: `PT${post.readingTimeMinutes}M`,
+    author: {
+      "@type": "Organization",
+      name: "LEGASSI",
+      url: BASE,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "LEGASSI",
+      url: BASE,
+      logo: { "@type": "ImageObject", url: `${BASE}/imagotipo_ligth.svg` },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+  }
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
       <main className="min-h-screen bg-background pt-20 pb-20">
 

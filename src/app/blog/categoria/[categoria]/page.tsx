@@ -35,10 +35,23 @@ export async function generateMetadata({ params }: { params: Promise<{ categoria
   const { categoria } = await params
   const cat = CATEGORIES[categoria as CategorySlug]
   if (!cat) return {}
+  const url = `https://legassi.es/blog/categoria/${categoria}`
   return {
     title: `${cat.label} – Blog LEGASSI`,
     description: cat.description,
-    openGraph: { title: `${cat.label} – Blog LEGASSI`, description: cat.description },
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${cat.label} – Blog LEGASSI`,
+      description: cat.description,
+      url,
+      siteName: "LEGASSI",
+      locale: "es_ES",
+    },
+    twitter: {
+      card: "summary",
+      title: `${cat.label} – Blog LEGASSI`,
+      description: cat.description,
+    },
   }
 }
 

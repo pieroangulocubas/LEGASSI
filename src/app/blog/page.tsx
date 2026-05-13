@@ -13,10 +13,19 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: "Blog – LEGASSI",
   description: "Guías, casos reales y avisos sobre extranjería en España. Sin burocracia. Sin tecnicismos vacíos.",
+  alternates: { canonical: "https://legassi.es/blog" },
   openGraph: {
     title: "Blog LEGASSI – Extranjería explicada con criterio",
     description: "Guías, casos reales y avisos sobre extranjería en España.",
     url: "https://legassi.es/blog",
+    siteName: "LEGASSI",
+    locale: "es_ES",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Blog LEGASSI – Extranjería explicada con criterio",
+    description: "Guías, casos reales y avisos sobre extranjería en España.",
   },
 }
 
