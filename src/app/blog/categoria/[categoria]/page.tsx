@@ -1,9 +1,10 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import Image from "next/image"
 import { notFound } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { ArrowLeft, ArrowRight, BookOpen, AlertTriangle, GitBranch, FileText, Users, Compass } from "lucide-react"
+import { ArrowLeft, ArrowRight, BookOpen, AlertTriangle, GitBranch, FileText, Users, Compass, Clock, CalendarDays } from "lucide-react"
 import { getPostsByCategory, CATEGORIES, TAGS, formatDate } from "@/lib/blog"
 import type { CategorySlug, TagSlug } from "@/lib/blog"
 import { cn } from "@/lib/utils"
@@ -18,12 +19,12 @@ const CATEGORY_ICONS: Record<CategorySlug, React.ElementType> = {
   casos:    Users,
 }
 
-const CATEGORY_COLOR_CLASSES: Record<CategorySlug, { border: string; bg: string; icon: string; badge: string; iconBg: string }> = {
-  salida:   { border: "border-blue-200 dark:border-blue-800",   bg: "bg-blue-50/60 dark:bg-blue-950/20",   icon: "text-blue-600 dark:text-blue-400",   badge: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800",   iconBg: "bg-blue-100 dark:bg-blue-950/50" },
-  opciones: { border: "border-emerald-200 dark:border-emerald-800", bg: "bg-emerald-50/60 dark:bg-emerald-950/20", icon: "text-emerald-600 dark:text-emerald-400", badge: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", iconBg: "bg-emerald-100 dark:bg-emerald-950/50" },
-  tramite:  { border: "border-violet-200 dark:border-violet-800",  bg: "bg-violet-50/60 dark:bg-violet-950/20",  icon: "text-violet-600 dark:text-violet-400",  badge: "bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800",  iconBg: "bg-violet-100 dark:bg-violet-950/50" },
-  errores:  { border: "border-rose-200 dark:border-rose-800",    bg: "bg-rose-50/60 dark:bg-rose-950/20",    icon: "text-rose-600 dark:text-rose-400",    badge: "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",    iconBg: "bg-rose-100 dark:bg-rose-950/50" },
-  casos:    { border: "border-amber-200 dark:border-amber-800",   bg: "bg-amber-50/60 dark:bg-amber-950/20",   icon: "text-amber-600 dark:text-amber-400",   badge: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",   iconBg: "bg-amber-100 dark:bg-amber-950/50" },
+const CATEGORY_COLORS: Record<CategorySlug, { border: string; bg: string; icon: string; badge: string; gradient: string; iconBg: string }> = {
+  salida:   { border: "border-blue-200 dark:border-blue-800",   bg: "bg-blue-50/60 dark:bg-blue-950/20",   icon: "text-blue-600 dark:text-blue-400",   badge: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800",   gradient: "from-blue-950 to-slate-950",   iconBg: "bg-blue-100 dark:bg-blue-950/50" },
+  opciones: { border: "border-emerald-200 dark:border-emerald-800", bg: "bg-emerald-50/60 dark:bg-emerald-950/20", icon: "text-emerald-600 dark:text-emerald-400", badge: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", gradient: "from-emerald-950 to-slate-950", iconBg: "bg-emerald-100 dark:bg-emerald-950/50" },
+  tramite:  { border: "border-violet-200 dark:border-violet-800",  bg: "bg-violet-50/60 dark:bg-violet-950/20",  icon: "text-violet-600 dark:text-violet-400",  badge: "bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800",  gradient: "from-violet-950 to-slate-950",  iconBg: "bg-violet-100 dark:bg-violet-950/50" },
+  errores:  { border: "border-rose-200 dark:border-rose-800",    bg: "bg-rose-50/60 dark:bg-rose-950/20",    icon: "text-rose-600 dark:text-rose-400",    badge: "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",    gradient: "from-rose-950 to-slate-950",    iconBg: "bg-rose-100 dark:bg-rose-950/50" },
+  casos:    { border: "border-amber-200 dark:border-amber-800",   bg: "bg-amber-50/60 dark:bg-amber-950/20",   icon: "text-amber-600 dark:text-amber-400",   badge: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",   gradient: "from-amber-950 to-slate-950",   iconBg: "bg-amber-100 dark:bg-amber-950/50" },
 }
 
 export async function generateStaticParams() {
@@ -48,21 +49,18 @@ export default async function CategoriaPage({ params }: { params: Promise<{ cate
   const slug = categoria as CategorySlug
   const cat = CATEGORIES[slug]
   const Icon = CATEGORY_ICONS[slug]
-  const colors = CATEGORY_COLOR_CLASSES[slug]
+  const colors = CATEGORY_COLORS[slug]
   const posts = await getPostsByCategory(slug)
 
   return (
     <>
       <Navbar />
       <main className="min-h-screen bg-background pt-20 pb-20">
-        <div className="container mx-auto max-w-4xl px-6 sm:px-10">
+        <div className="container mx-auto max-w-5xl px-6 sm:px-10">
 
           {/* Back */}
-          <div className="pt-8 mb-8">
-            <Link
-              href="/blog"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
+          <div className="pt-8 mb-6">
+            <Link href="/blog" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-3.5 w-3.5" />
               Volver al blog
             </Link>
@@ -82,15 +80,27 @@ export default async function CategoriaPage({ params }: { params: Promise<{ cate
 
           {/* Articles */}
           {posts.length > 0 ? (
-            <div className="flex flex-col gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {posts.map(post => (
                 <Link
                   key={post.id}
                   href={`/blog/${post.slug}`}
-                  className="group flex items-start gap-5 rounded-2xl border border-border/50 bg-card p-5 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5 transition-all duration-300"
+                  className="group flex flex-col rounded-2xl overflow-hidden border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap gap-1.5 mb-2">
+                  {/* Cover */}
+                  <div className="relative aspect-[16/9]">
+                    {post.coverImage ? (
+                      <Image src={post.coverImage} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+                    ) : (
+                      <div className={cn("absolute inset-0 bg-gradient-to-br", colors.gradient)}>
+                        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 30% 50%, white 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex flex-col flex-1 p-5 gap-3">
+                    <div className="flex flex-wrap gap-1.5">
                       {post.tags.map(tag => {
                         const t = TAGS[tag as TagSlug]
                         if (!t) return null
@@ -101,13 +111,18 @@ export default async function CategoriaPage({ params }: { params: Promise<{ cate
                         )
                       })}
                     </div>
-                    <h2 className="font-heading font-bold text-base leading-snug group-hover:text-primary transition-colors mb-1.5">
+                    <h2 className="font-heading font-bold text-base leading-snug group-hover:text-primary transition-colors line-clamp-2 flex-1">
                       {post.title}
                     </h2>
                     <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{post.excerpt}</p>
-                    <p className="text-xs text-muted-foreground/60 mt-2">{formatDate(post.publishedAt)} · {post.readingTimeMinutes} min de lectura</p>
+                    <div className="flex items-center justify-between pt-2 border-t border-border/40">
+                      <span className="flex items-center gap-3 text-xs text-muted-foreground/60">
+                        <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{formatDate(post.publishedAt)}</span>
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{post.readingTimeMinutes} min</span>
+                      </span>
+                      <ArrowRight className="h-3.5 w-3.5 text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                    </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-primary shrink-0 mt-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                 </Link>
               ))}
             </div>

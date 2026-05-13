@@ -6,6 +6,7 @@ import Image from "@tiptap/extension-image"
 import Link from "@tiptap/extension-link"
 import Placeholder from "@tiptap/extension-placeholder"
 import Underline from "@tiptap/extension-underline"
+import NextImage from "next/image"
 import { useRef, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { CATEGORIES, TAGS, type CategorySlug, type TagSlug, type BlogPostRow } from "@/lib/blog"
@@ -14,7 +15,7 @@ import {
   Bold, Italic, UnderlineIcon, Strikethrough,
   Heading1, Heading2, Heading3,
   List, ListOrdered, Quote, Minus,
-  Link2, ImageIcon, Loader2, Save, Eye, EyeOff,
+  Link2, ImageIcon, Loader2, Save, Eye, EyeOff, Upload, X,
 } from "lucide-react"
 
 interface PostEditorProps {
@@ -34,6 +35,7 @@ function slugify(text: string): string {
 export function PostEditor({ post }: PostEditorProps) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
 
   const [title, setTitle] = useState(post?.title ?? "")
   const [slug, setSlug] = useState(post?.slug ?? "")
@@ -42,9 +44,11 @@ export function PostEditor({ post }: PostEditorProps) {
   const [tags, setTags] = useState<TagSlug[]>((post?.tags ?? []) as TagSlug[])
   const [published, setPublished] = useState(post?.published ?? false)
   const [featured, setFeatured] = useState(post?.featured ?? false)
+  const [coverImage, setCoverImage] = useState<string | null>(post?.cover_image ?? null)
   const [slugManual, setSlugManual] = useState(!!post?.slug)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [coverUploading, setCoverUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const editor = useEditor({
@@ -79,18 +83,33 @@ export function PostEditor({ post }: PostEditorProps) {
     editor.chain().focus().setLink({ href: url }).run()
   }, [editor])
 
+  const uploadFile = useCallback(async (file: File): Promise<string | null> => {
+    const fd = new FormData()
+    fd.append("file", file)
+    const res = await fetch("/api/admin/upload", { method: "POST", body: fd })
+    const json = await res.json()
+    return json.url ?? null
+  }, [])
+
   const insertImage = useCallback(async (file: File) => {
     setUploading(true)
     try {
-      const fd = new FormData()
-      fd.append("file", file)
-      const res = await fetch("/api/admin/upload", { method: "POST", body: fd })
-      const json = await res.json()
-      if (json.url) editor?.chain().focus().setImage({ src: json.url }).run()
+      const url = await uploadFile(file)
+      if (url) editor?.chain().focus().setImage({ src: url }).run()
     } finally {
       setUploading(false)
     }
-  }, [editor])
+  }, [editor, uploadFile])
+
+  const uploadCover = useCallback(async (file: File) => {
+    setCoverUploading(true)
+    try {
+      const url = await uploadFile(file)
+      if (url) setCoverImage(url)
+    } finally {
+      setCoverUploading(false)
+    }
+  }, [uploadFile])
 
   const handleSave = async () => {
     if (!title.trim() || !slug.trim()) {
@@ -110,6 +129,7 @@ export function PostEditor({ post }: PostEditorProps) {
         content,
         published,
         featured,
+        cover_image: coverImage ?? null,
         published_at: published ? (post?.published_at ?? new Date().toISOString()) : null,
       }
 
@@ -137,6 +157,54 @@ export function PostEditor({ post }: PostEditorProps) {
 
   return (
     <div className="flex flex-col gap-6">
+
+      {/* Cover image */}
+      <div>
+        <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Imagen de portada</label>
+        <div
+          onClick={() => !coverImage && coverInputRef.current?.click()}
+          className={cn(
+            "relative w-full rounded-xl overflow-hidden border-2 border-dashed transition-colors",
+            coverImage ? "border-border/40 h-52" : "border-border hover:border-primary/50 cursor-pointer h-36 flex items-center justify-center bg-muted/20"
+          )}
+        >
+          {coverImage ? (
+            <>
+              <NextImage src={coverImage} alt="Portada" fill className="object-cover" sizes="100vw" />
+              <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center gap-3 opacity-0 hover:opacity-100">
+                <button type="button" onClick={() => coverInputRef.current?.click()} className="bg-white/90 text-foreground rounded-lg px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5">
+                  <Upload className="h-3.5 w-3.5" /> Cambiar
+                </button>
+                <button type="button" onClick={() => setCoverImage(null)} className="bg-rose-500 text-white rounded-lg px-3 py-1.5 text-xs font-semibold flex items-center gap-1.5">
+                  <X className="h-3.5 w-3.5" /> Quitar
+                </button>
+              </div>
+            </>
+          ) : coverUploading ? (
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span className="text-xs">Subiendo imagen…</span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <ImageIcon className="h-8 w-8 opacity-40" />
+              <span className="text-sm font-medium">Subir imagen de portada</span>
+              <span className="text-xs opacity-60">Recomendado: 1200 × 630 px</span>
+            </div>
+          )}
+        </div>
+        <input
+          ref={coverInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={e => {
+            const file = e.target.files?.[0]
+            if (file) uploadCover(file)
+            e.target.value = ""
+          }}
+        />
+      </div>
 
       {/* Metadata */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

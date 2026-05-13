@@ -1,22 +1,23 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import Image from "next/image"
 import { notFound } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { ArrowLeft, ArrowRight, Clock, CalendarDays, MessageCircle } from "lucide-react"
+import { ArrowLeft, ArrowRight, Clock, CalendarDays, MessageCircle, GitBranch, FileText, Users, Compass, AlertTriangle } from "lucide-react"
 import { getAllPosts, getPostBySlug, getRelatedPosts, CATEGORIES, TAGS, formatDate } from "@/lib/blog"
-import type { CategorySlug, TagSlug } from "@/lib/blog"
+import type { BlogPost, CategorySlug, TagSlug } from "@/lib/blog"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
 export const revalidate = 3600
 
-const CATEGORY_COLOR_CLASSES: Record<CategorySlug, { badge: string }> = {
-  salida:   { badge: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800" },
-  opciones: { badge: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800" },
-  tramite:  { badge: "bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800" },
-  errores:  { badge: "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800" },
-  casos:    { badge: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800" },
+const CATEGORY_COLORS: Record<CategorySlug, { badge: string; gradient: string }> = {
+  salida:   { badge: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800",   gradient: "from-blue-950 to-slate-950" },
+  opciones: { badge: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", gradient: "from-emerald-950 to-slate-950" },
+  tramite:  { badge: "bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800",  gradient: "from-violet-950 to-slate-950" },
+  errores:  { badge: "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",    gradient: "from-rose-950 to-slate-950" },
+  casos:    { badge: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",   gradient: "from-amber-950 to-slate-950" },
 }
 
 export async function generateStaticParams() {
@@ -34,6 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: {
       title: post.title,
       description: post.excerpt,
+      images: post.coverImage ? [{ url: post.coverImage }] : [],
       url: `https://legassi.es/blog/${slug}`,
       type: "article",
       publishedTime: post.publishedAt,
@@ -50,30 +52,52 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   ])
   if (!post) notFound()
 
-  const catColors = CATEGORY_COLOR_CLASSES[post.category]
+  const catColors = CATEGORY_COLORS[post.category]
   const cat = CATEGORIES[post.category]
 
   return (
     <>
       <Navbar />
       <main className="min-h-screen bg-background pt-20 pb-20">
+
+        {/* ── Cover image ── */}
+        <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden">
+          {post.coverImage ? (
+            <>
+              <Image
+                src={post.coverImage}
+                alt={post.title}
+                fill
+                className="object-cover"
+                priority
+                sizes="100vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+            </>
+          ) : (
+            <div className={cn("absolute inset-0 bg-gradient-to-br", catColors.gradient)}>
+              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 30% 50%, white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+              <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
+            </div>
+          )}
+        </div>
+
         <div className="container mx-auto max-w-3xl px-6 sm:px-10">
 
-          {/* Back */}
-          <div className="pt-8 mb-8">
+          {/* ── Back ── */}
+          <div className="mb-7 -mt-1">
             <Link
               href={`/blog/categoria/${post.category}`}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               {cat.label}
             </Link>
           </div>
 
-          {/* Article header */}
+          {/* ── Article header ── */}
           <header className="mb-10">
-            {/* Badges */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-5">
               <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide", catColors.badge)}>
                 {cat.label}
               </span>
@@ -88,26 +112,21 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               })}
             </div>
 
-            {/* Title */}
             <h1 className="text-section font-heading font-bold tracking-tight mb-4 leading-snug">
               {post.title}
             </h1>
 
-            {/* Excerpt */}
-            <p className="text-base text-muted-foreground leading-relaxed mb-5">
+            <p className="text-base text-muted-foreground leading-relaxed mb-6">
               {post.excerpt}
             </p>
 
-            {/* Meta */}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground/70 border-t border-border/40 pt-4">
+            <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground/70 border-t border-border/40 pt-4">
               <span className="flex items-center gap-1.5">
                 <CalendarDays className="h-3.5 w-3.5" />
                 {formatDate(post.publishedAt)}
               </span>
               {post.updatedAt && post.updatedAt !== post.publishedAt && (
-                <span className="flex items-center gap-1.5">
-                  Actualizado: {formatDate(post.updatedAt)}
-                </span>
+                <span>Actualizado: {formatDate(post.updatedAt)}</span>
               )}
               <span className="flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" />
@@ -116,7 +135,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             </div>
           </header>
 
-          {/* Article content */}
+          {/* ── Content ── */}
           <article
             className={cn(
               "text-foreground/90",
@@ -144,7 +163,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
 
-          {/* CTA — asesor */}
+          {/* ── CTA ── */}
           <div className="mt-12 rounded-2xl border border-primary/25 bg-primary/5 px-6 py-6 flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm mb-1 flex items-center gap-2">
@@ -156,37 +175,39 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               </p>
             </div>
             <Button variant="cta" size="sm" asChild className="shrink-0 whitespace-nowrap">
-              <a
-                href="https://wa.me/34672297468?text=Hola,%20leí%20un%20artículo%20del%20blog%20de%20LEGASSI%20y%20tengo%20una%20consulta"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://wa.me/34672297468?text=Hola,%20leí%20un%20artículo%20del%20blog%20de%20LEGASSI%20y%20tengo%20una%20consulta" target="_blank" rel="noopener noreferrer">
                 Hablar con asesor
                 <ArrowRight className="h-3.5 w-3.5" />
               </a>
             </Button>
           </div>
 
-          {/* Related articles */}
+          {/* ── Related ── */}
           {related.length > 0 && (
             <section className="mt-14">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-5">
                 Artículos relacionados
               </p>
-              <div className="flex flex-col gap-3">
+              <div className="grid sm:grid-cols-3 gap-4">
                 {related.map(rel => (
                   <Link
                     key={rel.id}
                     href={`/blog/${rel.slug}`}
-                    className="group flex items-start justify-between gap-4 rounded-xl border border-border/50 bg-card px-5 py-4 hover:border-primary/30 hover:shadow-sm transition-all"
+                    className="group flex flex-col rounded-xl overflow-hidden border border-border/50 hover:border-primary/30 hover:shadow-md transition-all"
                   >
-                    <div className="min-w-0">
-                      <p className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors line-clamp-1">
+                    <div className="relative aspect-[16/9]">
+                      {rel.coverImage ? (
+                        <Image src={rel.coverImage} alt={rel.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 280px" />
+                      ) : (
+                        <div className={cn("absolute inset-0 bg-gradient-to-br", CATEGORY_COLORS[rel.category].gradient)} />
+                      )}
+                    </div>
+                    <div className="p-3 bg-card flex-1">
+                      <p className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors line-clamp-2 mb-1">
                         {rel.title}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{formatDate(rel.publishedAt)} · {rel.readingTimeMinutes} min</p>
+                      <p className="text-[11px] text-muted-foreground">{formatDate(rel.publishedAt)} · {rel.readingTimeMinutes} min</p>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-primary shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Link>
                 ))}
               </div>

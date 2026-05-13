@@ -53,6 +53,7 @@ export interface BlogPost {
   updatedAt?: string
   featured: boolean
   readingTimeMinutes: number
+  coverImage?: string
 }
 
 export interface BlogPostWithContent extends BlogPost {
@@ -73,6 +74,7 @@ export interface BlogPostRow {
   published_at: string | null
   updated_at: string
   created_at: string
+  cover_image?: string | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -97,6 +99,7 @@ function rowToPost(row: BlogPostRow): BlogPost {
     updatedAt: row.updated_at !== row.published_at ? row.updated_at : undefined,
     featured: row.featured,
     readingTimeMinutes: estimateReadingTime(row.content),
+    coverImage: row.cover_image ?? undefined,
   }
 }
 
