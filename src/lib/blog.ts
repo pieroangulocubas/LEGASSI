@@ -3,15 +3,10 @@ import { createServerClient } from "@/lib/supabase"
 // ─── Constants (shared with notion.ts) ───────────────────────────────────────
 
 export const CATEGORIES = {
-  salida: {
-    label: "¿Hay salida para mi caso?",
-    description: "Entiende si tienes opciones reales y cuáles son según tu situación.",
+  situacion: {
+    label: "Qué puedo hacer",
+    description: "Entiende si tienes opciones reales, cuáles son y cuál encaja con tu caso.",
     color: "blue",
-  },
-  opciones: {
-    label: "Qué opción me conviene",
-    description: "Compara vías y elige la que encaja con tu caso concreto.",
-    color: "emerald",
   },
   tramite: {
     label: "Cómo funciona el trámite",
@@ -27,6 +22,11 @@ export const CATEGORIES = {
     label: "Casos reales",
     description: "Situaciones reales que gestionamos y cómo las resolvimos.",
     color: "amber",
+  },
+  actualidad: {
+    label: "Actualidad",
+    description: "Cambios de ley, anuncios y novedades que afectan a tu situación.",
+    color: "emerald",
   },
 } as const
 

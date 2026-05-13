@@ -40,7 +40,7 @@ export function PostEditor({ post }: PostEditorProps) {
   const [title, setTitle] = useState(post?.title ?? "")
   const [slug, setSlug] = useState(post?.slug ?? "")
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "")
-  const [category, setCategory] = useState<CategorySlug>((post?.category as CategorySlug) ?? "salida")
+  const [category, setCategory] = useState<CategorySlug>((post?.category as CategorySlug) ?? "situacion")
   const [tags, setTags] = useState<TagSlug[]>((post?.tags ?? []) as TagSlug[])
   const [published, setPublished] = useState(post?.published ?? false)
   const [featured, setFeatured] = useState(post?.featured ?? false)

@@ -32,19 +32,19 @@ export const metadata: Metadata = {
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const CATEGORY_ICONS: Record<CategorySlug, React.ElementType> = {
-  salida:   Compass,
-  opciones: GitBranch,
-  tramite:  FileText,
-  errores:  AlertTriangle,
-  casos:    Users,
+  situacion: Compass,
+  tramite:   FileText,
+  errores:   AlertTriangle,
+  casos:     Users,
+  actualidad: GitBranch,
 }
 
 const CATEGORY_COLORS: Record<CategorySlug, { border: string; bg: string; icon: string; badge: string; gradient: string }> = {
-  salida:   { border: "border-blue-200 dark:border-blue-800",   bg: "bg-blue-50 dark:bg-blue-950/30",   icon: "text-blue-600 dark:text-blue-400",   badge: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800",   gradient: "from-blue-900 to-blue-950" },
-  opciones: { border: "border-emerald-200 dark:border-emerald-800", bg: "bg-emerald-50 dark:bg-emerald-950/30", icon: "text-emerald-600 dark:text-emerald-400", badge: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", gradient: "from-emerald-900 to-emerald-950" },
-  tramite:  { border: "border-violet-200 dark:border-violet-800",  bg: "bg-violet-50 dark:bg-violet-950/30",  icon: "text-violet-600 dark:text-violet-400",  badge: "bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800",  gradient: "from-violet-900 to-violet-950" },
-  errores:  { border: "border-rose-200 dark:border-rose-800",    bg: "bg-rose-50 dark:bg-rose-950/30",    icon: "text-rose-600 dark:text-rose-400",    badge: "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",    gradient: "from-rose-900 to-rose-950" },
-  casos:    { border: "border-amber-200 dark:border-amber-800",   bg: "bg-amber-50 dark:bg-amber-950/30",   icon: "text-amber-600 dark:text-amber-400",   badge: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",   gradient: "from-amber-900 to-amber-950" },
+  situacion: { border: "border-blue-200 dark:border-blue-800",    bg: "bg-blue-50 dark:bg-blue-950/30",    icon: "text-blue-600 dark:text-blue-400",    badge: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800",    gradient: "from-blue-900 to-blue-950" },
+  tramite:   { border: "border-violet-200 dark:border-violet-800", bg: "bg-violet-50 dark:bg-violet-950/30", icon: "text-violet-600 dark:text-violet-400", badge: "bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800", gradient: "from-violet-900 to-violet-950" },
+  errores:   { border: "border-rose-200 dark:border-rose-800",    bg: "bg-rose-50 dark:bg-rose-950/30",    icon: "text-rose-600 dark:text-rose-400",    badge: "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",    gradient: "from-rose-900 to-rose-950" },
+  casos:     { border: "border-amber-200 dark:border-amber-800",   bg: "bg-amber-50 dark:bg-amber-950/30",   icon: "text-amber-600 dark:text-amber-400",   badge: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",   gradient: "from-amber-900 to-amber-950" },
+  actualidad:{ border: "border-emerald-200 dark:border-emerald-800", bg: "bg-emerald-50 dark:bg-emerald-950/30", icon: "text-emerald-600 dark:text-emerald-400", badge: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", gradient: "from-emerald-900 to-emerald-950" },
 }
 
 // ─── Cover image ───────────────────────────────────────────────────────────────
@@ -245,7 +245,7 @@ export default async function BlogPage() {
                 </div>
                 {allPosts.length > 7 && (
                   <div className="mt-8 text-center">
-                    <Link href="/blog/categoria/salida" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline underline-offset-2">
+                    <Link href="/blog/categoria/actualidad" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline underline-offset-2">
                       Ver todos los artículos <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </div>
