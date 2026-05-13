@@ -1,13 +1,11 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { ArrowLeft, ArrowRight, Clock, CalendarDays, MessageCircle } from "lucide-react"
-import { getAllPosts, getPostBySlug, getRelatedPosts, CATEGORIES, TAGS, formatDate } from "@/lib/notion"
-import type { CategorySlug, TagSlug } from "@/lib/notion"
+import { getAllPosts, getPostBySlug, getRelatedPosts, CATEGORIES, TAGS, formatDate } from "@/lib/blog"
+import type { CategorySlug, TagSlug } from "@/lib/blog"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -119,42 +117,32 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           </header>
 
           {/* Article content */}
-          <article className={cn(
-            "text-foreground/90",
-            // headings
-            "[&_h1]:text-2xl [&_h1]:font-heading [&_h1]:font-bold [&_h1]:mt-10 [&_h1]:mb-4 [&_h1]:tracking-tight",
-            "[&_h2]:text-xl [&_h2]:font-heading [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:tracking-tight",
-            "[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2",
-            "[&_h4]:text-base [&_h4]:font-semibold [&_h4]:mt-4 [&_h4]:mb-1.5",
-            // paragraph
-            "[&_p]:text-muted-foreground [&_p]:leading-relaxed [&_p]:mb-4",
-            // lists
-            "[&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ul]:space-y-1.5",
-            "[&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_ol]:space-y-1.5",
-            "[&_li]:text-muted-foreground [&_li]:leading-relaxed",
-            // links
-            "[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a]:hover:opacity-80",
-            // strong / em
-            "[&_strong]:text-foreground [&_strong]:font-semibold",
-            "[&_em]:italic",
-            // blockquote
-            "[&_blockquote]:border-l-4 [&_blockquote]:border-primary/40 [&_blockquote]:pl-5 [&_blockquote]:py-1 [&_blockquote]:my-6 [&_blockquote]:text-muted-foreground [&_blockquote]:italic",
-            // inline code
-            "[&_code]:bg-muted [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_code]:font-mono [&_code]:text-foreground",
-            // code block
-            "[&_pre]:bg-muted [&_pre]:rounded-xl [&_pre]:p-4 [&_pre]:overflow-x-auto [&_pre]:mb-4",
-            "[&_pre_code]:bg-transparent [&_pre_code]:px-0 [&_pre_code]:py-0",
-            // hr
-            "[&_hr]:border-border/40 [&_hr]:my-8",
-            // table
-            "[&_table]:w-full [&_table]:border-collapse [&_table]:mb-4",
-            "[&_th]:border [&_th]:border-border [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-sm [&_th]:font-semibold [&_th]:bg-muted/50",
-            "[&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:text-sm [&_td]:text-muted-foreground",
-          )}>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {post.content}
-            </ReactMarkdown>
-          </article>
+          <article
+            className={cn(
+              "text-foreground/90",
+              "[&_h1]:text-2xl [&_h1]:font-heading [&_h1]:font-bold [&_h1]:mt-10 [&_h1]:mb-4 [&_h1]:tracking-tight",
+              "[&_h2]:text-xl [&_h2]:font-heading [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:tracking-tight",
+              "[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2",
+              "[&_h4]:text-base [&_h4]:font-semibold [&_h4]:mt-4 [&_h4]:mb-1.5",
+              "[&_p]:text-muted-foreground [&_p]:leading-relaxed [&_p]:mb-4",
+              "[&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ul]:space-y-1.5",
+              "[&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_ol]:space-y-1.5",
+              "[&_li]:text-muted-foreground [&_li]:leading-relaxed",
+              "[&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a]:hover:opacity-80",
+              "[&_strong]:text-foreground [&_strong]:font-semibold",
+              "[&_em]:italic [&_u]:underline",
+              "[&_blockquote]:border-l-4 [&_blockquote]:border-primary/40 [&_blockquote]:pl-5 [&_blockquote]:py-1 [&_blockquote]:my-6 [&_blockquote]:text-muted-foreground [&_blockquote]:italic",
+              "[&_code]:bg-muted [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_code]:font-mono [&_code]:text-foreground",
+              "[&_pre]:bg-muted [&_pre]:rounded-xl [&_pre]:p-4 [&_pre]:overflow-x-auto [&_pre]:mb-4",
+              "[&_pre_code]:bg-transparent [&_pre_code]:px-0 [&_pre_code]:py-0",
+              "[&_hr]:border-border/40 [&_hr]:my-8",
+              "[&_table]:w-full [&_table]:border-collapse [&_table]:mb-4",
+              "[&_th]:border [&_th]:border-border [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:text-sm [&_th]:font-semibold [&_th]:bg-muted/50",
+              "[&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:text-sm [&_td]:text-muted-foreground",
+              "[&_img]:rounded-xl [&_img]:w-full [&_img]:my-6 [&_img]:border [&_img]:border-border/40",
+            )}
+            dangerouslySetInnerHTML={{ __html: post.content }}
+          />
 
           {/* CTA — asesor */}
           <div className="mt-12 rounded-2xl border border-primary/25 bg-primary/5 px-6 py-6 flex flex-col sm:flex-row sm:items-center gap-4">

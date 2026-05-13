@@ -4,8 +4,8 @@ import { notFound } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { ArrowLeft, ArrowRight, BookOpen, AlertTriangle, GitBranch, FileText, Users, Compass } from "lucide-react"
-import { getPostsByCategory, CATEGORIES, TAGS, formatDate } from "@/lib/notion"
-import type { CategorySlug, TagSlug } from "@/lib/notion"
+import { getPostsByCategory, CATEGORIES, TAGS, formatDate } from "@/lib/blog"
+import type { CategorySlug, TagSlug } from "@/lib/blog"
 import { cn } from "@/lib/utils"
 
 export const revalidate = 3600

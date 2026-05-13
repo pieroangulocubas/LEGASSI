@@ -3,8 +3,8 @@ import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { ArrowRight, AlertTriangle, BookOpen, GitBranch, FileText, Users, Compass } from "lucide-react"
-import { getAllPosts, getFeaturedPosts, CATEGORIES, TAGS, formatDate } from "@/lib/notion"
-import type { BlogPost, CategorySlug, TagSlug } from "@/lib/notion"
+import { getAllPosts, getFeaturedPosts, CATEGORIES, TAGS, formatDate } from "@/lib/blog"
+import type { BlogPost, CategorySlug, TagSlug } from "@/lib/blog"
 import { cn } from "@/lib/utils"
 
 export const revalidate = 3600
