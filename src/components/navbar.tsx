@@ -18,6 +18,7 @@ export function Navbar() {
     { href: "#mision", label: "Misión y Visión" },
     { href: "#faq", label: "FAQ" },
     { href: "#contacto", label: "Contacto" },
+    { href: "/blog", label: "Blog" },
   ]
 
   return (
