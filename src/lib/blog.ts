@@ -70,7 +70,7 @@ export interface BlogPostRow {
   excerpt: string
   category: string
   tags: string[]
-  content: string
+  content?: string  // present in getPostBySlug; absent in listing queries (SUMMARY_COLUMNS)
   published: boolean
   featured: boolean
   published_at: string | null
@@ -81,12 +81,16 @@ export interface BlogPostRow {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// Columns for listing queries — excludes `content` to keep payloads small.
+// Reading time is approximated from excerpt; exact time is only available in getPostBySlug.
+const SUMMARY_COLUMNS = "id,slug,title,excerpt,category,tags,published,featured,published_at,updated_at,created_at,cover_image,likes_count,views_count"
+
 function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
 }
 
-function estimateReadingTime(html: string): number {
-  return Math.max(1, Math.ceil(stripHtml(html).split(" ").length / 200))
+function estimateReadingTime(text: string): number {
+  return Math.max(1, Math.ceil(stripHtml(text).split(" ").length / 200))
 }
 
 function rowToPost(row: BlogPostRow): BlogPost {
@@ -100,7 +104,8 @@ function rowToPost(row: BlogPostRow): BlogPost {
     publishedAt: row.published_at ?? row.created_at,
     updatedAt: row.updated_at !== row.published_at ? row.updated_at : undefined,
     featured: row.featured,
-    readingTimeMinutes: estimateReadingTime(row.content),
+    // Use content for accurate reading time when available (getPostBySlug), excerpt otherwise
+    readingTimeMinutes: estimateReadingTime(row.content ?? row.excerpt),
     coverImage: row.cover_image ?? undefined,
     likesCount: (row as unknown as Record<string, number>).likes_count ?? 0,
     viewsCount: (row as unknown as Record<string, number>).views_count ?? 0,
@@ -127,7 +132,7 @@ export async function getPostsPage(
   const supabase = createServerClient()
   let query = supabase
     .from("blog_posts")
-    .select("*", { count: "exact" })
+    .select(SUMMARY_COLUMNS, { count: "exact" })
     .eq("published", true)
     .order("published_at", { ascending: false })
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
@@ -135,7 +140,8 @@ export async function getPostsPage(
   if (category) query = query.eq("category", category)
   if (q) query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%`)
 
-  const { data, count } = await query
+  const { data, count, error } = await query
+  if (error) throw error
   const total = count ?? 0
   return {
     posts: (data ?? []).map(rowToPost),
@@ -146,86 +152,95 @@ export async function getPostsPage(
 
 export async function getAllPosts(): Promise<BlogPost[]> {
   const supabase = createServerClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("blog_posts")
-    .select("*")
+    .select(SUMMARY_COLUMNS)
     .eq("published", true)
     .order("published_at", { ascending: false })
+  if (error) throw error
   return (data ?? []).map(rowToPost)
 }
 
 export async function getPostBySlug(slug: string): Promise<BlogPostWithContent | null> {
   const supabase = createServerClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("blog_posts")
     .select("*")
     .eq("published", true)
     .eq("slug", slug)
     .single()
+  if (error?.code === "PGRST116") return null // not found
+  if (error) throw error
   if (!data) return null
   return { ...rowToPost(data as BlogPostRow), content: data.content }
 }
 
 export async function getPostsByCategory(category: CategorySlug): Promise<BlogPost[]> {
   const supabase = createServerClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("blog_posts")
-    .select("*")
+    .select(SUMMARY_COLUMNS)
     .eq("published", true)
     .eq("category", category)
     .order("published_at", { ascending: false })
+  if (error) throw error
   return (data ?? []).map(rowToPost)
 }
 
 export async function getFeaturedPosts(): Promise<BlogPost[]> {
   const supabase = createServerClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("blog_posts")
-    .select("*")
+    .select(SUMMARY_COLUMNS)
     .eq("published", true)
     .eq("featured", true)
     .order("published_at", { ascending: false })
     .limit(5)
+  if (error) throw error
   return (data ?? []).map(rowToPost)
 }
 
 export async function getHeroPost(): Promise<BlogPost | null> {
   const supabase = createServerClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("blog_posts")
-    .select("*")
+    .select(SUMMARY_COLUMNS)
     .eq("published", true)
     .order("featured",     { ascending: false })
     .order("likes_count",  { ascending: false, nullsFirst: false })
     .order("published_at", { ascending: false })
     .limit(1)
     .single()
+  if (error?.code === "PGRST116") return null // no posts yet
+  if (error) throw error
   if (!data) return null
   return rowToPost(data as BlogPostRow)
 }
 
 export async function getPopularPosts(limit = 5): Promise<BlogPost[]> {
   const supabase = createServerClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("blog_posts")
-    .select("*")
+    .select(SUMMARY_COLUMNS)
     .eq("published", true)
     .order("views_count", { ascending: false, nullsFirst: false })
     .order("published_at", { ascending: false })
     .limit(limit)
+  if (error) throw error
   return (data ?? []).map(rowToPost)
 }
 
 export async function getRelatedPosts(currentSlug: string, category: CategorySlug): Promise<BlogPost[]> {
   const supabase = createServerClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("blog_posts")
-    .select("*")
+    .select(SUMMARY_COLUMNS)
     .eq("published", true)
     .eq("category", category)
     .neq("slug", currentSlug)
     .order("published_at", { ascending: false })
     .limit(3)
+  if (error) throw error
   return (data ?? []).map(rowToPost)
 }
 

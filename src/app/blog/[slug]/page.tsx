@@ -4,21 +4,18 @@ import Image from "next/image"
 import { notFound } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { ArrowLeft, ArrowRight, Clock, CalendarDays, MessageCircle, GitBranch, FileText, Users, Compass, AlertTriangle } from "lucide-react"
+import { ArrowLeft, ArrowRight, Clock, CalendarDays, MessageCircle } from "lucide-react"
 import { getAllPosts, getPostBySlug, getRelatedPosts, CATEGORIES, TAGS, formatDate } from "@/lib/blog"
-import type { BlogPost, CategorySlug, TagSlug } from "@/lib/blog"
+import type { CategorySlug, TagSlug } from "@/lib/blog"
+import { CATEGORY_COLORS, safeCategorySlug } from "@/lib/categories"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { ViewTracker } from "@/components/blog/ViewTracker"
+import { LikeButton } from "@/components/blog/LikeButton"
+import { ShareButton } from "@/components/blog/ShareButton"
+import { Comments } from "@/components/blog/Comments"
 
 export const revalidate = 3600
-
-const CATEGORY_COLORS: Record<CategorySlug, { badge: string; gradient: string }> = {
-  situacion:  { badge: "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800",       gradient: "from-blue-950 to-slate-950" },
-  tramite:    { badge: "bg-violet-100 dark:bg-violet-950/50 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800",  gradient: "from-violet-950 to-slate-950" },
-  errores:    { badge: "bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",        gradient: "from-rose-950 to-slate-950" },
-  casos:      { badge: "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",  gradient: "from-amber-950 to-slate-950" },
-  actualidad: { badge: "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", gradient: "from-emerald-950 to-slate-950" },
-}
 
 export async function generateStaticParams() {
   const posts = await getAllPosts()
@@ -63,14 +60,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const [post, related] = await Promise.all([
-    getPostBySlug(slug),
-    getPostBySlug(slug).then(p => p ? getRelatedPosts(slug, p.category) : []),
-  ])
+  const post = await getPostBySlug(slug)
   if (!post) notFound()
+  const related = await getRelatedPosts(slug, post.category)
 
-  const catColors = CATEGORY_COLORS[post.category]
-  const cat = CATEGORIES[post.category]
+  const contentHtml = post.content.replace(/^<h1[^>]*>[\s\S]*?<\/h1>\s*/i, "")
+
+  const safeCategory = safeCategorySlug(post.category)
+  const catColors = CATEGORY_COLORS[safeCategory]
+  const cat = CATEGORIES[safeCategory]
   const url = `${BASE}/blog/${slug}`
 
   const jsonLd = {
@@ -104,6 +102,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <ViewTracker slug={slug} />
       <Navbar />
       <main className="min-h-screen bg-background pt-20 pb-20">
 
@@ -122,7 +121,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
             </>
           ) : (
-            <div className={cn("absolute inset-0 bg-gradient-to-br", catColors.gradient)}>
+            <div className={cn("absolute inset-0 bg-gradient-to-br", catColors.heroGradient)}>
               <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 30% 50%, white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
               <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
             </div>
@@ -207,8 +206,17 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               "[&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:text-sm [&_td]:text-muted-foreground",
               "[&_img]:rounded-xl [&_img]:w-full [&_img]:my-6 [&_img]:border [&_img]:border-border/40",
             )}
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: contentHtml }}
           />
+
+          {/* ── Like + Share ── */}
+          <div className="mt-10 flex items-center gap-3 flex-wrap">
+            <LikeButton slug={slug} initialCount={post.likesCount} />
+            <ShareButton title={post.title} url={url} />
+          </div>
+
+          {/* ── Comments ── */}
+          <Comments slug={slug} />
 
           {/* ── CTA ── */}
           <div className="mt-12 rounded-2xl border border-primary/25 bg-primary/5 px-6 py-6 flex flex-col sm:flex-row sm:items-center gap-4">
@@ -246,7 +254,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                       {rel.coverImage ? (
                         <Image src={rel.coverImage} alt={rel.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 280px" />
                       ) : (
-                        <div className={cn("absolute inset-0 bg-gradient-to-br", CATEGORY_COLORS[rel.category].gradient)} />
+                        <div className={cn("absolute inset-0 bg-gradient-to-br", CATEGORY_COLORS[safeCategorySlug(rel.category)].heroGradient)} />
                       )}
                     </div>
                     <div className="p-3 bg-card flex-1">

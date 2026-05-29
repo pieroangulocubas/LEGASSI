@@ -3,7 +3,7 @@ import Image from "next/image"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { FileText, LogOut, Plus } from "lucide-react"
-import { COOKIE_NAME, createToken } from "@/lib/auth"
+import { COOKIE_NAME } from "@/lib/auth"
 
 async function logout() {
   "use server"

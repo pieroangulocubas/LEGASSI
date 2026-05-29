@@ -1,16 +1,10 @@
 import Link from "next/link"
-import { adminGetAllPosts, CATEGORIES, TAGS, formatDate, type BlogPostRow, type CategorySlug, type TagSlug } from "@/lib/blog"
+import { adminGetAllPosts, CATEGORIES, formatDate, type CategorySlug } from "@/lib/blog"
+import { CATEGORY_COLORS } from "@/lib/categories"
 import { cn } from "@/lib/utils"
-import { PenLine, Trash2, Eye, EyeOff, Plus } from "lucide-react"
+import { PenLine, Plus } from "lucide-react"
 import { DeletePostButton } from "./DeletePostButton"
-
-const CATEGORY_COLORS: Record<CategorySlug, string> = {
-  situacion:  "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400 border-blue-200 dark:border-blue-800",
-  tramite:    "bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-400 border-violet-200 dark:border-violet-800",
-  errores:    "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border-rose-200 dark:border-rose-800",
-  casos:      "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border-amber-200 dark:border-amber-800",
-  actualidad: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
-}
+import { TogglePublishedButton } from "./TogglePublishedButton"
 
 export default async function AdminPostsPage() {
   const posts = await adminGetAllPosts()
@@ -58,7 +52,7 @@ export default async function AdminPostsPage() {
                     <p className="text-[11px] text-muted-foreground font-mono mt-0.5">/blog/{post.slug}</p>
                   </td>
                   <td className="px-4 py-3 hidden sm:table-cell">
-                    <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", CATEGORY_COLORS[post.category as CategorySlug])}>
+                    <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", CATEGORY_COLORS[post.category as CategorySlug]?.badge)}>
                       {CATEGORIES[post.category as CategorySlug]?.label ?? post.category}
                     </span>
                   </td>
@@ -68,15 +62,7 @@ export default async function AdminPostsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={cn(
-                      "inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2 py-0.5",
-                      post.published
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                        : "bg-muted text-muted-foreground"
-                    )}>
-                      {post.published ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                      {post.published ? "Publicado" : "Borrador"}
-                    </span>
+                    <TogglePublishedButton id={post.id} published={post.published} />
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end">
