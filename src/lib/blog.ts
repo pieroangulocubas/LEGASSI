@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase"
 
-// ─── Constants (shared with notion.ts) ───────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────────
 
 export const CATEGORIES = {
   situacion: {
@@ -54,6 +54,8 @@ export interface BlogPost {
   featured: boolean
   readingTimeMinutes: number
   coverImage?: string
+  likesCount: number
+  viewsCount: number
 }
 
 export interface BlogPostWithContent extends BlogPost {
@@ -100,6 +102,8 @@ function rowToPost(row: BlogPostRow): BlogPost {
     featured: row.featured,
     readingTimeMinutes: estimateReadingTime(row.content),
     coverImage: row.cover_image ?? undefined,
+    likesCount: (row as unknown as Record<string, number>).likes_count ?? 0,
+    viewsCount: (row as unknown as Record<string, number>).views_count ?? 0,
   }
 }
 
@@ -113,6 +117,32 @@ export function formatDate(iso: string): string {
 }
 
 // ─── Public queries (published posts only) ───────────────────────────────────
+
+export const PAGE_SIZE = 9
+
+export async function getPostsPage(
+  page = 0,
+  { q = "", category = "" }: { q?: string; category?: string } = {}
+): Promise<{ posts: BlogPost[]; total: number; hasMore: boolean }> {
+  const supabase = createServerClient()
+  let query = supabase
+    .from("blog_posts")
+    .select("*", { count: "exact" })
+    .eq("published", true)
+    .order("published_at", { ascending: false })
+    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+
+  if (category) query = query.eq("category", category)
+  if (q) query = query.or(`title.ilike.%${q}%,excerpt.ilike.%${q}%`)
+
+  const { data, count } = await query
+  const total = count ?? 0
+  return {
+    posts: (data ?? []).map(rowToPost),
+    total,
+    hasMore: (page + 1) * PAGE_SIZE < total,
+  }
+}
 
 export async function getAllPosts(): Promise<BlogPost[]> {
   const supabase = createServerClient()
@@ -156,6 +186,33 @@ export async function getFeaturedPosts(): Promise<BlogPost[]> {
     .eq("featured", true)
     .order("published_at", { ascending: false })
     .limit(5)
+  return (data ?? []).map(rowToPost)
+}
+
+export async function getHeroPost(): Promise<BlogPost | null> {
+  const supabase = createServerClient()
+  const { data } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("published", true)
+    .order("featured",     { ascending: false })
+    .order("likes_count",  { ascending: false, nullsFirst: false })
+    .order("published_at", { ascending: false })
+    .limit(1)
+    .single()
+  if (!data) return null
+  return rowToPost(data as BlogPostRow)
+}
+
+export async function getPopularPosts(limit = 5): Promise<BlogPost[]> {
+  const supabase = createServerClient()
+  const { data } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("published", true)
+    .order("views_count", { ascending: false, nullsFirst: false })
+    .order("published_at", { ascending: false })
+    .limit(limit)
   return (data ?? []).map(rowToPost)
 }
 
