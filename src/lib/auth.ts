@@ -19,22 +19,22 @@ function resolveJwtSecret(): string {
   return secret
 }
 
-const SECRET = new TextEncoder().encode(resolveJwtSecret())
-
 export const COOKIE_NAME = "admin_session"
 export const COOKIE_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
 
 export async function createToken(): Promise<string> {
+  const secret = new TextEncoder().encode(resolveJwtSecret())
   return new SignJWT({ role: "admin" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(SECRET)
+    .sign(secret)
 }
 
 export async function verifyToken(token: string): Promise<boolean> {
   try {
-    const { payload } = await jwtVerify(token, SECRET)
+    const secret = new TextEncoder().encode(resolveJwtSecret())
+    const { payload } = await jwtVerify(token, secret)
     return payload.role === "admin"
   } catch {
     return false

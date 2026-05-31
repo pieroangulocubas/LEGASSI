@@ -18,8 +18,12 @@ import { Comments } from "@/components/blog/Comments"
 export const revalidate = 3600
 
 export async function generateStaticParams() {
-  const posts = await getAllPosts()
-  return posts.filter(p => p.slug).map(p => ({ slug: p.slug }))
+  try {
+    const posts = await getAllPosts()
+    return posts.filter(p => p.slug).map(p => ({ slug: p.slug }))
+  } catch {
+    return []
+  }
 }
 
 const BASE = "https://legassi.es"
