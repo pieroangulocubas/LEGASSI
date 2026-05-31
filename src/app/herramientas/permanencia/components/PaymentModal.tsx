@@ -48,7 +48,7 @@ export function PaymentModal({
     try {
       const [, res] = await Promise.all([
         saveFilesToIDB(files),
-        fetch("/api/clasificador/checkout", {
+        fetch("/api/permanencia/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

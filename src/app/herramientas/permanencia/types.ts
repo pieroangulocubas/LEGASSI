@@ -45,3 +45,23 @@ export interface ClasificadorFormData {
   telefono: string
   mesPresentation: PresentationMonth
 }
+
+// Stored in localStorage("cls_evaluador_result") so the Evaluador can read it
+export interface ClasificadorBridgeResult {
+  veredicto: Veredicto
+  validDocs: Array<{
+    tipo: string
+    originalName: string
+    fechas: string[]
+    fuerza: DocFuerza
+    descripcion_breve: string
+  }>
+  months: Array<{
+    yearMonth: string
+    label: string
+    status: MonthStatus
+    isOptional: boolean
+  }>
+  mesPresentation: PresentationMonth
+  savedAt: string
+}

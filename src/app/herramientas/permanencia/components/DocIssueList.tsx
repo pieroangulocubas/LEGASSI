@@ -1,6 +1,6 @@
 "use client"
 
-import { FileText, XCircle, UserX } from "lucide-react"
+import { FileText, XCircle, UserX, PlusCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatFechasRange } from "../logic"
 import type { DocumentResult } from "../types"
@@ -9,10 +9,12 @@ export function DocIssueList({
   docs,
   files,
   onPreview,
+  onInclude,
 }: {
   docs: DocumentResult[]
   files?: File[]
   onPreview?: (doc: DocumentResult) => void
+  onInclude?: (doc: DocumentResult) => void
 }) {
   if (docs.length === 0) {
     return (
@@ -55,21 +57,22 @@ export function DocIssueList({
       {docs.map((doc, i) => {
         const { text, style, Icon } = getReason(doc)
         const canPreview = !!onPreview && !!files?.[doc.fileIndex]
-        const CardTag = canPreview ? "button" : "div"
         return (
-          <CardTag
+          <div
             key={i}
-            {...(canPreview
-              ? { type: "button" as const, onClick: () => onPreview!(doc) }
-              : {})}
-            className={cn(
-              "w-full px-5 py-4 space-y-2 transition-colors text-left",
-              canPreview ? "hover:bg-muted/30 cursor-pointer" : "hover:bg-muted/10"
-            )}
+            className="w-full px-5 py-4 space-y-2 hover:bg-muted/10 transition-colors"
           >
             <div className="flex items-start gap-2.5 min-w-0">
               <FileText className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
-              <div className="min-w-0 flex-1">
+              <button
+                type="button"
+                disabled={!canPreview}
+                onClick={() => canPreview && onPreview!(doc)}
+                className={cn(
+                  "min-w-0 flex-1 text-left",
+                  canPreview && "cursor-pointer hover:opacity-80 transition-opacity"
+                )}
+              >
                 <p className="text-sm font-semibold text-foreground truncate">
                   {doc.descripcion_breve || doc.originalName}
                 </p>
@@ -80,22 +83,34 @@ export function DocIssueList({
                 <p className="text-[11px] text-muted-foreground/60 font-mono mt-0.5 truncate">
                   {doc.originalName}
                 </p>
+              </button>
+              <div className="shrink-0 flex items-center gap-1.5">
+                {canPreview && (
+                  <button
+                    type="button"
+                    onClick={() => onPreview!(doc)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted hover:border-primary/40 transition-all"
+                  >
+                    Ver
+                  </button>
+                )}
+                {onInclude && (
+                  <button
+                    type="button"
+                    onClick={() => onInclude(doc)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-orange-600 hover:bg-orange-700 active:bg-orange-800 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all"
+                  >
+                    <PlusCircle className="h-3 w-3" />
+                    Incluir
+                  </button>
+                )}
               </div>
-              {canPreview && (
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); onPreview!(doc) }}
-                  className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted hover:border-primary/40 transition-all"
-                >
-                  Ver
-                </button>
-              )}
             </div>
             <div className={cn("flex items-start gap-2 rounded-lg px-3 py-2 text-xs font-medium", style)}>
               <Icon className="h-3.5 w-3.5 shrink-0 mt-0.5" />
               <span className="break-words min-w-0">{text}</span>
             </div>
-          </CardTag>
+          </div>
         )
       })}
     </div>
