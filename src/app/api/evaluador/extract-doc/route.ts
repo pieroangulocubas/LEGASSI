@@ -36,7 +36,8 @@ Criterios de validez por tipo:
 - Empadronamiento: reciente, nominativo.
 
 TAREA 2 — EXTRACCIÓN de datos personales visibles:
-Extrae TODOS los datos visibles. Fechas en formato YYYY-MM-DD. Sexo como "H" o "M". Usa null si no está visible.
+Extrae ÚNICAMENTE los datos que puedas leer con claridad. Fechas en formato YYYY-MM-DD. Sexo como "H" o "M".
+REGLA DE CALIDAD: Si un campo no es legible con certeza (por brillo, desenfoque, baja resolución, oclusión, reflejos o deterioro), devuelve null para ese campo y anota el problema en "observaciones" con el texto exacto: "Dato ilegible por calidad de imagen: [campo]. Solicita al usuario que suba una copia más nítida." NO supongas, no interpoles ni rellenes con valores probables. Solo extrae lo que ves con certeza.
 
 Devuelve EXCLUSIVAMENTE un JSON con esta estructura exacta (sin texto adicional, sin markdown):
 {
