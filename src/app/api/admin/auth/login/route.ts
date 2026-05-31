@@ -31,11 +31,10 @@ function buildRatelimiter(): Ratelimit | null {
   })
 }
 
-const ratelimiter = buildRatelimiter()
-
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for") ?? "anonymous"
 
+  const ratelimiter = buildRatelimiter()
   if (ratelimiter) {
     const { success } = await ratelimiter.limit(ip)
     if (!success) {
