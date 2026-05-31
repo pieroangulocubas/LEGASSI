@@ -1,6 +1,6 @@
 "use client"
 
-import { FileText, Eye, Trash2, Lightbulb } from "lucide-react"
+import { FileText, Eye, Trash2, Lightbulb, MinusCircle, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatFechasCompact, getCategoryForTipo, CATEGORY_BADGE_CFG, getMonthSuggestion } from "../logic"
 import type { MonthCoverage, DocumentResult } from "../types"
@@ -114,20 +114,32 @@ export function MonthCard({
   month,
   onPreview,
   onDelete,
+  isSkipped,
+  onSkip,
+  onUnskip,
 }: {
   month: MonthCoverage
   onPreview: (doc: DocumentResult) => void
   onDelete?: (doc: DocumentResult) => void
+  isSkipped?: boolean
+  onSkip?: () => void
+  onUnskip?: () => void
 }) {
   const s = STATUS_CFG[month.status]
   const suggestion = getMonthSuggestion(month.docs)
 
-  const borderClass = month.isLimitrofe
-    ? "border-violet-200 dark:border-violet-800"
-    : s.border
-  const headerClass = month.isLimitrofe
-    ? "bg-violet-50 dark:bg-violet-950/20"
-    : s.header
+  const canSkip = !month.isOptional && !month.isLimitrofe
+
+  const borderClass = isSkipped
+    ? "border-border"
+    : month.isLimitrofe
+      ? "border-violet-200 dark:border-violet-800"
+      : s.border
+  const headerClass = isSkipped
+    ? "bg-muted/30"
+    : month.isLimitrofe
+      ? "bg-violet-50 dark:bg-violet-950/20"
+      : s.header
 
   return (
     <div className={cn("rounded-xl border overflow-hidden", borderClass)}>
@@ -135,35 +147,72 @@ export function MonthCard({
       {/* Header */}
       <div className={cn("flex items-center justify-between gap-2 px-4 py-3", headerClass)}>
         <div className="flex items-center gap-2 min-w-0">
-          <span className={cn("h-2 w-2 rounded-full shrink-0", month.isLimitrofe ? "bg-violet-400" : s.dot)} />
-          <span className="font-bold text-sm text-foreground truncate">{month.label}</span>
+          <span className={cn(
+            "h-2 w-2 rounded-full shrink-0",
+            isSkipped ? "bg-muted-foreground/40" : month.isLimitrofe ? "bg-violet-400" : s.dot
+          )} />
+          <span className={cn("font-bold text-sm truncate", isSkipped ? "text-muted-foreground/60 line-through" : "text-foreground")}>
+            {month.label}
+          </span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          {month.isLimitrofe && (
-            <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
-              Contexto adicional
-            </span>
-          )}
-          {!month.isLimitrofe && month.isOptional && month.status === "VACÍO" && (
-            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
-              Recomendable
-            </span>
-          )}
-          {!month.isLimitrofe && !(month.isOptional && month.status === "VACÍO") && (
-            <span className={cn("rounded-full px-2.5 py-0.5 text-[11px] font-semibold", s.badge)}>
-              {s.label}
-            </span>
-          )}
-          {!month.isLimitrofe && month.isOptional && month.status !== "VACÍO" && (
-            <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
-              Recomendable
-            </span>
+          {isSkipped ? (
+            <>
+              <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-muted text-muted-foreground">
+                Omitido
+              </span>
+              {onUnskip && (
+                <button
+                  type="button"
+                  onClick={onUnskip}
+                  title="Restaurar mes al cálculo"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-background hover:bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-all"
+                >
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Restaurar
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              {month.isLimitrofe && (
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+                  Contexto adicional
+                </span>
+              )}
+              {!month.isLimitrofe && month.isOptional && month.status === "VACÍO" && (
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
+                  Recomendable
+                </span>
+              )}
+              {!month.isLimitrofe && !(month.isOptional && month.status === "VACÍO") && (
+                <span className={cn("rounded-full px-2.5 py-0.5 text-[11px] font-semibold", s.badge)}>
+                  {s.label}
+                </span>
+              )}
+              {!month.isLimitrofe && month.isOptional && month.status !== "VACÍO" && (
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
+                  Recomendable
+                </span>
+              )}
+              {canSkip && onSkip && (
+                <button
+                  type="button"
+                  onClick={onSkip}
+                  title="Omitir este mes del cálculo"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-background hover:bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-all"
+                >
+                  <MinusCircle className="h-2.5 w-2.5" />
+                  Omitir
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
 
       {/* Suggestion: add a second doc type */}
-      {suggestion && month.docs.length > 0 && (
+      {!isSkipped && suggestion && month.docs.length > 0 && (
         <div className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-50/60 dark:bg-amber-950/10 border-b border-amber-100 dark:border-amber-900/30">
           <Lightbulb className="h-3 w-3 shrink-0 text-amber-500" />
           <p className="text-[10px] text-amber-700 dark:text-amber-400">{suggestion}</p>
@@ -171,16 +220,18 @@ export function MonthCard({
       )}
 
       {/* Document list */}
-      {month.docs.length > 0 ? (
-        <div className="divide-y divide-border">
-          {month.docs.map((doc, i) => (
-            <DocRow key={i} doc={doc} onPreview={onPreview} onDelete={onDelete} />
-          ))}
-        </div>
-      ) : (
-        <p className="px-4 py-3 text-xs text-muted-foreground/70">
-          No hay documentos válidos para este mes.
-        </p>
+      {!isSkipped && (
+        month.docs.length > 0 ? (
+          <div className="divide-y divide-border">
+            {month.docs.map((doc, i) => (
+              <DocRow key={i} doc={doc} onPreview={onPreview} onDelete={onDelete} />
+            ))}
+          </div>
+        ) : (
+          <p className="px-4 py-3 text-xs text-muted-foreground/70">
+            No hay documentos válidos para este mes.
+          </p>
+        )
       )}
     </div>
   )

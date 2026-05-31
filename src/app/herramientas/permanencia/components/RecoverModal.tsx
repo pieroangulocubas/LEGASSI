@@ -30,7 +30,7 @@ export function RecoverModal({
     setLoading(true)
     setErr("")
     try {
-      const res = await fetch("/api/clasificador/recover", {
+      const res = await fetch("/api/permanencia/recover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -116,7 +116,7 @@ export function RecoverModal({
                 onClick={async () => {
                   setCheckoutLoading(true)
                   try {
-                    const res = await fetch("/api/clasificador/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) })
+                    const res = await fetch("/api/permanencia/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) })
                     const data = await res.json()
                     if (data.url) window.location.href = data.url
                     else setErr(data.error ?? "No se pudo iniciar el pago.")
@@ -157,7 +157,7 @@ export function RecoverModal({
                 onClick={async () => {
                   setCheckoutLoading(true)
                   try {
-                    const res = await fetch("/api/clasificador/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) })
+                    const res = await fetch("/api/permanencia/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) })
                     const data = await res.json()
                     if (data.url) window.location.href = data.url
                     else setErr(data.error ?? "No se pudo iniciar el pago.")

@@ -10,6 +10,7 @@ import {
   Loader2,
   FileText,
   ArrowLeft,
+  ArrowRight,
   ShieldCheck,
   CreditCard,
   KeyRound,
@@ -53,6 +54,20 @@ export default function ClasificadorPage() {
   // Account info from DB (not reactive to form inputs)
   const [account, setAccount] = useState({ nombre: "", email: "", telefono: "" })
 
+  // Callback URL — set when user navigated here from Evaluador (?from=evaluador)
+  const [returnUrl, setReturnUrl] = useState<string | null>(null)
+
+  // Independent localStorage keys when accessed from Evaluador context
+  // Determined once at init so the session never switches mid-use
+  const [isEvaluadorCtx] = useState(() =>
+    typeof sessionStorage !== "undefined"
+      ? sessionStorage.getItem("cls_return_url") != null
+      : false
+  )
+  const TOKEN_KEY    = isEvaluadorCtx ? "evaluador_cls_token"    : "clasificador_token"
+  const CREDITS_KEY  = isEvaluadorCtx ? "evaluador_cls_credits"  : "clasificador_credits"
+  const FREEMIUM_KEY = isEvaluadorCtx ? "evaluador_cls_freemium" : "clasificador_is_freemium"
+
   // Payment / credits
   const [isFreemium, setIsFreemium] = useState(false)
   const [paymentModal, setPaymentModal] = useState<{ open: boolean; reason: "first_time" | "exhausted" }>({
@@ -84,6 +99,20 @@ export default function ClasificadorPage() {
   // On mount: check for Stripe redirect (session_id) or existing localStorage token
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+
+    // Detect navigation from Evaluador — persist in sessionStorage so it survives page flows
+    const fromParam = params.get("from")
+    if (fromParam === "evaluador") {
+      const url = "/herramientas/evaluador-regularizacion"
+      sessionStorage.setItem("cls_return_url", url)
+      setReturnUrl(url)
+      // Remove ?from from the URL without a reload
+      window.history.replaceState({}, "", window.location.pathname)
+    } else {
+      const stored = sessionStorage.getItem("cls_return_url")
+      if (stored) setReturnUrl(stored)
+    }
+
     const sessionId = params.get("session_id")
     const cancelled = params.get("cancelled")
 
@@ -105,13 +134,13 @@ export default function ClasificadorPage() {
       window.history.replaceState({}, "", window.location.pathname)
       setPageState("verifying_payment")
 
-      fetch(`/api/clasificador/verify?session_id=${sessionId}`)
+      fetch(`/api/permanencia/verify?session_id=${sessionId}`)
         .then((r) => r.json())
         .then((data) => {
           if (data.paid && data.token) {
-            localStorage.setItem("clasificador_token", data.token)
-            localStorage.setItem("clasificador_credits", String(data.credits ?? 7))
-            localStorage.removeItem("clasificador_is_freemium")   // ya pagó
+            localStorage.setItem(TOKEN_KEY, data.token)
+            localStorage.setItem(CREDITS_KEY, String(data.credits ?? 7))
+            localStorage.removeItem(FREEMIUM_KEY)   // ya pagó
             if (data.nombre)   localStorage.setItem("clasificador_nombre",   data.nombre)
             if (data.email)    localStorage.setItem("clasificador_email",    data.email)
             if (data.telefono) localStorage.setItem("clasificador_telefono", data.telefono)
@@ -153,17 +182,17 @@ export default function ClasificadorPage() {
     const recoverToken = params.get("recover_token")
     if (recoverToken) {
       window.history.replaceState({}, "", window.location.pathname)
-      localStorage.setItem("clasificador_token", recoverToken)
+      localStorage.setItem(TOKEN_KEY, recoverToken)
 
       // Fetch profile to pre-fill form and store data locally
-      fetch(`/api/clasificador/profile?token=${recoverToken}`)
+      fetch(`/api/permanencia/profile?token=${recoverToken}`)
         .then((r) => r.json())
         .then((data) => {
           if (data.nombre)   { localStorage.setItem("clasificador_nombre",   data.nombre);   setNombreFromFull(data.nombre); setAccount((prev) => ({ ...prev, nombre: data.nombre })) }
           if (data.email)    { localStorage.setItem("clasificador_email",    data.email);    setEmail(data.email) }
           if (data.telefono) { localStorage.setItem("clasificador_telefono", data.telefono); setTelefono(data.telefono) }
           if (data.credits != null) {
-            localStorage.setItem("clasificador_credits", String(data.credits))
+            localStorage.setItem(CREDITS_KEY, String(data.credits))
             setCreditsRemaining(data.credits)
           }
         })
@@ -185,8 +214,8 @@ export default function ClasificadorPage() {
     if (storedMes)      setMesPresentation(storedMes as PresentationMonth)
 
     // Load existing token/credits if present, then validate against DB
-    const token = localStorage.getItem("clasificador_token")
-    const credits = localStorage.getItem("clasificador_credits")
+    const token = localStorage.getItem(TOKEN_KEY)
+    const credits = localStorage.getItem(CREDITS_KEY)
     if (token) {
       // Optimistically set from localStorage while we validate
       if (credits !== null) setCreditsRemaining(parseInt(credits, 10))
@@ -196,10 +225,10 @@ export default function ClasificadorPage() {
         telefono: storedTelefono ?? "",
       })
       if (storedNombre) setNombreFromFull(storedNombre)
-      if (localStorage.getItem("clasificador_is_freemium") === "true") setIsFreemium(true)
+      if (localStorage.getItem(FREEMIUM_KEY) === "true") setIsFreemium(true)
 
       // Validate token against DB — source of truth for credits and freemium status
-      fetch(`/api/clasificador/profile?token=${token}`)
+      fetch(`/api/permanencia/profile?token=${token}`)
         .then((r) => {
           if (r.status === 404) {
             // Token no longer valid (deleted or expired) — clear local state
@@ -219,11 +248,11 @@ export default function ClasificadorPage() {
           if (!data) return
           if (typeof data.credits === "number") {
             setCreditsRemaining(data.credits)
-            localStorage.setItem("clasificador_credits", String(data.credits))
+            localStorage.setItem(CREDITS_KEY, String(data.credits))
           }
           if (typeof data.is_freemium === "boolean") {
             setIsFreemium(data.is_freemium)
-            localStorage.setItem("clasificador_is_freemium", data.is_freemium ? "true" : "false")
+            localStorage.setItem(FREEMIUM_KEY, data.is_freemium ? "true" : "false")
           }
           setAccount((prev) => ({
             nombre: data.nombre ?? prev.nombre,
@@ -264,7 +293,7 @@ export default function ClasificadorPage() {
         setResult(analysisResult)
         if (typeof pollResult.creditsRemaining === "number") {
           setCreditsRemaining(pollResult.creditsRemaining)
-          localStorage.setItem("clasificador_credits", String(pollResult.creditsRemaining))
+          localStorage.setItem(CREDITS_KEY, String(pollResult.creditsRemaining))
         }
         clearFilesFromIDB() // already restored to React state above
         setLoadingStep(5)
@@ -273,7 +302,7 @@ export default function ClasificadorPage() {
     } else {
       setPageState("form")
     }
-  }, [])
+  }, [CREDITS_KEY, FREEMIUM_KEY, TOKEN_KEY])
 
   function handleAddFiles(newFiles: File[]) {
     setFiles((prev) => {
@@ -331,7 +360,7 @@ export default function ClasificadorPage() {
       if (signal.aborted) return { error: "Cancelado" }
 
       try {
-        const res = await fetch(`/api/clasificador/status?jobId=${jobId}`, { signal })
+        const res = await fetch(`/api/permanencia/status?jobId=${jobId}`, { signal })
         if (!res.ok) continue
         const data = await res.json()
 
@@ -381,7 +410,7 @@ export default function ClasificadorPage() {
 
       // ── Step 1: prepare-job — validate + create job + get signed upload URLs ──
       // No file bytes sent to Vercel (avoids 4.5 MB hard limit)
-      const prepRes = await fetch("/api/clasificador/prepare-job", {
+      const prepRes = await fetch("/api/permanencia/prepare-job", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -389,7 +418,7 @@ export default function ClasificadorPage() {
           email,
           telefono,
           mesPresentation,
-          token: localStorage.getItem("clasificador_token") ?? "",
+          token: localStorage.getItem(TOKEN_KEY) ?? "",
           files: processedFiles.map((f) => ({ name: f.name, size: f.size, mimeType: f.type })),
         }),
       })
@@ -412,8 +441,8 @@ export default function ClasificadorPage() {
 
         if (prepData.reason === "freemium_exhausted") {
           // This IS their account and they exhausted their free credit.
-          localStorage.setItem("clasificador_credits", "0")
-          localStorage.setItem("clasificador_is_freemium", "true")
+          localStorage.setItem(CREDITS_KEY, "0")
+          localStorage.setItem(FREEMIUM_KEY, "true")
           setCreditsRemaining(0)
           setIsFreemium(true)
           setPageState("form")
@@ -421,9 +450,9 @@ export default function ClasificadorPage() {
         }
 
         // No token or token exhausted → show payment modal
-        localStorage.setItem("clasificador_credits", "0")
+        localStorage.setItem(CREDITS_KEY, "0")
         setCreditsRemaining(0)
-        const hasToken = !!localStorage.getItem("clasificador_token")
+        const hasToken = !!localStorage.getItem(TOKEN_KEY)
         setPaymentModal({ open: true, reason: hasToken ? "exhausted" : "first_time" })
         setPageState("form")
         return
@@ -460,7 +489,7 @@ export default function ClasificadorPage() {
       }
 
       // ── Step 3: trigger Inngest analysis ──
-      const triggerRes = await fetch("/api/clasificador", {
+      const triggerRes = await fetch("/api/permanencia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jobId }),
@@ -476,8 +505,8 @@ export default function ClasificadorPage() {
       // Persist auto-issued freemium token (first analysis, no prior token)
       if (autoIssuedToken) {
         sessionAutoToken = autoIssuedToken
-        localStorage.setItem("clasificador_token", autoIssuedToken)
-        localStorage.setItem("clasificador_is_freemium", "true")
+        localStorage.setItem(TOKEN_KEY, autoIssuedToken)
+        localStorage.setItem(FREEMIUM_KEY, "true")
         setIsFreemium(true)
         if (!account.nombre && nombre) setAccount((prev) => ({ ...prev, nombre }))
       }
@@ -492,9 +521,9 @@ export default function ClasificadorPage() {
         // Analysis failed — credit was never deducted, so nothing to refund.
         // For auto-issued freemium tokens, delete the token so user gets a clean retry.
         if (sessionAutoToken) {
-          localStorage.removeItem("clasificador_token")
-          localStorage.removeItem("clasificador_is_freemium")
-          localStorage.removeItem("clasificador_credits")
+          localStorage.removeItem(TOKEN_KEY)
+          localStorage.removeItem(FREEMIUM_KEY)
+          localStorage.removeItem(CREDITS_KEY)
           setIsFreemium(false)
           setCreditsRemaining(null)
         }
@@ -512,15 +541,15 @@ export default function ClasificadorPage() {
       // Update credits now that results are confirmed (deducted server-side by Inngest)
       if (typeof pollResult.creditsRemaining === "number") {
         setCreditsRemaining(pollResult.creditsRemaining)
-        localStorage.setItem("clasificador_credits", String(pollResult.creditsRemaining))
+        localStorage.setItem(CREDITS_KEY, String(pollResult.creditsRemaining))
       }
 
       // Send analysis summary email in background (non-blocking)
-      const notifyToken = autoIssuedToken ?? localStorage.getItem("clasificador_token") ?? ""
+      const notifyToken = autoIssuedToken ?? localStorage.getItem(TOKEN_KEY) ?? ""
       if (notifyToken) {
         ;(async () => {
           try {
-            await fetch("/api/clasificador/notify-analysis", {
+            await fetch("/api/permanencia/notify-analysis", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -561,9 +590,9 @@ export default function ClasificadorPage() {
       console.error(err)
       // Undo auto-issued token on unexpected failure (credit never deducted)
       if (sessionAutoToken) {
-        localStorage.removeItem("clasificador_token")
-        localStorage.removeItem("clasificador_is_freemium")
-        localStorage.removeItem("clasificador_credits")
+        localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem(FREEMIUM_KEY)
+        localStorage.removeItem(CREDITS_KEY)
         setIsFreemium(false)
         setCreditsRemaining(null)
       }
@@ -598,7 +627,7 @@ export default function ClasificadorPage() {
     }
 
     // Freemium users must provide a valid email so we can deduplicate across sessions
-    const isFreemiumSubmit = !localStorage.getItem("clasificador_token")
+    const isFreemiumSubmit = !localStorage.getItem(TOKEN_KEY)
     if (isFreemiumSubmit) {
       if (!email.trim()) {
         setErrorMsg("Introduce tu correo electrónico para usar el análisis gratuito.")
@@ -668,14 +697,8 @@ export default function ClasificadorPage() {
   }
 
   function handleSignOut() {
-    ;[
-      "clasificador_token",
-      "clasificador_credits",
-      "clasificador_nombre",
-      "clasificador_email",
-      "clasificador_telefono",
-      "clasificador_mes",
-      "clasificador_is_freemium",
+    ;[TOKEN_KEY, CREDITS_KEY, FREEMIUM_KEY,
+      "clasificador_nombre", "clasificador_email", "clasificador_telefono", "clasificador_mes",
     ].forEach((k) => localStorage.removeItem(k))
     setIsFreemium(false)
     setCreditsRemaining(null)
@@ -714,7 +737,7 @@ export default function ClasificadorPage() {
           reason={paymentModal.reason}
           formValues={{ nombre: isFreemium ? (account.nombre || nombre) : nombre, email, telefono, mesPresentation }}
           files={files}
-          existingToken={localStorage.getItem("clasificador_token") ?? undefined}
+          existingToken={localStorage.getItem(TOKEN_KEY) ?? undefined}
           onClose={() => setPaymentModal((prev) => ({ ...prev, open: false }))}
         />
       )}
@@ -751,72 +774,70 @@ export default function ClasificadorPage() {
         {/* ── Loading ── */}
         {pageState === "loading" && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            {/* Animated document stack */}
-            <div className="relative h-24 w-24 mb-10">
-              {/* Stacked pages effect */}
-              <div className="absolute inset-0 translate-x-2 translate-y-2 rounded-lg border-2 border-primary/20 bg-primary/5" />
-              <div className="absolute inset-0 translate-x-1 translate-y-1 rounded-lg border-2 border-primary/30 bg-primary/8" />
-              {/* Main page — pulses */}
-              <div className="absolute inset-0 rounded-lg border-2 border-primary/60 bg-card shadow-lg flex flex-col items-center justify-center gap-1.5 overflow-hidden">
-                {/* Scanning line */}
+            {/* Animated scanner */}
+            <div className="relative h-28 w-28 mb-10">
+              <div className="absolute inset-0 rounded-2xl border-2 border-primary/10 bg-primary/3 translate-x-3 translate-y-3" />
+              <div className="absolute inset-0 rounded-2xl border-2 border-primary/20 bg-primary/5 translate-x-1.5 translate-y-1.5" />
+              <div className="absolute inset-0 rounded-2xl border-2 border-primary/40 bg-card shadow-[var(--shadow-float)] flex flex-col items-center justify-center overflow-hidden">
                 <div
-                  className="absolute left-0 right-0 h-0.5 bg-primary/50"
+                  className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent"
                   style={{ animation: "scan 2s ease-in-out infinite" }}
                 />
-                <FileText className="h-7 w-7 text-primary" />
+                <div className="text-3xl font-black text-primary/20 font-heading select-none">IA</div>
+                <FileText className="h-6 w-6 text-primary absolute" style={{ animation: "pulse 2s ease-in-out infinite" }} />
               </div>
             </div>
 
             <style>{`
               @keyframes scan {
-                0%   { top: 10%; opacity: 0; }
+                0%   { top: 8%; opacity: 0; }
                 10%  { opacity: 1; }
                 90%  { opacity: 1; }
-                100% { top: 90%; opacity: 0; }
+                100% { top: 92%; opacity: 0; }
               }
             `}</style>
 
-            <div className="space-y-1.5 mb-10">
-              <p className="text-lg font-semibold text-foreground">Analizando tu expediente…</p>
-              <p className="text-sm text-muted-foreground">La IA está revisando cada documento.</p>
-              <p className="text-xs text-muted-foreground/70">Puede tardar entre 20 y 60 segundos.</p>
+            <div className="space-y-1 mb-10">
+              <p className="text-xl font-heading font-bold text-foreground">
+                Permanen<span className="text-primary">c</span><span className="italic text-primary">IA</span> analizando…
+              </p>
+              <p className="text-sm text-muted-foreground">La IA está revisando cada documento individualmente.</p>
+              <p className="text-xs text-muted-foreground/60">Puede tardar entre 20 y 60 segundos.</p>
             </div>
 
             {/* Steps */}
-            <div className="w-full max-w-xs space-y-2.5 text-left">
+            <div className="w-full max-w-sm space-y-2 text-left">
               {([
-                { label: "Comprimiendo y enviando archivos", icon: "📤" },
-                { label: "Leyendo cada documento con IA", icon: "🔍" },
-                { label: "Clasificando meses y valor probatorio", icon: "📅" },
-                { label: "Generando resultado del expediente", icon: "✅" },
-              ] as const).map(({ label, icon }, i) => {
+                { label: "Comprimiendo y enviando archivos",    icon: ArrowRight },
+                { label: "Leyendo cada documento con IA",       icon: FileText },
+                { label: "Clasificando meses y valor probatorio", icon: CheckCircle },
+                { label: "Generando resultado del expediente",  icon: ShieldCheck },
+              ] as const).map(({ label, icon: Icon }, i) => {
                 const stepNum = i + 1
-                const done = loadingStep > stepNum
+                const done    = loadingStep > stepNum
                 const current = loadingStep === stepNum
                 return (
                   <div
                     key={i}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-slow ${
-                      done
-                        ? "bg-green-50 dark:bg-green-950/20"
-                        : current
-                        ? "bg-primary/8 ring-1 ring-primary/20"
-                        : "opacity-40"
+                    className={`flex items-center gap-3 rounded-xl px-4 py-3 border transition-all duration-500 ${
+                      done    ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
+                      : current ? "bg-primary/6 border-primary/25 shadow-sm"
+                      : "border-border/30 opacity-35"
                     }`}
                   >
-                    <span className="text-base shrink-0">{icon}</span>
-                    <span
-                      className={`text-sm font-medium flex-1 ${
-                        done
-                          ? "text-green-700 dark:text-green-300 line-through decoration-green-400"
-                          : current
-                          ? "text-foreground"
-                          : "text-muted-foreground"
-                      }`}
-                    >
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                      done ? "bg-green-100 dark:bg-green-900/40" : current ? "bg-primary/10" : "bg-muted"
+                    }`}>
+                      <Icon className={`h-3.5 w-3.5 ${done ? "text-green-600" : current ? "text-primary" : "text-muted-foreground/40"}`} />
+                    </div>
+                    <span className={`text-sm font-medium flex-1 ${
+                      done    ? "text-green-700 dark:text-green-300 line-through decoration-green-400/60"
+                      : current ? "text-foreground"
+                      : "text-muted-foreground"
+                    }`}>
                       {label}
                     </span>
-                    {done && <CheckCircle className="h-4 w-4 shrink-0 text-green-500" />}
+                    {done    && <CheckCircle className="h-4 w-4 shrink-0 text-green-500" />}
                     {current && <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />}
                   </div>
                 )
@@ -833,6 +854,8 @@ export default function ClasificadorPage() {
             formData={formData}
             files={files}
             creditsRemaining={creditsRemaining}
+            returnUrl={returnUrl ?? undefined}
+            tokenKey={TOKEN_KEY}
             onReset={() => handleReset()}
           />
         )}
@@ -937,13 +960,23 @@ export default function ClasificadorPage() {
                 )}
               </div>
               <div>
-                <h1 className="text-3xl sm:text-4xl font-bold leading-tight tracking-tight">
-                  Verifica tus{" "}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-[var(--shadow-brand)] shrink-0">
+                    <ShieldCheck className="h-5.5 w-5.5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Herramienta · RD 316/2026</p>
+                    <h1 className="text-xl font-heading font-black leading-tight">
+                      Permanen<span className="text-primary">c</span><span className="italic text-primary">IA</span>
+                    </h1>
+                  </div>
+                </div>
+                <p className="text-2xl sm:text-3xl font-heading font-bold leading-tight tracking-tight text-foreground">
+                  Verifica y organiza tus{" "}
                   <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                     pruebas de permanencia
                   </span>
-                  {" "}para la regularización extraordinaria
-                </h1>
+                </p>
               </div>
               {creditsRemaining !== null && account.nombre.trim() ? (
                 <div className="space-y-2">

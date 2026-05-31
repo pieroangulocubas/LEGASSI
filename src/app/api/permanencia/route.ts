@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 import { inngest } from "@/inngest/client"
 
-// POST /api/clasificador
+// POST /api/permanencia
 // Receives { jobId } after the client has uploaded files directly to Supabase Storage.
 // Verifies the job exists and is pending, then triggers the Inngest background function.
 // File bytes never pass through Vercel — this endpoint is tiny and fast.

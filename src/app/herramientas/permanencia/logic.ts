@@ -138,7 +138,8 @@ export function getBorderMonths(presentationMonth: PresentationMonth): { before:
 export function runRulesEngine(
   geminiResults: DocumentResult[],
   presentationMonth: PresentationMonth,
-  includedBorderMonths?: Set<string>
+  includedBorderMonths?: Set<string>,
+  skippedMonths?: Set<string>
 ): AnalysisResult {
   const window = TEMPORAL_WINDOWS[presentationMonth]
   const allWindowMonths = [...window.required, ...window.optional]
@@ -215,8 +216,10 @@ export function runRulesEngine(
     return { yearMonth: ym, label: MONTH_LABELS[ym] || ym, status, docs, isOptional, isLimitrofe }
   })
 
-  // Veredicto: only required months (non-optional, non-limítrofe)
-  const requiredMonths = months.filter((m) => !m.isOptional && !m.isLimitrofe)
+  // Veredicto: only required months (non-optional, non-limítrofe, non-omitido)
+  const requiredMonths = months.filter(
+    (m) => !m.isOptional && !m.isLimitrofe && !skippedMonths?.has(m.yearMonth)
+  )
   let veredicto: Veredicto
   if (requiredMonths.some((m) => m.status === "VACÍO")) {
     veredicto = "NO_CUMPLE"

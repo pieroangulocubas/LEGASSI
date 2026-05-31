@@ -3,7 +3,7 @@ import { createServerClient } from "@/lib/supabase"
 
 export const dynamic = "force-dynamic"
 
-// GET /api/clasificador/status?jobId=xxx
+// GET /api/permanencia/status?jobId=xxx
 // Returns job status and (when done) the enriched results.
 export async function GET(req: NextRequest) {
   const jobId = req.nextUrl.searchParams.get("jobId")

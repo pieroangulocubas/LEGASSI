@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   AlertCircle,
@@ -15,8 +15,10 @@ import {
   FileText,
   CheckCircle2,
   PlusCircle,
+  ArrowRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 import type { AnalysisResult, ClasificadorFormData, DocumentResult, PresentationMonth } from "../types"
 import { runRulesEngine, PRESENTATION_MONTH_LABELS, MONTH_LABELS, getBorderMonths, formatFechasRange } from "../logic"
 import { PreviewModal } from "./PreviewModal"
@@ -36,6 +38,8 @@ export function ResultsView({
   formData,
   files,
   creditsRemaining,
+  returnUrl,
+  tokenKey = "clasificador_token",
   onReset,
 }: {
   result: AnalysisResult
@@ -43,12 +47,16 @@ export function ResultsView({
   formData: ClasificadorFormData
   files: File[]
   creditsRemaining: number | null
+  returnUrl?: string
+  tokenKey?: string
   onReset: () => void
 }) {
   const [activeMonth, setActiveMonth] = useState<PresentationMonth>(formData.mesPresentation)
   const [approvedIndices, setApprovedIndices] = useState<Set<number>>(new Set())
   const [deletedIndices, setDeletedIndices] = useState<Set<number>>(new Set())
   const [includedBorderIndices, setIncludedBorderIndices] = useState<Set<number>>(new Set())
+  const [skippedMonths, setSkippedMonths] = useState<Set<string>>(new Set())
+  const [forcedInvalidIndices, setForcedInvalidIndices] = useState<Set<number>>(new Set())
   const [activeSecondaryTab, setActiveSecondaryTab] = useState<SecondaryTab>("por-confirmar")
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfError, setPdfError] = useState<string | null>(null)
@@ -74,11 +82,40 @@ export function ResultsView({
     if (deletedIndices.has(i)) return
     const effective = (doc.observado && approvedIndices.has(i))
       ? { ...doc, valido: true, observado: false }
-      : doc
+      : (!doc.valido && forcedInvalidIndices.has(i))
+        ? { ...doc, valido: true }
+        : doc
     effectiveResultsList.push(effective)
     docToRawIndex.set(effective, i)
   })
-  const result = runRulesEngine(effectiveResultsList, activeMonth, includedBorderMonths)
+  const result = runRulesEngine(effectiveResultsList, activeMonth, includedBorderMonths, skippedMonths)
+
+  // Persist result so the Evaluador can read it (localStorage = cross-tab, sessionStorage = current session only)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const bridge = JSON.stringify({
+      veredicto: result.veredicto,
+      validDocs: result.validDocs.map(d => ({
+        tipo: d.tipo,
+        originalName: d.originalName,
+        fechas: d.fechas,
+        fuerza: d.fuerza,
+        descripcion_breve: d.descripcion_breve,
+      })),
+      months: result.months.map(m => ({
+        yearMonth: m.yearMonth,
+        label: m.label,
+        status: m.status,
+        isOptional: m.isOptional,
+      })),
+      mesPresentation: activeMonth,
+      savedAt: new Date().toISOString(),
+    })
+    localStorage.setItem("cls_evaluador_result", bridge)
+    sessionStorage.setItem("cls_evaluador_result", bridge)
+  // result is derived from these state variables; rawResults and formData are stable props
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeMonth, approvedIndices, deletedIndices, includedBorderIndices])
 
   const allObservadoDocs = rawResults.filter((d, i) => d.observado && !deletedIndices.has(i))
   const deletedDocs = rawResults.map((doc, i) => ({ doc, rawIdx: i })).filter(({ rawIdx }) => deletedIndices.has(rawIdx))
@@ -126,7 +163,7 @@ export function ResultsView({
 
   async function prepareUpload(token: string): Promise<{ publicUrl?: string; signedUrl?: string }> {
     try {
-      const prep = await fetch("/api/clasificador/prepare-upload", {
+      const prep = await fetch("/api/permanencia/prepare-upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
@@ -148,7 +185,7 @@ export function ResultsView({
           body: blob,
         })
         if (result.veredicto === "CUMPLE" && formData.email) {
-          await fetch("/api/clasificador/notify-upload", {
+          await fetch("/api/permanencia/notify-upload", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -169,7 +206,7 @@ export function ResultsView({
 
   async function handleFinalDownload(finalBytes: Uint8Array) {
     const { addQRToFirstPage, addPageNumbers, compressPdfIfNeeded } = await import("../pdf-utils")
-    const token = typeof window !== "undefined" ? localStorage.getItem("clasificador_token") : null
+    const token = typeof window !== "undefined" ? localStorage.getItem(tokenKey) : null
     const { signedUrl, publicUrl } = token ? await prepareUpload(token) : {}
 
     let processedBytes = await addPageNumbers(finalBytes)
@@ -253,7 +290,7 @@ export function ResultsView({
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <button
           type="button"
           onClick={onReset}
@@ -262,12 +299,23 @@ export function ResultsView({
           <ArrowLeft className="h-4 w-4" />
           Analizar de nuevo
         </button>
-        {creditsRemaining !== null && (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            {creditsRemaining} análisis disponible{creditsRemaining !== 1 ? "s" : ""}
-          </span>
-        )}
+        <div className="flex items-center gap-3 flex-wrap">
+          {returnUrl && (
+            <Link
+              href={returnUrl}
+              className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+            >
+              Volver al Evaluador
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
+          {creditsRemaining !== null && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              {creditsRemaining} análisis disponible{creditsRemaining !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -284,7 +332,7 @@ export function ResultsView({
                 <button
                   key={month}
                   type="button"
-                  onClick={() => { setActiveMonth(month); setIncludedBorderIndices(new Set()) }}
+                  onClick={() => { setActiveMonth(month); setIncludedBorderIndices(new Set()); setSkippedMonths(new Set()) }}
                   className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-fast ${
                     activeMonth === month
                       ? "bg-gradient-to-r from-primary to-secondary text-white shadow-sm shadow-primary/20"
@@ -310,7 +358,15 @@ export function ResultsView({
         <h3 className="text-sm font-semibold text-foreground">Cobertura mensual</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {result.months.map((month) => (
-            <MonthCard key={month.yearMonth} month={month} onPreview={handlePreview} onDelete={handleDelete} />
+            <MonthCard
+              key={month.yearMonth}
+              month={month}
+              onPreview={handlePreview}
+              onDelete={handleDelete}
+              isSkipped={skippedMonths.has(month.yearMonth)}
+              onSkip={() => setSkippedMonths((prev) => new Set([...prev, month.yearMonth]))}
+              onUnskip={() => setSkippedMonths((prev) => { const n = new Set(prev); n.delete(month.yearMonth); return n })}
+            />
           ))}
         </div>
       </div>
@@ -418,6 +474,10 @@ export function ResultsView({
               docs={result.invalidDocs}
               files={files}
               onPreview={handlePreview}
+              onInclude={(doc) => {
+                const rawIdx = docToRawIndex.get(doc) ?? rawResults.indexOf(doc)
+                if (rawIdx !== -1) setForcedInvalidIndices((prev) => new Set([...prev, rawIdx]))
+              }}
             />
           )}
 
