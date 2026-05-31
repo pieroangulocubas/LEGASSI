@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     req.headers.get("origin") ||
     "http://localhost:3000"
 
-  const returnUrl = `${origin}/herramientas/clasificador-documentos`
+  const returnUrl = `${origin}/herramientas/permanencia`
 
   // Read form data passed from the client
   let nombre = ""

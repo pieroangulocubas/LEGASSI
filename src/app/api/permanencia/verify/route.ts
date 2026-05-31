@@ -34,7 +34,7 @@ async function sendPaymentConfirmationEmail(email: string, nombre: string, credi
           Tu pago se ha procesado correctamente. Tienes <strong>${credits} análisis disponibles</strong>
           para usar cuando quieras, con tu cuenta o con cualquier familiar.
         </p>
-        <a href="https://legassi.es/herramientas/clasificador-documentos"
+        <a href="https://legassi.es/herramientas/permanencia"
            style="display:inline-block;background:#b8941f;color:#fff;font-size:15px;font-weight:600;
                   text-decoration:none;padding:14px 28px;border-radius:8px;">
           Ir al clasificador →

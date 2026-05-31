@@ -18,13 +18,13 @@ export const metadata: Metadata = {
     title: "¿Tienes los documentos para la regularización extraordinaria? Veríficalo en segundos",
     description:
       "Herramienta gratuita con IA: sube tus documentos y descubre si acreditas los 5 meses de permanencia. Detecta meses faltantes y genera tu expediente en PDF.",
-    url: "https://legassi.es/herramientas/clasificador-documentos",
+    url: "https://legassi.es/herramientas/permanencia",
     siteName: "LEGASSI",
     locale: "es_ES",
     type: "website",
   },
   alternates: {
-    canonical: "https://legassi.es/herramientas/clasificador-documentos",
+    canonical: "https://legassi.es/herramientas/permanencia",
   },
 }
 

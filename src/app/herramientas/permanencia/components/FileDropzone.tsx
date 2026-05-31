@@ -7,7 +7,7 @@ import { CameraScanner } from "@/components/camera-scanner"
 
 export const ACCEPTED_TYPES = ["application/pdf", "image/jpeg", "image/png"]
 export const ACCEPTED_EXT = [".pdf", ".jpg", ".jpeg", ".png"]
-export const MAX_FILES = 30
+export const MAX_FILES = 35
 export const MAX_FILE_SIZE = 10 * 1024 * 1024   // 10 MB per file
 export const MAX_TOTAL_SIZE = 50 * 1024 * 1024  // 50 MB total
 

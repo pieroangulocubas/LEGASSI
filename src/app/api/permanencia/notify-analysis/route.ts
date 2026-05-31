@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
                  text-decoration:none;padding:12px 24px;border-radius:8px;">
          Hablar con un asesor →
        </a>`
-    : `<a href="https://legassi.es/herramientas/clasificador-documentos"
+    : `<a href="https://legassi.es/herramientas/permanencia"
           style="display:inline-block;background:#b8941f;color:#fff;font-size:14px;font-weight:600;
                  text-decoration:none;padding:12px 24px;border-radius:8px;">
          Descargar expediente PDF →

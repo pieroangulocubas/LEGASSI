@@ -595,27 +595,27 @@ async function embedPdfFile(doc: PDFDocument, bytes: Uint8Array, fileName: strin
       ? pageRange.map((p) => Math.min(Math.max(p - 1, 0), total - 1))
       : Array.from({ length: total }, (_, i) => i)
 
+    // Pages with /Rotate need a full content-stream rotation transform that pdf-lib
+    // can't apply cleanly via its public API. Fall back to pdfjs canvas rendering,
+    // which applies /Rotate correctly through the browser's PDF engine.
+    const hasRotation = indices.some(i => srcDoc.getPage(i).getRotation().angle !== 0)
+    if (hasRotation) throw new Error("rotated")
+
     const [a4W, a4H] = PageSizes.A4
     const copied = await doc.copyPages(srcDoc, indices)
     for (const p of copied) {
       const { width: rawW, height: rawH } = p.getSize()
-      const rot = p.getRotation().angle
-      // Effective visible dimensions after viewer applies /Rotate
-      const effW = rot === 90 || rot === 270 ? rawH : rawW
-      const effH = rot === 90 || rot === 270 ? rawW : rawH
-      const scale = Math.min(a4W / effW, a4H / effH)
-      const dx = (a4W - effW * scale) / 2
-      const dy = (a4H - effH * scale) / 2
+      const scale = Math.min(a4W / rawW, a4H / rawH, 1)
+      const dx = (a4W - rawW * scale) / 2
+      const dy = (a4H - rawH * scale) / 2
       p.setSize(a4W, a4H)
-      // translateContent prepends — applied second (after scale)
       p.translateContent(dx, dy)
-      // scaleContent prepends — applied first
       p.scaleContent(scale, scale)
       doc.addPage(p)
     }
     return
   } catch {
-    // Broken XRef or encrypted — fall back to pdfjs canvas render
+    // Broken XRef, encrypted, or /Rotate pages — fall back to pdfjs canvas render
   }
 
   const ok = await embedPdfViaCanvas(doc, bytes, pageRange)

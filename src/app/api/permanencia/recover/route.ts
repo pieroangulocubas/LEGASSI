@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, exhausted: true })
   }
 
-  const recoveryLink = `${appUrl}/herramientas/clasificador-documentos?recover_token=${data.token}`
+  const recoveryLink = `${appUrl}/herramientas/permanencia?recover_token=${data.token}`
 
   const resend = new Resend(resendKey)
 

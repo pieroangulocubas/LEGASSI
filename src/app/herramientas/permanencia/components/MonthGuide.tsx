@@ -37,7 +37,7 @@ export function MonthGuide({ month }: { month: PresentationMonth }) {
       </div>
       {window.optional.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          Los meses opcionales son recomendables si presentas a principios de junio. Inclúyelos si ya tienes documentos disponibles.
+          Los meses opcionales son recomendables si presentas a principios del mes de presentación. Inclúyelos si ya tienes documentos disponibles.
         </p>
       )}
     </div>
