@@ -8,8 +8,8 @@ const steps = [
   },
   {
     icon: Bot,
-    title: "IA + experiencia",
-    description: "Combinamos inteligencia artificial con la experiencia de nuestros asesores expertos.",
+    title: "Revisión sin errores",
+    description: "Revisamos tu expediente con nuestro sistema interno antes de presentarlo. Detectamos lo que falta antes de que lo detecte la Administración.",
   },
   {
     icon: Calendar,

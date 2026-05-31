@@ -75,19 +75,19 @@ const services = [
 
 const differentiators = [
   {
+    icon: HeartHandshake,
+    title: "Lo construimos porque lo vivimos",
+    description: "Legassi fue fundado por personas que pasaron por el proceso migratorio en España. El miedo al primer trámite, no entender el sistema, no saber en quién confiar. Esa experiencia define cómo tratamos a cada cliente.",
+  },
+  {
     icon: Users,
-    title: "Abogados y asesores expertos",
-    description: "Equipo de abogados colegiados y asesores especializados en extranjería con años de experiencia resolviendo casos reales.",
+    title: "Calidad profesional sin atajos",
+    description: "Abogados colegiados y asesores especializados. Normativa al día, criterio jurídico real. Más de 2.000 casos desde 2021.",
   },
   {
     icon: Clock,
-    title: "Siempre actualizados",
-    description: "Normativa y jurisprudencia al día. Nuestro equipo se forma continuamente para ofrecerte la mejor estrategia.",
-  },
-  {
-    icon: HeartHandshake,
-    title: "Atención integral",
-    description: "Citas en consulados, policía, ayuntamientos, SEPE y más. Somos tu centro de confianza para cualquier trámite.",
+    title: "El primer despacho con LegalTech propio en extranjería",
+    description: "No compramos soluciones genéricas: las construimos con los casos reales que gestionamos cada día.",
   },
 ]
 
@@ -141,7 +141,7 @@ export function ServicesSection() {
                     Si llevas tiempo en España sin documentación, esta normativa excepcional te permite regularizar tu situación. Nuestros asesores expertos preparan y presentan tu expediente completo.
                   </p>
                   <div className="flex flex-wrap gap-3 mt-3">
-                    {["Análisis de elegibilidad", "Preparación del expediente", "Clasificador incluido"].map((item) => (
+                    {["Evaluador de elegibilidad", "Verificador de documentos", "Checklist personalizado"].map((item) => (
                       <span key={item} className="inline-flex items-center gap-1.5 text-xs text-foreground/70">
                         <CheckCircle className="h-3.5 w-3.5 text-primary shrink-0" />
                         {item}
@@ -153,18 +153,16 @@ export function ServicesSection() {
 
               <div className="shrink-0 flex flex-row md:flex-col md:items-end gap-2">
                 <Button variant="cta" size="sm" asChild className="whitespace-nowrap">
-                  <Link href="/herramientas/clasificador-documentos">
-                    Verificar documentos
+                  <Link href="/herramientas/evaluador-regularizacion">
+                    Evaluar mi caso
                     <ArrowRight className="size-3.5" />
                   </Link>
                 </Button>
                 <Link
-                  href="https://wa.me/34672297468?text=Hola,%20quiero%20información%20sobre%20la%20Regularización%20Extraordinaria%202026"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/herramientas/permanencia"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline whitespace-nowrap"
                 >
-                  Hablar con asesor
+                  Verificar documentos
                   <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>

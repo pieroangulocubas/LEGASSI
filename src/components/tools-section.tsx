@@ -11,7 +11,7 @@ const availableTools = [
     title: "Clasificador de documentos de permanencia",
     description:
       "Sube tus documentos, los analizamos y los clasificamos por meses. Detecta cuáles son válidos y genera tu expediente en PDF listo para presentar.",
-    href: "/herramientas/clasificador-documentos",
+    href: "/herramientas/permanencia",
   },
 ]
 
@@ -77,19 +77,18 @@ export function ToolsSection() {
             <div className="flex items-center gap-2 mb-3">
               <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1">
                 <Cpu className="h-3 w-3 text-primary" />
-                <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Equipo LegalTech</span>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-primary">Herramientas propias</span>
               </div>
             </div>
             <h2 className="text-section font-heading font-bold tracking-tight">
-              Herramientas que{" "}
+              El primer despacho de extranjería en España con{" "}
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                desarrollamos internamente
+                herramientas propias
               </span>
             </h2>
             <p className="mt-3 text-muted-foreground max-w-xl text-pretty">
-              Nuestro equipo LegalTech construye herramientas para hacer más eficiente el trabajo de nuestro equipo interno.
-              Las que creemos convenientes las liberamos para que puedas usarlas directamente.{" "}
-              <span className="font-semibold text-foreground">Todas tienen capa gratuita</span>.
+              Construidas con los expedientes reales que gestionamos cada día. Las más útiles las liberamos para que las uses tú.{" "}
+              <span className="font-semibold text-foreground">Todas tienen capa gratuita.</span>
             </p>
           </div>
           <div className="shrink-0 text-right hidden lg:block">

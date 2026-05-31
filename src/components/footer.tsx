@@ -14,8 +14,7 @@ export function Footer() {
               <Image src="/imagotipo_dark.svg"  alt="LEGASSI" width={130} height={35} className="h-8 w-auto hidden dark:block" />
             </div>
             <p className="text-muted-foreground mb-4 text-pretty">
-              Tu centro de confianza en servicios de extranjería. Democratizamos los trámites migratorios con tecnología
-              avanzada y atención personalizada.
+              El despacho de extranjería fundado por quienes vivieron el proceso. Calidad profesional, atención humana y herramientas propias. El primero con enfoque LegalTech en extranjería. Desde 2021.
             </p>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Scale className="h-4 w-4 text-primary" />
