@@ -1,20 +1,12 @@
-export const dynamic = "force-dynamic"
+export const runtime = "edge"
 import { NextRequest, NextResponse } from "next/server"
-import { timingSafeEqual } from "crypto"
 import { createToken, COOKIE_NAME, COOKIE_MAX_AGE } from "@/lib/auth"
 
 function safeEqual(a: string, b: string): boolean {
-  try {
-    const bufA = Buffer.from(a)
-    const bufB = Buffer.from(b)
-    if (bufA.length !== bufB.length) {
-      timingSafeEqual(bufA, Buffer.alloc(bufA.length))
-      return false
-    }
-    return timingSafeEqual(bufA, bufB)
-  } catch {
-    return false
-  }
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
 }
 
 export async function POST(req: NextRequest) {
