@@ -29,9 +29,9 @@ export function AnnouncementBar() {
           <Sparkles className="h-4 w-4 shrink-0 opacity-90" />
           <span className="text-center leading-snug">
             <span className="font-semibold">Regularización extraordinaria 2026:</span>{" "}
-            verifica tus documentos de permanencia con IA —{" "}
+            verifica tus documentos de permanencia con nuestra herramienta —{" "}
             <Link
-              href="/herramientas/clasificador-documentos"
+              href="/herramientas/permanencia"
               className="underline underline-offset-2 hover:opacity-80 transition-opacity inline-flex items-center gap-1"
             >
               prueba gratis <ArrowRight className="h-3.5 w-3.5" />

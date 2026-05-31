@@ -13,7 +13,15 @@
       "Bash(mkdir -p \"/c/Users/piero/Desktop/ZOMBIE PROJECTS/legassi-web/src/app/api/antecedentes/submit\")",
       "Bash(mkdir -p \"/c/Users/piero/Desktop/ZOMBIE PROJECTS/legassi-web/src/app/api/antecedentes/status\")",
       "Bash(mkdir -p \"/c/Users/piero/Desktop/ZOMBIE PROJECTS/legassi-web/src/app/api/antecedentes/webhook\")",
-      "WebFetch(domain:jimp-dev.github.io)"
+      "WebFetch(domain:jimp-dev.github.io)",
+      "Bash(start \"c:\\\\Users\\\\piero\\\\Desktop\\\\ZOMBIE PROJECTS\\\\legassi-web\\\\public\\\\forms\\\\EX31_labeled.pdf\")",
+      "PowerShell(Start-Process \"c:\\\\Users\\\\piero\\\\Desktop\\\\ZOMBIE PROJECTS\\\\legassi-web\\\\public\\\\forms\\\\EX31_labeled.pdf\")",
+      "PowerShell(Start-Process \"c:\\\\Users\\\\piero\\\\Desktop\\\\ZOMBIE PROJECTS\\\\legassi-web\\\\public\\\\forms\\\\EX32_labeled.pdf\")",
+      "Bash(python3 -c \"import pdfplumber; print\\('ok'\\)\")",
+      "Bash(python -c \"import pdfplumber; print\\('ok'\\)\")",
+      "Bash(python3 -c \"import pdfminer; print\\('ok'\\)\")",
+      "Bash(pip3 install *)",
+      "Bash(python3 -c ' *)"
     ]
   }
 }

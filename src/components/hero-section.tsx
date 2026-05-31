@@ -21,26 +21,25 @@ export function HeroSection() {
             {/* Trust badge */}
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary mb-7 shadow-sm shadow-primary/10">
               <Sparkles className="h-3.5 w-3.5 shrink-0" />
-              <span>Centro de Extranjería líder en España</span>
+              <span>Despacho fundado por inmigrantes · desde 2021</span>
             </div>
 
             {/* Heading */}
-            <h1 className="text-display font-heading font-bold text-balance mb-5 tracking-tight">
-              Tu{" "}
+            <h1 className="text-section font-heading font-bold text-balance mb-5 tracking-tight">
+              Somos el despacho de extranjería que{" "}
               <span className="relative inline-block">
                 <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  Centro de Confianza
+                  entiende tu situación
                 </span>
                 <span className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
               </span>
-              {" "}en{" "}
-              <span className="text-secondary">Extranjería</span>
+              {" "}porque{" "}
+              <span className="text-secondary">venimos de donde tú vienes.</span>
             </h1>
 
             {/* Subheading */}
             <p className="text-base md:text-lg text-muted-foreground text-pretty mb-8 leading-relaxed">
-              Democratizamos los trámites de extranjería con tecnología avanzada, inteligencia
-              artificial y la experiencia de abogados expertos. Atención personalizada para tu futuro.
+              Fundado por quienes pasaron por el proceso migratorio en España. Abogados especializados, atención humana real y herramientas propias para que tu expediente llegue sin errores.
             </p>
 
             {/* CTA Buttons */}
@@ -67,7 +66,7 @@ export function HeroSection() {
             <div className="flex flex-wrap gap-2 mb-9">
               {[
                 { icon: Scale, text: "Extranjería & Nacionalidad" },
-                { icon: Brain, text: "Tecnología & IA" },
+                { icon: Brain, text: "Herramientas propias" },
                 { icon: Users, text: "Atención Personalizada" },
                 { icon: Shield, text: "Seguridad Jurídica" },
               ].map(({ icon: Icon, text }) => (
@@ -120,7 +119,7 @@ export function HeroSection() {
 
             {/* Floating tool card */}
             <Link
-              href="/herramientas/clasificador-documentos"
+              href="/herramientas/permanencia"
               className="group absolute -bottom-5 inset-x-6 rounded-2xl border border-primary/25 bg-background/95 backdrop-blur-md shadow-float p-4 hover:border-primary/50 hover:shadow-primary/15 transition-all duration-slow"
             >
               <div className="flex items-start gap-3">
@@ -129,7 +128,7 @@ export function HeroSection() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-1 mb-0.5">
-                    <Sparkles className="h-2.5 w-2.5" /> Herramienta Tech disponible
+                    <Sparkles className="h-2.5 w-2.5" /> Herramienta disponible
                   </span>
                   <p className="font-semibold text-foreground text-sm leading-snug">
                     Verifica tus pruebas de permanencia
@@ -147,7 +146,7 @@ export function HeroSection() {
           {/* ── Mobile: tool card ── */}
           <div className="lg:hidden">
             <Link
-              href="/herramientas/clasificador-documentos"
+              href="/herramientas/permanencia"
               className="group block rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent hover:border-primary/50 transition-all duration-slow p-5 shadow-card"
             >
               <div className="flex items-start gap-4">
@@ -156,7 +155,7 @@ export function HeroSection() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="text-xs font-bold uppercase tracking-widest text-primary flex items-center gap-1 mb-1">
-                    <Sparkles className="h-3 w-3" /> Herramienta IA disponible
+                    <Sparkles className="h-3 w-3" /> Herramienta disponible
                   </span>
                   <p className="font-semibold text-foreground text-sm leading-snug">
                     ¿Tienes los documentos para la regularización extraordinaria?

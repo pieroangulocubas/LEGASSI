@@ -9,9 +9,9 @@ export function FAQSection() {
         "Nos especializamos en todos los trámites de extranjería: residencias temporales y permanentes, reagrupación familiar, nacionalidad española, estancia por estudios, protección internacional (asilo), autorizaciones de trabajo, y renovaciones. Cada caso es único y lo tratamos con la atención personalizada que merece.",
     },
     {
-      question: "¿Cómo utilizan la inteligencia artificial en los procesos?",
+      question: "¿Cómo revisan la documentación antes de presentar el expediente?",
       answer:
-        "Empleamos IA para analizar la normativa más actualizada, revisar jurisprudencia relevante, y optimizar la preparación de expedientes. Esto nos permite reducir errores, acelerar procesos y asegurar que cada documento cumpla exactamente con los requisitos legales vigentes.",
+        "Usamos herramientas propias que construimos internamente para revisar cada expediente antes de presentarlo. Detectamos lo que falta o no cumple los requisitos antes de que lo detecte la Administración. Eso reduce errores y evita retrasos innecesarios.",
     },
     {
       question: "¿Realmente gestionan las citas en consulados y oficinas públicas?",
@@ -21,7 +21,7 @@ export function FAQSection() {
     {
       question: "¿Cuánto tiempo toma resolver un caso típico?",
       answer:
-        "Los tiempos varían según el tipo de trámite y la complejidad del caso. Sin embargo, gracias a nuestra metodología tecnológica y gestión eficiente, reducimos los tiempos tradicionales hasta en un 60%. Te mantenemos informado en cada etapa del proceso.",
+        "Los tiempos varían según el tipo de trámite y la complejidad del caso. Te mantenemos informado en cada etapa del proceso y gestionamos los plazos activamente para evitar demoras. Antes de presentar, revisamos que el expediente esté completo.",
     },
     {
       question: "¿Qué pasa si mi caso es rechazado?",
@@ -31,7 +31,7 @@ export function FAQSection() {
     {
       question: "¿Cómo se diferencia LEGASSI de otros despachos?",
       answer:
-        "Somos el único centro que combina experiencia legal tradicional con tecnología avanzada e IA. No solo te damos una lista de requisitos como otros abogados, sino que te acompañamos personalmente, gestionamos todas tus citas y somos tu único punto de contacto confiable.",
+        "Legassi fue fundado por personas que pasaron por el proceso migratorio en España. Lo conocemos por dentro — no lo aprendimos en un libro. A eso le sumamos años gestionando casos reales, herramientas propias construidas internamente, y atención directa: sin intermediarios, sin perder el hilo de tu caso.",
     },
   ]
 
