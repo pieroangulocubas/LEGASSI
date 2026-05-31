@@ -4,6 +4,12 @@ export type PermitStatus = "has_permit" | "pending_procedure" | "none"
 
 export type DA21Supuesto = "work_history" | "job_offer" | "self_employed" | "family" | "vulnerability"
 
+export type FamilyType = "minor_children" | "adult_disabled" | "ascendants"
+
+export type FamilyMemberType = "minor_children" | "adult_disabled" | "ascendants" | "spouse_partner"
+
+export type MinorsBornInSpain = "all" | "some" | "none"
+
 export type FamilyMember =
   | "spouse_partner"
   | "minor_children"
@@ -26,14 +32,23 @@ export type CriminalStatus = "clean" | "maybe_origin" | "has_spain" | "unknown"
 export type PassportStatus = "valid" | "expired" | "missing"
 
 export interface QuizAnswers {
-  forWhom: "self" | "relative" | null   // first question: for yourself or a relative?
+  forWhom: "self" | "relative" | null
   inSpainBefore2026: boolean | null
   permitStatus: PermitStatus | null
-  hasChildrenToRegularize: boolean | null  // only asked when has_permit
+  hasChildrenToRegularize: boolean | null
   isUkrainian: boolean | null
   hasPiHistory: boolean | null
-  da21Supuestos: DA21Supuesto[]
-  familyMembers: FamilyMember[]
+  da20IncludesFamily: boolean | null          // DA20: ¿añade familiar en presentación simultánea?
+  da21Supuesto: DA21Supuesto | null           // single select (antes: da21Supuestos array)
+  // ── Detalle familiar (solo cuando da21Supuesto === "family") ──
+  familyType: FamilyType | null               // qué tipo de familiar
+  minorCount: number | null                   // cuántos menores
+  minorsBornInSpain: MinorsBornInSpain | null // todos/algunos/ninguno nacidos en España
+  minorsSchooled: boolean | null              // están escolarizados
+  bothParentsCohabiting: boolean | null       // ambos progenitores empadronados juntos
+  otherParentInSpain: boolean | null          // si no cohabitan: el otro progenitor está en España
+  familySimultaneous: boolean | null          // ¿presentan expediente simultáneo?
+  familyMembers: FamilyMember[]               // mantenido para compatibilidad con tabs
   permanenceDocs: PermanenceDoc[]
   criminalStatus: CriminalStatus | null
   passportStatus: PassportStatus | null
@@ -45,14 +60,18 @@ export interface ChecklistItem {
   id: string
   label: string
   status: ChecklistStatus
-  section?: string      // visual grouping key
-  optional?: boolean    // if true, not required for completion button
+  section?: string
+  optional?: boolean
   detail?: string
   linkLabel?: string
   linkHref?: string
   isClassificadorLink?: boolean
   uploadable?: boolean
-  uploadHint?: string // context hint for the AI extractor
+  uploadHint?: string
+  annexActions?: { id: string; label: string; hint?: string }[]
+  criteria?: string[]
+  sharedWithMain?: boolean  // documento ya presente en el expediente del titular
+  isClasificadorResult?: boolean  // slot conectado al Clasificador via localStorage
 }
 
 export interface EligibilityResult {
@@ -67,7 +86,21 @@ export interface EligibilityResult {
   formUrl: string | null
   deadlineDays: number
   hasSimultaneousFamily: boolean
-  isEX25Path?: boolean  // padre con residencia que quiere regularizar hijos/familiares
+  isEX25Path?: boolean
+}
+
+// ─── Perfil de familiar añadido (para "Añadir familiar" en resultados) ─────────
+
+export interface FamilyMemberProfile {
+  id: string
+  type: FamilyMemberType
+  label: string
+  count: number
+  bornInSpain?: MinorsBornInSpain
+  schooled?: boolean
+  bothParentsCohabiting?: boolean
+  otherParentInSpain?: boolean
+  checklist: ChecklistItem[]
 }
 
 // ─── Personal data for form fill ─────────────────────────────────────────────
@@ -77,7 +110,7 @@ export interface PersonalData {
   primerApellido: string
   segundoApellido: string
   sexo: "H" | "M" | ""
-  fechaNacimiento: string   // YYYY-MM-DD
+  fechaNacimiento: string
   lugarNacimiento: string
   paisNacimiento: string
   estadoCivil: "S" | "C" | "V" | "D" | "Sp" | ""
@@ -93,10 +126,8 @@ export interface PersonalData {
   cp: string
   telefono: string
   email: string
-  // DA20 specific
   numExpedientePi: string
   estadoPi: "pendiente" | "denegada" | "desistida" | "recurso" | ""
-  // DA21 specific
   da21Supuesto: string
 }
 
@@ -107,7 +138,7 @@ export interface ExtractedDocData {
   primerApellido?: string | null
   segundoApellido?: string | null
   sexo?: "H" | "M" | null
-  fechaNacimiento?: string | null  // YYYY-MM-DD
+  fechaNacimiento?: string | null
   lugarNacimiento?: string | null
   paisNacimiento?: string | null
   nacionalidad?: string | null
@@ -150,8 +181,8 @@ export interface ExtractDocResult {
   tipoDocumento: string
   estado: DocStatus
   observaciones: string[]
-  alertasValidez?: string[]       // validity/authenticity/expiry alerts
-  fechaVencimiento?: string | null // YYYY-MM-DD or null
+  alertasValidez?: string[]
+  fechaVencimiento?: string | null
   sugerencias_presencial: string[]
   extractedData: ExtractedDocData
 }

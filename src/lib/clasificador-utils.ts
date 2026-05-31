@@ -1,4 +1,4 @@
-// ─── Shared utilities for /api/clasificador and Inngest function ──────────────
+// ─── Shared utilities for /api/permanencia and Inngest function ──────────────
 
 // ─── Email helpers ────────────────────────────────────────────────────────────
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

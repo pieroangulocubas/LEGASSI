@@ -53,7 +53,7 @@ export function RegularizacionBanner() {
           {/* CTAs */}
           <div className="flex items-center gap-2 shrink-0 pl-10 sm:pl-0">
             <Link
-              href="/herramientas/clasificador-documentos"
+              href="/herramientas/permanencia"
               className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 sm:px-4 py-2 text-xs font-bold text-primary shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-normal whitespace-nowrap"
             >
               Verificar documentos

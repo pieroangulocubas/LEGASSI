@@ -1,0 +1,238 @@
+"use client"
+
+import { FileText, Eye, Trash2, Lightbulb, MinusCircle, RotateCcw } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { formatFechasCompact, getCategoryForTipo, CATEGORY_BADGE_CFG, getMonthSuggestion } from "../logic"
+import type { MonthCoverage, DocumentResult } from "../types"
+
+const STATUS_CFG = {
+  CUBIERTO: {
+    dot:    "bg-emerald-500",
+    label:  "Cubierto",
+    header: "bg-emerald-50 dark:bg-emerald-950/20",
+    border: "border-emerald-200 dark:border-emerald-800",
+    badge:  "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  },
+  DÉBIL: {
+    dot:    "bg-amber-500",
+    label:  "Cobertura débil",
+    header: "bg-amber-50 dark:bg-amber-950/20",
+    border: "border-amber-200 dark:border-amber-800",
+    badge:  "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  },
+  VACÍO: {
+    dot:    "bg-red-500",
+    label:  "Sin documentos",
+    header: "bg-red-50 dark:bg-red-950/20",
+    border: "border-red-200 dark:border-red-800",
+    badge:  "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  },
+} as const
+
+const FUERZA_CFG = {
+  fuerte: { dot: "bg-emerald-500", label: "Fuerte",  text: "text-emerald-700 dark:text-emerald-400" },
+  media:  { dot: "bg-amber-400",   label: "Media",   text: "text-amber-700 dark:text-amber-400" },
+  débil:  { dot: "bg-red-400",     label: "Débil",   text: "text-red-600 dark:text-red-400" },
+} as const
+
+function DocRow({
+  doc,
+  onPreview,
+  onDelete,
+}: {
+  doc: DocumentResult
+  onPreview: (doc: DocumentResult) => void
+  onDelete?: (doc: DocumentResult) => void
+}) {
+  const f = FUERZA_CFG[doc.fuerza as keyof typeof FUERZA_CFG]
+  const categories = getCategoryForTipo(doc.tipo)
+
+  return (
+    <div className="divide-y divide-border/60">
+      <div className="group w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors">
+        <button
+          type="button"
+          onClick={() => onPreview(doc)}
+          className="flex items-start gap-3 flex-1 min-w-0"
+        >
+          <FileText className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <p className="text-xs font-semibold text-foreground leading-snug truncate">
+              {doc.descripcion_breve}
+            </p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {doc.fechas.length > 0 && (
+                <p className="text-[11px] text-muted-foreground">
+                  {formatFechasCompact(doc.fechas)}
+                </p>
+              )}
+              {categories.map((cat) => {
+                const cfg = CATEGORY_BADGE_CFG[cat]
+                return cfg ? (
+                  <span key={cat} className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none", cfg.bg, cfg.text)}>
+                    {cfg.label}
+                  </span>
+                ) : null
+              })}
+            </div>
+          </div>
+        </button>
+
+        <div className="shrink-0 flex items-center gap-1.5 mt-0.5">
+          {f && (
+            <>
+              <span className={cn("h-1.5 w-1.5 rounded-full", f.dot)} />
+              <span className={cn("text-[11px] font-medium", f.text)}>{f.label}</span>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => onPreview(doc)}
+            className="ml-1"
+            aria-label="Ver documento"
+          >
+            <Eye className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+          </button>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onDelete(doc) }}
+              className="rounded p-0.5 text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 transition-colors"
+              aria-label="Eliminar documento"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function MonthCard({
+  month,
+  onPreview,
+  onDelete,
+  isSkipped,
+  onSkip,
+  onUnskip,
+}: {
+  month: MonthCoverage
+  onPreview: (doc: DocumentResult) => void
+  onDelete?: (doc: DocumentResult) => void
+  isSkipped?: boolean
+  onSkip?: () => void
+  onUnskip?: () => void
+}) {
+  const s = STATUS_CFG[month.status]
+  const suggestion = getMonthSuggestion(month.docs)
+
+  const canSkip = !month.isOptional && !month.isLimitrofe
+
+  const borderClass = isSkipped
+    ? "border-border"
+    : month.isLimitrofe
+      ? "border-violet-200 dark:border-violet-800"
+      : s.border
+  const headerClass = isSkipped
+    ? "bg-muted/30"
+    : month.isLimitrofe
+      ? "bg-violet-50 dark:bg-violet-950/20"
+      : s.header
+
+  return (
+    <div className={cn("rounded-xl border overflow-hidden", borderClass)}>
+
+      {/* Header */}
+      <div className={cn("flex items-center justify-between gap-2 px-4 py-3", headerClass)}>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={cn(
+            "h-2 w-2 rounded-full shrink-0",
+            isSkipped ? "bg-muted-foreground/40" : month.isLimitrofe ? "bg-violet-400" : s.dot
+          )} />
+          <span className={cn("font-bold text-sm truncate", isSkipped ? "text-muted-foreground/60 line-through" : "text-foreground")}>
+            {month.label}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {isSkipped ? (
+            <>
+              <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-muted text-muted-foreground">
+                Omitido
+              </span>
+              {onUnskip && (
+                <button
+                  type="button"
+                  onClick={onUnskip}
+                  title="Restaurar mes al cálculo"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-background hover:bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-all"
+                >
+                  <RotateCcw className="h-2.5 w-2.5" />
+                  Restaurar
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              {month.isLimitrofe && (
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+                  Contexto adicional
+                </span>
+              )}
+              {!month.isLimitrofe && month.isOptional && month.status === "VACÍO" && (
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
+                  Recomendable
+                </span>
+              )}
+              {!month.isLimitrofe && !(month.isOptional && month.status === "VACÍO") && (
+                <span className={cn("rounded-full px-2.5 py-0.5 text-[11px] font-semibold", s.badge)}>
+                  {s.label}
+                </span>
+              )}
+              {!month.isLimitrofe && month.isOptional && month.status !== "VACÍO" && (
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
+                  Recomendable
+                </span>
+              )}
+              {canSkip && onSkip && (
+                <button
+                  type="button"
+                  onClick={onSkip}
+                  title="Omitir este mes del cálculo"
+                  className="inline-flex items-center gap-1 rounded-lg border border-border bg-background hover:bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-all"
+                >
+                  <MinusCircle className="h-2.5 w-2.5" />
+                  Omitir
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Suggestion: add a second doc type */}
+      {!isSkipped && suggestion && month.docs.length > 0 && (
+        <div className="flex items-center gap-1.5 px-4 py-1.5 bg-amber-50/60 dark:bg-amber-950/10 border-b border-amber-100 dark:border-amber-900/30">
+          <Lightbulb className="h-3 w-3 shrink-0 text-amber-500" />
+          <p className="text-[10px] text-amber-700 dark:text-amber-400">{suggestion}</p>
+        </div>
+      )}
+
+      {/* Document list */}
+      {!isSkipped && (
+        month.docs.length > 0 ? (
+          <div className="divide-y divide-border">
+            {month.docs.map((doc, i) => (
+              <DocRow key={i} doc={doc} onPreview={onPreview} onDelete={onDelete} />
+            ))}
+          </div>
+        ) : (
+          <p className="px-4 py-3 text-xs text-muted-foreground/70">
+            No hay documentos válidos para este mes.
+          </p>
+        )
+      )}
+    </div>
+  )
+}
