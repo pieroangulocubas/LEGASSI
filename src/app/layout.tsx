@@ -23,11 +23,11 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "LEGASSI – Trámites de Extranjería, Asilo y Nacionalidad Española",
   description:
-    "Tu trámite de Extranjería, Nacionalidad o Asilo, bien hecho desde el principio. Combinamos normativa vigente, criterio jurídico y herramientas de IA para preparar expedientes sólidos.",
+    "El primer despacho de extranjería en España con enfoque LegalTech propio. Fundado por quienes vivieron el proceso. Calidad profesional, atención humana y herramientas construidas internamente. Desde 2021.",
   generator: "v0.app",
   openGraph: {
     title: "LEGASSI – Extranjería, Nacionalidad y Asilo",
-    description: "Tu trámite de Extranjería, Nacionalidad o Asilo, bien hecho desde el principio. Combinamos normativa vigente, criterio jurídico y herramientas de IA para preparar expedientes sólidos.",
+    description: "El primer despacho de extranjería en España con enfoque LegalTech propio. Fundado por quienes vivieron el proceso. Calidad profesional, atención humana y herramientas construidas internamente. Desde 2021.",
     url: "https://legassi.es",
     siteName: "LEGASSI – Trámites de Extranjería, Asilo y Nacionalidad Española",
     images: [
