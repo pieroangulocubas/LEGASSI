@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+
 import Image from "next/image"
 import { Loader2, Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
-  const router = useRouter()
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -27,8 +27,7 @@ export default function LoginPage() {
         const json = await res.json()
         throw new Error(json.error ?? "Credenciales incorrectas")
       }
-      router.push("/admin/posts")
-      router.refresh()
+      window.location.href = "/admin/posts"
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
