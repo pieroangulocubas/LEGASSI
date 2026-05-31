@@ -1,4 +1,11 @@
-import type { QuizAnswers, EligibilityResult, ChecklistItem, Pathway } from "./types"
+import type {
+  QuizAnswers, EligibilityResult, ChecklistItem, Pathway,
+} from "./types"
+import { evaluatePermitAndEx25 } from "./logic/ex25"
+import { buildDa20CaseChecklist } from "./logic/da20"
+import { buildDa21CaseChecklist, buildDa21NoSupuestoIneligible } from "./logic/da21"
+import { buildIneligibleResult } from "./logic/results"
+import { buildFamilyDocsChecklist } from "./logic/familyDocs"
 
 function deadlineDays(): number {
   return Math.max(0, Math.ceil((new Date("2026-06-30").getTime() - Date.now()) / 86_400_000))
@@ -7,159 +14,58 @@ function deadlineDays(): number {
 export function evaluateEligibility(answers: QuizAnswers): EligibilityResult {
   const days = deadlineDays()
 
-  // ── Hard disqualifiers ─────────────────────────────────────────────────────
+
+  // Hard disqualifiers
   if (!answers.inSpainBefore2026) {
-    return {
-      eligible: false, pathway: "ineligible", score: 0, scoreLabel: "No elegible",
-      ineligibleReason: "Este proceso exige haber estado en España antes del 1 de enero de 2026. Si llegaste después, no puedes acogerte al RD 316/2026.",
-      checklist: [], recommendations: ["Consulta con nuestros asesores sobre otras vías de regularización disponibles para tu situación."],
-      formName: null, formUrl: null, deadlineDays: days, hasSimultaneousFamily: false,
-    }
+    return buildIneligibleResult({
+      days,
+      reason:
+        "Este proceso exige haber estado en Espana antes del 1 de enero de 2026. Si llegaste despues, no puedes acogerte al RD 316/2026.",
+      recommendations: [
+        "Consulta con nuestros asesores sobre otras vias de regularizacion disponibles para tu situacion.",
+      ],
+    })
   }
 
-  if (answers.permitStatus === "pending_procedure") {
-    return {
-      eligible: false, pathway: "ineligible", score: 0, scoreLabel: "No elegible",
-      ineligibleReason: "Tienes un procedimiento de residencia pendiente de resolución. La normativa excluye a quienes ya tienen un trámite activo.",
-      checklist: [], recommendations: ["Espera la resolución de tu procedimiento. Si te deniegan, podrías explorar otras vías. Contacta con nuestros asesores."],
-      formName: null, formUrl: null, deadlineDays: days, hasSimultaneousFamily: false,
-    }
-  }
-
-  if (answers.permitStatus === "has_permit") {
-    if (answers.hasChildrenToRegularize) {
-      // Parent has residencia → children apply via EX25 (arts. 159/160)
-      const ex25Checklist: ChecklistItem[] = [
-        {
-          id: "parent_residencia",
-          label: "Permiso de residencia del padre/madre en vigor",
-          status: "available",
-          section: "identity",
-          detail: "Tu permiso de residencia acredita que cumples el requisito del titular. Debe estar vigente.",
-          uploadable: true,
-          uploadHint: "Tarjeta de residencia o permiso de residencia. Extrae: nombre del titular, número NIE, fecha de caducidad.",
-        },
-        {
-          id: "children_birth_cert",
-          label: "Partida de nacimiento apostillada de cada hijo menor",
-          status: "missing",
-          section: "minors",
-          detail: "Una por hijo. Certifica la filiación. Si está en otro idioma: apostilla + traducción jurada al español.",
-          uploadable: true,
-          uploadHint: "Partida de nacimiento del hijo menor. Extrae: nombre del menor, fecha de nacimiento, nombres de los padres.",
-        },
-        {
-          id: "children_passport_ex25",
-          label: "Pasaporte o documento de viaje del menor — todas las páginas escaneadas",
-          status: "missing",
-          section: "minors",
-          detail: "Imprescindible como documento de identidad. Si está caducado, renuévalo en el consulado. Escanea TODAS las páginas.",
-          uploadable: true,
-          uploadHint: "Pasaporte del menor. Extrae: nombre, apellidos, fecha de nacimiento, número de pasaporte, nacionalidad.",
-        },
-        {
-          id: "children_schooling_ex25",
-          label: "Certificado de escolarización del menor",
-          status: "info",
-          section: "minors",
-          optional: true,
-          detail: "Refuerza la prueba de permanencia y arraigo en España, especialmente para el art. 160. Solicítalo en el centro educativo.",
-          uploadable: true,
-          uploadHint: "Certificado de escolarización o matrícula escolar. Extrae: nombre del menor, nombre del centro, curso, municipio.",
-        },
-        {
-          id: "children_empadronamiento_ex25",
-          label: "Empadronamiento del menor en España — individual o familiar",
-          status: "missing",
-          section: "permanence",
-          detail: "Prueba la residencia del menor en España. Solicita también el empadronamiento histórico si es posible.",
-          uploadable: true,
-          uploadHint: "Certificado de empadronamiento del menor. Extrae: nombre del menor, domicilio, fecha de alta en padrón.",
-        },
-        {
-          id: "children_permanence_ex25",
-          label: "Otras pruebas de permanencia del menor en España — 5 meses (solo si no nació en España, art. 160)",
-          status: "missing",
-          section: "permanence",
-          detail: "Si el hijo nació en España (art. 159) no se exige. Si no nació en España (art. 160), acredita 5 meses de permanencia ininterrumpida: empadronamiento, informes escolares, médicos pediátricos.",
-          uploadable: true,
-          uploadHint: "Documentos de permanencia del menor en España: empadronamiento, informes escolares o médicos pediátricos.",
-        },
-        {
-          id: "fee_ex25",
-          label: "Pago de tasas — Modelo 790 código 052 (10,94 € por menor)",
-          status: "missing",
-          section: "admin",
-          detail: "Tasa reducida para menores. Genera el Modelo 790-052 en la sede electrónica y págalo. Uno por cada hijo que presentes.",
-          uploadable: true,
-          uploadHint: "Justificante de pago del Modelo 790 código 052 para menor. Verifica: código 052, importe 10,94€, nombre del menor.",
-        },
-        {
-          id: "form_ex25",
-          label: "Formulario EX25 cumplimentado y firmado",
-          status: "missing",
-          section: "admin",
-          detail: "Formulario oficial EX25 — Solicitud de residencia por circunstancias excepcionales para menores (Disposición Transitoria Primera). Uno por cada hijo menor.",
-        },
-      ]
-      return {
-        eligible: true,
-        pathway: "EX25_children",
-        score: 70,
-        scoreLabel: "Bueno",
-        checklist: ex25Checklist,
-        recommendations: [
-          "Como titular de residencia vigente, tramitas la regularización de tus hijos vía EX25 (Disposición Transitoria Primera del RD 316/2026), no mediante EX31/EX32.",
-          "Art. 159 — Hijos nacidos en España: no necesitan acreditar permanencia propia.",
-          "Art. 160 — Hijos no nacidos en España: deben demostrar 5 meses de permanencia ininterrumpida en España antes de la solicitud.",
-          "Presenta todos los EX25 a la vez y adjunta tu permiso de residencia en vigor. La tasa por menor es 10,94€.",
-          "El plazo de presentación cierra el 30 de junio de 2026.",
-        ],
-        formName: "EX25",
-        formUrl: null,
-        deadlineDays: days,
-        hasSimultaneousFamily: false,
-        isEX25Path: true,
-      }
-    }
-    return {
-      eligible: false, pathway: "ineligible", score: 0, scoreLabel: "No elegible",
-      ineligibleReason: "Ya tienes un permiso de residencia o estancia vigente. Este proceso es solo para personas sin documentación en vigor.",
-      checklist: [], recommendations: ["Si tu permiso está próximo a caducar, consulta con nuestros asesores sobre la renovación."],
-      formName: null, formUrl: null, deadlineDays: days, hasSimultaneousFamily: false,
-    }
-  }
+  const permitOrEx25Result = evaluatePermitAndEx25(answers, days)
+  if (permitOrEx25Result) return permitOrEx25Result
 
   if (answers.isUkrainian) {
-    return {
-      eligible: false, pathway: "ineligible", score: 0, scoreLabel: "No elegible",
-      ineligibleReason: "Los beneficiarios de la Protección Temporal Ucraniana están excluidos de este proceso por normativa específica.",
-      checklist: [], recommendations: ["La protección temporal ucraniana tiene su propia regulación y plazos. Consulta con nuestros asesores."],
-      formName: null, formUrl: null, deadlineDays: days, hasSimultaneousFamily: false,
-    }
+    return buildIneligibleResult({
+      days,
+      reason:
+        "Los beneficiarios de la Proteccion Temporal Ucraniana estan excluidos de este proceso por normativa especifica.",
+      recommendations: [
+        "La proteccion temporal ucraniana tiene su propia regulacion y plazos. Consulta con nuestros asesores.",
+      ],
+    })
   }
-
   // ── Pathway ────────────────────────────────────────────────────────────────
   const pathway: Pathway = answers.hasPiHistory ? "DA20" : "DA21"
-  const hasSupuesto = answers.da21Supuestos.length > 0
-  const pathwayReady = pathway === "DA20" || hasSupuesto
+  const supuesto = answers.da21Supuesto
 
   // ── Family analysis ────────────────────────────────────────────────────────
   const fm = answers.familyMembers
   const hasSpouse = fm.includes("spouse_partner")
-  const hasMinorChildren = fm.includes("minor_children")
-  const hasAdultDisabled = fm.includes("adult_disabled_children")
-  const hasAscendants = fm.includes("cohabiting_ascendants")
-  const hasSimultaneousFamily = hasSpouse || hasAscendants  // aptdo. 3 simultaneous
+  const hasMinorChildren = fm.includes("minor_children") || answers.familyType === "minor_children"
+  const hasAdultDisabled = fm.includes("adult_disabled_children") || answers.familyType === "adult_disabled"
+  const hasAscendants = fm.includes("cohabiting_ascendants") || answers.familyType === "ascendants"
+  const hasSimultaneousFamily = hasSpouse || hasAscendants
+  // DA20 family is always simultaneous; DA21 depends on user answer
+  const effectiveFamilySimultaneous =
+    (pathway === "DA20" && answers.da20IncludesFamily === true && answers.familyType !== null) ||
+    answers.familySimultaneous === true
 
-  // If family supuesto but no DA21 supuesto explicitly selected, auto-add family supuesto
+  // Effective supuesto: si da21Supuesto === "family" y tiene familiares, vale como supuesto b)
   const familyQualifies = hasMinorChildren || hasAdultDisabled || hasAscendants
-  const effectiveSupuestos = [...answers.da21Supuestos]
-  if (pathway === "DA21" && familyQualifies && !effectiveSupuestos.includes("family")) {
-    effectiveSupuestos.push("family")
-  }
-  const hasEffectiveSupuesto = effectiveSupuestos.length > 0
+  const effectiveSupuesto = supuesto ?? (pathway === "DA21" && familyQualifies ? "family" : null)
+  const hasEffectiveSupuesto = effectiveSupuesto !== null
   const effectivePathwayReady = pathway === "DA20" || hasEffectiveSupuesto
+
+  // DA21 sin supuesto → inelegible
+  if (pathway === "DA21" && !hasEffectiveSupuesto) {
+    return buildDa21NoSupuestoIneligible(days)
+  }
 
   // ── Score ──────────────────────────────────────────────────────────────────
   const noDocs = answers.permanenceDocs.includes("none")
@@ -170,11 +76,7 @@ export function evaluateEligibility(answers: QuizAnswers): EligibilityResult {
 
   if (effectivePathwayReady) {
     score += 30
-    if (pathway === "DA21" && (
-      effectiveSupuestos.includes("work_history") || effectiveSupuestos.includes("job_offer")
-    )) score += 5
-
-    // Family-strengthened case
+    if (pathway === "DA21" && (effectiveSupuesto === "work_history" || effectiveSupuesto === "job_offer")) score += 5
     if (pathway === "DA21" && familyQualifies) score += 3
   }
 
@@ -211,45 +113,19 @@ export function evaluateEligibility(answers: QuizAnswers): EligibilityResult {
       : "Escanea TODAS las páginas: hoja de datos, páginas de sellos, páginas en blanco y contraportada. No es válido presentar únicamente la hoja de datos.",
     uploadable: true,
     uploadHint: "Pasaporte o documento de viaje. Extrae: nombre, apellidos, fecha de nacimiento, lugar y país de nacimiento, nacionalidad, número de pasaporte, sexo.",
+    criteria: ["Vigente en la fecha de solicitud", "Todas las páginas incluidas", "Datos personales legibles", "Número de pasaporte visible"],
   })
-
-  // ── 2. PERMANENCE ─────────────────────────────────────────────────────────
-  checklist.push({
-    id: "empadronamiento_individual",
-    label: "Certificado(s) de Empadronamiento Individual",
-    status: "info",
-    section: "permanence",
-    optional: true,
-    detail: "Puedes tener varios si has vivido en distintos municipios. Es una de las pruebas más sólidas de permanencia. Solicítalo gratis en la oficina de padrón o en la sede electrónica del ayuntamiento.",
-    uploadable: true,
-    uploadHint: "Certificado de empadronamiento individual. Extrae: nombre completo, domicilio, fecha de alta en padrón.",
-  })
-  checklist.push({
-    id: "empadronamiento_historico",
-    label: "Certificado de Empadronamiento Histórico",
-    status: "info",
-    section: "permanence",
-    optional: true,
-    detail: "Recoge todos los domicilios en los que has estado empadronado históricamente. Especialmente útil para acreditar períodos largos. Solicítalo en el ayuntamiento donde estás empadronado actualmente.",
-    uploadable: true,
-    uploadHint: "Certificado de empadronamiento histórico. Extrae: nombre, domicilios con fechas de alta y baja.",
-  })
-  checklist.push({
-    id: "permanence_other",
-    label: "Otras pruebas de permanencia ininterrumpida en España (5 meses previos a la solicitud)",
-    status: hasDocs ? (docCount >= 2 ? "available" : "warning") : "missing",
-    section: "permanence",
-    detail: hasDocs
-      ? docCount < 2
-        ? "Tienes documentos pero refuerza el expediente. Válidos: contratos de alquiler, nóminas, extractos bancarios, billetes de transporte, facturas a tu nombre en España."
-        : "Válidos: contratos de alquiler, nóminas, extractos bancarios, billetes de transporte, facturas. Usa el Clasificador para confirmar que cubres los 5 meses sin lagunas."
-      : "Reúne documentos nominativos y fechados: contratos de alquiler, nóminas, extractos bancarios, billetes de transporte, facturas en España. El Clasificador verifica la cobertura.",
-    linkLabel: "Verificar permanencia con el Clasificador",
-    linkHref: "/herramientas/clasificador-documentos",
-    isClassificadorLink: true,
-    uploadable: true,
-    uploadHint: "Documento de permanencia en España: contrato de alquiler, nómina, extracto bancario, billete de transporte. Extrae: nombre, fecha, tipo de documento.",
-  })
+  // ── 2. CASE-SPECIFIC ──────────────────────────────────────────────────────
+  if (pathway === "DA20") {
+    checklist.push(...buildDa20CaseChecklist())
+  } else {
+    checklist.push(...buildDa21CaseChecklist({
+      effectiveSupuesto,
+      hasMinorChildren,
+      hasAdultDisabled,
+      hasAscendants,
+    }))
+  }
 
   // ── 3. CRIMINAL ───────────────────────────────────────────────────────────
   checklist.push({
@@ -263,6 +139,7 @@ export function evaluateEligibility(answers: QuizAnswers): EligibilityResult {
       : "Opcional: la Administración puede solicitarlo de oficio. Sin embargo, si lo aportas tú, el expediente se resuelve antes. Solicítalo gratis en el Ministerio de Justicia (presencial o sede electrónica).",
     uploadable: true,
     uploadHint: "Certificado de antecedentes penales de España (Registro Central de Penados). Verifica si hay anotaciones activas.",
+    criteria: ["Sin anotaciones activas", "Expedido por el Ministerio de Justicia", "Emitido hace menos de 3 meses"],
   })
   checklist.push({
     id: "criminal_origin",
@@ -273,189 +150,37 @@ export function evaluateEligibility(answers: QuizAnswers): EligibilityResult {
     detail: "Apostillado (Convenio de La Haya) + traducción jurada si no está en español. Si no lo recibes en 1 mes, usa los Anexos I-1 (declaración de imposibilidad) e I-2 (solicitud diplomática) del formulario.",
     uploadable: true,
     uploadHint: "Certificado de antecedentes penales del país de origen. Verifica apostilla, traducción jurada y si hay anotaciones.",
+    criteria: ["Apostillado (Convenio de La Haya)", "Traducción jurada al español", "Sin condenas graves activas", "Fecha reciente de expedición"],
+    annexActions: [
+      { id: "03", label: "No puedo obtenerlo — Declaración de imposibilidad (Anexo I-1)", hint: "Si el certificado no puede obtenerse por causas ajenas a ti, el Anexo I-1 documenta la imposibilidad" },
+      { id: "04", label: "Solicitar vía diplomática — Solicitud al Ministerio (Anexo I-2)", hint: "El Anexo I-2 solicita el certificado directamente al país de origen a través del Ministerio" },
+    ],
   })
 
-  // ── 4. MINORS BASE DOCS ───────────────────────────────────────────────────
-  if (hasMinorChildren) {
-    checklist.push({
-      id: "minor_birth_cert",
-      label: "Partida de nacimiento apostillada del/los menor/es",
-      status: "missing",
-      section: "minors",
-      detail: "Una por cada hijo menor. Certifica la filiación. Si está en otro idioma: apostilla del Convenio de La Haya + traducción jurada al español. Solicítala en el Registro Civil del país de nacimiento.",
-      uploadable: true,
-      uploadHint: "Partida de nacimiento del hijo menor. Extrae: nombre del menor, fecha de nacimiento, nombres de los padres.",
-    })
-    checklist.push({
-      id: "minor_schooling",
-      label: "Certificado de escolarización del/los menor/es",
-      status: "info",
-      section: "minors",
-      optional: true,
-      detail: "Refuerza la prueba de arraigo en España. No es obligatorio pero es muy valorado. Solicítalo en el centro educativo.",
-      uploadable: true,
-      uploadHint: "Certificado de escolarización o matrícula escolar del menor. Extrae: nombre del menor, nombre del centro educativo, curso, municipio.",
-    })
-  }
+  // ── 4 & 5. FAMILY DOCS ───────────────────────────────────────────────────
+  checklist.push(...buildFamilyDocsChecklist({
+    answers,
+    hasSpouse,
+    hasMinorChildren,
+    hasAdultDisabled,
+    hasAscendants,
+    effectiveFamilySimultaneous,
+  }))
 
-  // ── 5. FAMILY BLOCK ───────────────────────────────────────────────────────
-  if (hasSpouse) {
-    checklist.push({
-      id: "spouse_docs",
-      label: "Certificado de matrimonio o de pareja de hecho registrada",
-      status: "missing",
-      section: "family",
-      detail: "Para la presentación simultánea del cónyuge/pareja (DA21 aptdo. 3). Apostillado + traducción jurada si no está en español. El cónyuge también debe cumplir los requisitos base.",
-      uploadable: true,
-      uploadHint: "Certificado de matrimonio o pareja de hecho. Extrae: nombres de los cónyuges, fecha del matrimonio/registro, lugar.",
-    })
-    checklist.push({
-      id: "spouse_permanence",
-      label: "Prueba de permanencia del cónyuge/pareja (5 meses en España)",
-      status: "missing",
-      section: "family",
-      detail: "El cónyuge también debe acreditar 5 meses de permanencia en España. Aplica el mismo criterio que para el solicitante principal.",
-      uploadable: true,
-      uploadHint: "Documentos de permanencia del cónyuge: empadronamiento, facturas, extractos bancarios a su nombre.",
-    })
-  }
+  checklist.push({
+    id: "permanence_other",
+    label: "Pruebas de permanencia ininterrumpida en España (5 meses previos a la solicitud)",
+    status: "missing",
+    section: "permanence",
+    isClasificadorResult: true,
+    detail: "Usa el Clasificador de documentos para verificar que cubres los 5 meses sin lagunas. El resultado aparece aquí automáticamente cuando usas esa herramienta.",
+    linkLabel: "Verificar permanencia con el Clasificador",
+    linkHref: "/herramientas/permanencia",
+    isClassificadorLink: true,
+    criteria: ["Cubre los 5 meses previos a la solicitud", "Tu nombre visible (nominativo)", "Fechado con día, mes y año", "Emitido en España"],
+  })
 
-  if (hasMinorChildren) {
-    checklist.push({
-      id: "children_passport",
-      label: "Pasaporte o documento de viaje del menor en vigor",
-      status: "missing",
-      section: "family",
-      detail: "Imprescindible como documento de identidad del menor. Si está caducado, renuévalo en el consulado antes de presentar.",
-      uploadable: true,
-      uploadHint: "Pasaporte del menor. Extrae: nombre, apellidos, fecha de nacimiento, número de pasaporte, nacionalidad.",
-    })
-    checklist.push({
-      id: "children_empadronamiento",
-      label: "Empadronamiento del menor — individual o en padrón familiar",
-      status: "missing",
-      section: "family",
-      detail: "Acredita la residencia del menor en España. Puede constar en el mismo padrón que los padres o ser certificado individual. Si es posible, solicita también el empadronamiento histórico.",
-      uploadable: true,
-      uploadHint: "Certificado de empadronamiento del menor. Extrae: nombre del menor, domicilio, fecha de alta en padrón.",
-    })
-    checklist.push({
-      id: "children_permanence",
-      label: "Prueba de permanencia de hijos menores en España — 5 meses (solo si no nacieron en España, art. 160)",
-      status: "missing",
-      section: "family",
-      detail: "Los menores NO nacidos en España deben acreditar 5 meses de permanencia ininterrumpida. Los nacidos en España (art. 159) no la necesitan. Los datos del menor van en el Anexo 02 del formulario.",
-      uploadable: true,
-      uploadHint: "Documentos de permanencia de menores: empadronamiento, informes escolares, informes médicos pediátricos.",
-    })
-  }
-
-  if (hasAdultDisabled) {
-    checklist.push({
-      id: "family_disabled",
-      label: "Certificado de discapacidad o dependencia del hijo/a mayor",
-      status: "warning",
-      section: "family",
-      detail: "Certificado oficial que acredite la discapacidad o incapacidad funcional. Empadronamiento conjunto obligatorio.",
-      uploadable: true,
-      uploadHint: "Certificado de discapacidad, resolución de dependencia o informe médico de incapacidad funcional.",
-    })
-  }
-
-  if (hasAscendants) {
-    checklist.push({
-      id: "family_ascendant",
-      label: "Acreditación de convivencia con ascendientes — empadronamiento conjunto",
-      status: "available",
-      section: "family",
-      detail: "Certificado de empadronamiento colectivo (todos los convivientes). La relación de parentesco se acredita con el certificado de nacimiento del solicitante.",
-      uploadable: true,
-      uploadHint: "Empadronamiento colectivo o certificado de convivencia. Extrae: nombres, domicilio completo, fecha del certificado.",
-    })
-  }
-
-  // ── 6. CASE-SPECIFIC ──────────────────────────────────────────────────────
-  if (pathway === "DA20") {
-    checklist.push({
-      id: "pi_docs",
-      label: "Documentación de tu solicitud de Protección Internacional",
-      status: "missing",
-      section: "case",
-      detail: "Resguardo de solicitud de asilo, tarjeta roja de solicitante, resolución, o acuse de recurso. Cualquiera es válido. Debe mostrar fecha anterior al 01/01/2026.",
-      uploadable: true,
-      uploadHint: "Documento de Protección Internacional. Extrae: nombre del solicitante, número de expediente PI, fecha de solicitud, estado de la solicitud.",
-    })
-  } else {
-    if (!hasEffectiveSupuesto) {
-      checklist.push({
-        id: "supuesto_missing",
-        label: "Documentación del supuesto DA21 (ninguno seleccionado)",
-        status: "missing",
-        section: "case",
-        detail: "Debes acreditar al menos uno: actividad laboral, unidad familiar con dependientes, o certificado de vulnerabilidad.",
-      })
-    } else {
-      if (effectiveSupuestos.includes("work_history")) {
-        checklist.push({
-          id: "work_history",
-          label: "Prueba de actividad laboral — nóminas, contratos o vida laboral TGSS",
-          status: "available",
-          section: "case",
-          detail: "Informe de vida laboral + contratos/nóminas. El contrato debe cubrir ≥90 días por año.",
-          uploadable: true,
-          uploadHint: "Nómina, contrato de trabajo o informe de vida laboral de la Seguridad Social. Extrae: nombre del trabajador, empresa, fechas, salario si visible.",
-        })
-      }
-      if (effectiveSupuestos.includes("job_offer")) {
-        checklist.push({
-          id: "job_offer",
-          label: "Oferta de trabajo — contrato mínimo 90 días/año firmado por el empleador",
-          status: "available",
-          section: "case",
-          detail: "Firmado por el empleador, especificando duración y condiciones.",
-          uploadable: true,
-          uploadHint: "Contrato de trabajo u oferta de empleo. Extrae: nombre del trabajador, nombre del empleador, duración del contrato, jornada.",
-        })
-      }
-      if (effectiveSupuestos.includes("self_employed")) {
-        checklist.push({
-          id: "self_employed",
-          label: "Declaración de intención de alta como autónomo o actividad por cuenta propia",
-          status: "available",
-          section: "case",
-          detail: "Declaración responsable de actividad económica por cuenta propia. Consulta con nuestros asesores el formato exacto.",
-          uploadable: true,
-          uploadHint: "Declaración de actividad por cuenta propia o documentación de autónomo.",
-        })
-      }
-      if (effectiveSupuestos.includes("vulnerability")) {
-        checklist.push({
-          id: "vulnerability_cert",
-          label: "Certificado de Vulnerabilidad — Anexo II (entidad RECEX o Servicios Sociales)",
-          status: "missing",
-          section: "case",
-          detail: "Siempre GRATUITO. Lo emite Cruz Roja, Cáritas, ACNUR, Médicos del Mundo, Servicios Sociales del ayuntamiento u otras entidades RECEX. Debe incluir sello y número RECEX.",
-          uploadable: true,
-          uploadHint: "Certificado de vulnerabilidad (Anexo II). Verifica: nombre del solicitante, entidad emisora, número RECEX, sello.",
-        })
-      }
-      if (!hasMinorChildren && !hasAdultDisabled && !hasAscendants && effectiveSupuestos.includes("family")) {
-        checklist.push({
-          id: "family_docs",
-          label: "Documentación de unidad familiar",
-          status: "available",
-          section: "case",
-          detail: "Libro de familia, certificados de nacimiento y/o certificados de discapacidad/dependencia. Empadronamiento conjunto acreditando la convivencia.",
-          uploadable: true,
-          uploadHint: "Documentación familiar: libro de familia, certificados de nacimiento, empadronamiento colectivo.",
-        })
-      }
-    }
-  }
-
-  // ── 7. ADMIN ──────────────────────────────────────────────────────────────
-  // DA20 (PI applicants) already have a NIE from their tarjeta roja → can pay tasa now.
-  // DA21 (irregular) may not have a NIE yet → tasa is paid after NIE is assigned.
+  // ── 6. ADMIN ──────────────────────────────────────────────────────────────
   checklist.push({
     id: "fee_payment",
     label: "Pago de tasas — Modelo 790 código 052 (38,28 € adulto · 10,94 € menor)",
@@ -467,6 +192,7 @@ export function evaluateEligibility(answers: QuizAnswers): EligibilityResult {
       : "La tasa se paga con el Modelo 790-052. Si aún no tienes NIE, se te asignará en la cita de presentación en la oficina de extranjería — genera y paga la tasa con ese NIE antes de entregar el expediente.",
     uploadable: true,
     uploadHint: "Justificante de pago del Modelo 790 código 052. Verifica: código 052, importe, nombre del solicitante, sello o validación bancaria.",
+    criteria: ["Modelo 790 código 052", "Importe correcto (38,28€ adulto / 10,94€ menor)", "Nombre del solicitante", "Sello bancario o validación electrónica"],
   })
   checklist.push({
     id: "form",
@@ -492,8 +218,18 @@ export function evaluateEligibility(answers: QuizAnswers): EligibilityResult {
   }
 
   if (hasMinorChildren) {
+    const bornInSpain = answers.minorsBornInSpain
+    const authNote = answers.bothParentsCohabiting === false
+      ? answers.otherParentInSpain
+        ? " Necesitas la autorización notarial del otro progenitor, legalizada ante notario español."
+        : " Necesitas la autorización notarial del otro progenitor, apostillada desde el extranjero."
+      : ""
     recommendations.push(
-      `Los datos de tus hijos menores se incluyen en la página 2 del formulario ${formName} (Anexo 02 — Datos del menor). Si el menor no nació en España (art. 160), debe acreditar 5 meses de permanencia. Si nació en España (art. 159), no hace falta. Tasa reducida: 10,94€ por menor. Selecciona el Anexo 02 en la herramienta de formularios.`,
+      bornInSpain === "all"
+        ? `Los datos de tus hijos menores se incluyen en el Anexo 02 del formulario ${formName}. Al haber nacido en España, no necesitan acreditar permanencia propia. Tasa: 10,94€ por menor.${authNote}`
+        : bornInSpain === "none"
+          ? `Los datos de tus hijos menores se incluyen en el Anexo 02 del formulario ${formName}. Al no haber nacido en España, deben acreditar 5 meses de permanencia. Tasa: 10,94€ por menor.${authNote}`
+          : `Los datos de tus hijos menores se incluyen en el Anexo 02 del formulario ${formName}. Los nacidos fuera de España deben acreditar 5 meses de permanencia; los nacidos en España no. Tasa: 10,94€ por menor.${authNote}`,
     )
   }
 
@@ -529,7 +265,7 @@ export function evaluateEligibility(answers: QuizAnswers): EligibilityResult {
     )
   }
 
-  if (effectiveSupuestos.includes("vulnerability")) {
+  if (effectiveSupuesto === "vulnerability") {
     recommendations.push(
       "El Certificado de Vulnerabilidad es gratuito. Lo emiten entidades RECEX (Cruz Roja, Cáritas, ACNUR…) y Servicios Sociales. No necesitas ser usuario habitual. Solicítalo cuanto antes: la demanda es alta.",
     )
@@ -548,9 +284,11 @@ export function evaluateEligibility(answers: QuizAnswers): EligibilityResult {
     recommendations,
     formName,
     formUrl: pathway === "DA20"
-      ? "https://sede.inclusion.gob.es/es/tramites/extranjeria/solicitud-autorizacion-residencia-trabajo-solicitantes-proteccion-internacional.html"
-      : "https://sede.inclusion.gob.es/es/tramites/extranjeria/solicitud-autorizacion-residencia-trabajo-extranjeros-situacion-irregular.html",
+      ? "/forms/DA20/EX31_01_Solicitud_Datos_Personales_y_Tipo_Autorizacion.pdf"
+      : "/forms/DA21/EX32_01_Solicitud_Datos_Personales_y_Tipo_Autorizacion.pdf",
     deadlineDays: days,
     hasSimultaneousFamily,
   }
 }
+
+export { generateFamilyChecklist, getFamilyMemberChecklist } from "./logic/familyChecklists"

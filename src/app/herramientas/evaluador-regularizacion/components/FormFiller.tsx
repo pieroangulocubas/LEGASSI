@@ -1,35 +1,14 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
   FileText, Download, Loader2, ChevronDown, ChevronUp,
-  Info, UserPlus, Trash2, Users, Sparkles, CheckCircle2, PenLine,
+  Info, Trash2, Users, Sparkles, CheckCircle2, PenLine,
   Eye, X, User, Bell, ShieldCheck,
 } from "lucide-react"
 import type { PersonalData, DA21Supuesto } from "../types"
-
-// ─── Annex definitions ────────────────────────────────────────────────────────
-
-interface AnnexDef {
-  id: string
-  label: string
-  hint: string
-}
-
-const ANNEXES_DA20: AnnexDef[] = [
-  { id: "02", label: "Datos de menor representado y firma", hint: "Si solicitas en nombre de un menor de edad" },
-  { id: "03", label: "Anexo I-1 — Declaración imposibilidad antecedentes penales", hint: "Si no puedes obtener el certificado de tu país por causas justificadas" },
-  { id: "04", label: "Anexo I-2 — Solicitud antecedentes penales país origen", hint: "Si solicitas el certificado directamente al Ministerio" },
-]
-
-const ANNEXES_DA21: AnnexDef[] = [
-  { id: "02", label: "Datos de menor y declaración actividad por cuenta propia", hint: "Si presentas datos de menor o declaración de autónomo" },
-  { id: "03", label: "Anexo I-1 — Declaración imposibilidad antecedentes penales", hint: "Si no puedes obtener el certificado de tu país por causas justificadas" },
-  { id: "04", label: "Anexo I-2 — Solicitud antecedentes penales país origen", hint: "Si solicitas el certificado directamente al Ministerio" },
-  { id: "05", label: "Anexo II — Acreditación de situación de vulnerabilidad", hint: "Obligatorio si tu supuesto es vulnerabilidad" },
-]
 
 // ─── Representante data ───────────────────────────────────────────────────────
 
@@ -138,10 +117,20 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={cn("w-9 h-5 rounded-full transition-colors relative shrink-0", checked ? "bg-primary" : "bg-muted border border-border")}
+      className={cn(
+        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        checked ? "bg-primary" : "bg-muted-foreground/25",
+      )}
     >
-      <span className={cn("absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform", checked ? "translate-x-4" : "translate-x-0.5")} />
+      <span
+        className={cn(
+          "pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200",
+          checked ? "translate-x-4" : "translate-x-0",
+        )}
+      />
     </button>
   )
 }
@@ -367,10 +356,10 @@ interface FormFillerProps {
   da21Supuestos: DA21Supuesto[]
   extractedData?: Partial<PersonalData>
   onFormCompleted?: () => void
-  onAnnexesChange?: (annexes: string[]) => void
+  computedAnnexes: string[]
 }
 
-export function FormFiller({ pathway, da21Supuestos, extractedData, onFormCompleted, onAnnexesChange }: FormFillerProps) {
+export function FormFiller({ pathway, da21Supuestos, extractedData, onFormCompleted, computedAnnexes }: FormFillerProps) {
   const hasExtracted = !!extractedData && Object.keys(extractedData).length > 0
   const [open, setOpen] = useState(hasExtracted)
   const [persons, setPersons] = useState<PersonalData[]>([emptyPerson(da21Supuestos.join(", "))])
@@ -403,20 +392,6 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
   // Consiento
   const [consiento, setConsiento] = useState(true)
 
-  // Anexos
-  const [selectedAnnexes, setSelectedAnnexes] = useState<string[]>(
-    pathway === "DA21" && da21Supuestos.includes("vulnerability") ? ["05"] : []
-  )
-
-  // Notify parent when annexes change
-  const prevAnnexes = useRef<string[]>([])
-  useEffect(() => {
-    if (JSON.stringify(selectedAnnexes) !== JSON.stringify(prevAnnexes.current)) {
-      prevAnnexes.current = selectedAnnexes
-      onAnnexesChange?.(selectedAnnexes)
-    }
-  }, [selectedAnnexes, onAnnexesChange])
-
   // Preview state
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
@@ -429,7 +404,6 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
   }, [previewUrl])
 
   const formName = pathway === "DA20" ? "EX31" : "EX32"
-  const availableAnnexes = pathway === "DA20" ? ANNEXES_DA20 : ANNEXES_DA21
   const totalAutoFilled = autoFilledKeys.size
 
   function updatePerson(index: number, key: keyof PersonalData, value: string) {
@@ -444,17 +418,8 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
     setNotifData((n) => ({ ...n, [key]: value }))
   }
 
-  function addPerson() {
-    if (persons.length >= 10) return
-    setPersons((ps) => [...ps, emptyPerson(da21Supuestos.join(", "))])
-  }
-
   function removePerson(index: number) {
     setPersons((ps) => ps.filter((_, i) => i !== index))
-  }
-
-  function toggleAnnex(id: string) {
-    setSelectedAnnexes((prev) => prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id])
   }
 
   function isPersonValid(p: PersonalData) {
@@ -465,29 +430,30 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
   const mainPerson = persons[0]
 
   // Build notification data (always sends main person's info if notifSameAsMain)
-  const notifForFill: NotifData = notifSameAsMain
-    ? {
-        nombre: [mainPerson.nombre, mainPerson.primerApellido, mainPerson.segundoApellido].filter(Boolean).join(" "),
-        nie: mainPerson.nie || mainPerson.pasaporte,
-        domicilio: mainPerson.domicilio,
-        piso: mainPerson.piso,
-        localidad: mainPerson.localidad,
-        provincia: mainPerson.provincia,
-        cp: mainPerson.cp,
-        telefono: mainPerson.telefono,
-        email: mainPerson.email,
-      }
-    : notifData
+  const notifForFill: NotifData = useMemo(() => {
+    if (!notifSameAsMain) return notifData
+    return {
+      nombre: [mainPerson.nombre, mainPerson.primerApellido, mainPerson.segundoApellido].filter(Boolean).join(" "),
+      nie: mainPerson.nie || mainPerson.pasaporte,
+      domicilio: mainPerson.domicilio,
+      piso: mainPerson.piso,
+      localidad: mainPerson.localidad,
+      provincia: mainPerson.provincia,
+      cp: mainPerson.cp,
+      telefono: mainPerson.telefono,
+      email: mainPerson.email,
+    }
+  }, [notifSameAsMain, notifData, mainPerson])
 
   const buildPayload = useCallback(() => ({
     persons,
     pathway,
-    annexes: selectedAnnexes,
+    annexes: computedAnnexes,
     hasRepresentante,
     representante: hasRepresentante ? representante : null,
     notifData: notifForFill,
     consiento,
-  }), [persons, pathway, selectedAnnexes, hasRepresentante, representante, notifForFill, consiento])
+  }), [persons, pathway, computedAnnexes, hasRepresentante, representante, notifForFill, consiento])
 
   async function handlePreview() {
     setError(null)
@@ -554,9 +520,7 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
             <div className="text-left">
               <p className="text-sm font-semibold">Rellenar formulario oficial {formName}</p>
               <p className="text-xs text-muted-foreground">
-                {persons.length > 1 ? `${persons.length} personas` : "1 persona"}
-                {selectedAnnexes.length > 0 ? ` · ${selectedAnnexes.length} anexo${selectedAnnexes.length > 1 ? "s" : ""}` : ""}
-                {totalAutoFilled > 0 ? ` · ${totalAutoFilled} campos auto-rellenados` : ""}
+                {totalAutoFilled > 0 ? `${totalAutoFilled} campos auto-rellenados` : "Completa los datos del solicitante"}
               </p>
             </div>
           </div>
@@ -597,19 +561,14 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
               ))}
             </div>
 
-            {persons.length < 10 && (
-              <button onClick={addPerson} className="flex items-center gap-2 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
-                <UserPlus className="h-3.5 w-3.5" />
-                Añadir otra persona (presentación simultánea)
-              </button>
-            )}
-
-            {/* Sección 2 — Representante */}
+            {/* Sección 2 — Representante (div, no button, para evitar botón anidado con Toggle) */}
             <div className="rounded-xl border border-border/50 bg-muted/10 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setHasRepresentante(!hasRepresentante)}
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setHasRepresentante((v) => !v)}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setHasRepresentante((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
                   <User className="h-3.5 w-3.5 text-muted-foreground" />
@@ -618,8 +577,9 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
                     <p className="text-[11px] text-muted-foreground">Sección 2 — Datos del representante</p>
                   </div>
                 </div>
-                <Toggle checked={hasRepresentante} onChange={setHasRepresentante} />
-              </button>
+                {/* Toggle is visual-only here; the div's onClick handles the toggle */}
+                <Toggle checked={hasRepresentante} onChange={() => {}} />
+              </div>
               {hasRepresentante && (
                 <div className="px-4 pb-4">
                   <RepresentanteForm data={representante} onChange={updateRepresentante} />
@@ -680,31 +640,7 @@ export function FormFiller({ pathway, da21Supuestos, extractedData, onFormComple
               </div>
             </label>
 
-            {/* Anexos */}
-            <div>
-              <p className="text-[10px] font-semibold text-primary uppercase tracking-widest mb-2">Anexos a incluir</p>
-              <div className="flex flex-col gap-2">
-                {availableAnnexes.map((annex) => (
-                  <label
-                    key={annex.id}
-                    className="flex items-start gap-3 cursor-pointer rounded-xl border border-border/50 bg-muted/20 hover:bg-muted/40 px-3 py-2.5 transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedAnnexes.includes(annex.id)}
-                      onChange={() => toggleAnnex(annex.id)}
-                      className="mt-0.5 shrink-0 accent-primary"
-                    />
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium leading-snug">{annex.label}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">{annex.hint}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+            {error &&<p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <Button

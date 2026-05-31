@@ -15,10 +15,10 @@ export function PaywallGate({ formName, onCheckout }: PaywallGateProps) {
   const [loading, setLoading] = useState(false)
 
   const features = [
-    { icon: FileText, text: `Formulario oficial ${formName} rellenado con tus datos (todas las personas)` },
-    { icon: FileScan, text: "Verificación IA de todos los documentos del expediente" },
-    { icon: CheckCircle2, text: "Sugerencias presenciales por documento + telemáticas si eres DA20" },
-    { icon: Shield, text: "Selección de anexos según tu caso (menores, antecedentes, vulnerabilidad)" },
+    { icon: Shield, text: "Evaluación completa de elegibilidad + vía (DA20/DA21) + puntuación" },
+    { icon: CheckCircle2, text: "Checklist personalizado de documentos por persona incluida" },
+    { icon: FileScan, text: "PermanencIA: verifica y organiza tus pruebas de permanencia con IA" },
+    { icon: FileText, text: `Formulario oficial ${formName} autorrellenado con tus datos` },
   ]
 
   return (
@@ -26,16 +26,19 @@ export function PaywallGate({ formName, onCheckout }: PaywallGateProps) {
       <div className="px-6 py-6 flex flex-col gap-5">
 
         {/* Header */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
-            <Lock className="h-5 w-5 text-primary" />
+        <div className="flex items-start gap-3 flex-wrap">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0">
+            <Lock className="h-5 w-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold">Kit Expediente Regularización 2026</p>
-            <p className="text-xs text-muted-foreground">Acceso completo · pago único · sin suscripciones</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">HERRAMIENTA COMPLETA · RD 316/2026</p>
+            <p className="text-lg font-heading font-black leading-tight">
+              Expediente<span className="text-primary italic">IA</span>
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">Pago único · acceso inmediato · incluye PermanencIA</p>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-2xl font-bold text-primary">9,90 €</p>
+            <p className="text-3xl font-black text-primary">59,90 €</p>
             <p className="text-[10px] text-muted-foreground">IVA incluido</p>
           </div>
         </div>
@@ -82,13 +85,12 @@ export function PaywallGate({ formName, onCheckout }: PaywallGateProps) {
           onClick={async () => {
             setLoading(true)
             await onCheckout(nombre, email)
-            // loading stays true while redirect happens
           }}
         >
           {loading ? (
             <><Loader2 className="h-4 w-4 animate-spin" />Redirigiendo al pago…</>
           ) : (
-            <><Sparkles className="h-4 w-4" />Desbloquear Kit Expediente — 9,90 €</>
+            <><Sparkles className="h-4 w-4" />Desbloquear ExpedienteIA — 59,90 €</>
           )}
         </Button>
 
