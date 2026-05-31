@@ -7,7 +7,8 @@ const BASE = "https://legassi.es"
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const posts = await getAllPosts()
+  let posts: Awaited<ReturnType<typeof getAllPosts>> = []
+  try { posts = await getAllPosts() } catch { /* sin posts en build time */ }
 
   const postEntries: MetadataRoute.Sitemap = posts.map(post => ({
     url: `${BASE}/blog/${post.slug}`,

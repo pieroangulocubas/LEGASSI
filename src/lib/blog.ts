@@ -83,7 +83,7 @@ export interface BlogPostRow {
 
 // Columns for listing queries — excludes `content` to keep payloads small.
 // Reading time is approximated from excerpt; exact time is only available in getPostBySlug.
-const SUMMARY_COLUMNS = "id,slug,title,excerpt,category,tags,published,featured,published_at,updated_at,created_at,cover_image,likes_count,views_count"
+const SUMMARY_COLUMNS = "id,slug,title,excerpt,category,tags,published,featured,published_at,updated_at,created_at,cover_image"
 
 function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
@@ -207,7 +207,7 @@ export async function getHeroPost(): Promise<BlogPost | null> {
     .select(SUMMARY_COLUMNS)
     .eq("published", true)
     .order("featured",     { ascending: false })
-    .order("likes_count",  { ascending: false, nullsFirst: false })
+    .order("published_at", { ascending: false })
     .order("published_at", { ascending: false })
     .limit(1)
     .single()
@@ -223,7 +223,7 @@ export async function getPopularPosts(limit = 5): Promise<BlogPost[]> {
     .from("blog_posts")
     .select(SUMMARY_COLUMNS)
     .eq("published", true)
-    .order("views_count", { ascending: false, nullsFirst: false })
+    .order("published_at", { ascending: false })
     .order("published_at", { ascending: false })
     .limit(limit)
   if (error) throw error
