@@ -12,7 +12,7 @@ import {
   ChevronDown,
   ArrowRight,
   Shield,
-  Zap,
+
   Users,
   Star,
   Phone,
@@ -158,7 +158,7 @@ function MiniEvaluador() {
 
   function goResult() { setStep("result"); }
 
-  const STEPS_LABEL: Record<MiniStep, string> = {
+  const _STEPS_LABEL: Record<MiniStep, string> = {
     data: "Tus datos", in_spain: "Requisito base", permit: "Situación actual",
     pi: "Historial de asilo", ukrainian: "Protección temporal", supuesto: "Tu supuesto",
     criminal: "Antecedentes", passport: "Documentación", result: "Tu resultado",
@@ -1113,7 +1113,7 @@ export default function RegularizacionExtraordinariaPage() {
                 </div>
                 <div className="bg-white/70 border border-amber-200 rounded-xl p-5">
                   <p className="text-stone-700 text-sm italic leading-relaxed mb-3">
-                    "Antes tardaba 2 horas en revisar los documentos de permanencia de cada cliente. Con PermanencIA lo hago en 10 minutos y con mucha más seguridad."
+                    &ldquo;Antes tardaba 2 horas en revisar los documentos de permanencia de cada cliente. Con PermanencIA lo hago en 10 minutos y con mucha más seguridad.&rdquo;
                   </p>
                   <p className="text-stone-500 text-xs font-semibold">— Gestora de extranjería, Madrid</p>
                 </div>
@@ -1136,7 +1136,7 @@ export default function RegularizacionExtraordinariaPage() {
                 <div className="flex gap-0.5 mb-4">
                   {Array.from({ length: t.estrellas }).map((_, i) => <Star key={i} className="size-4 fill-amber-400 text-amber-400" />)}
                 </div>
-                <p className="text-slate-600 text-sm leading-relaxed mb-6">"{t.texto}"</p>
+                <p className="text-slate-600 text-sm leading-relaxed mb-6">&ldquo;{t.texto}&rdquo;</p>
                 <div className="flex items-center gap-3 pt-5 border-t border-slate-200">
                   <div className="bg-amber-200 text-amber-900 font-black text-sm w-9 h-9 rounded-full flex items-center justify-center shrink-0">{t.nombre[0]}</div>
                   <div>
