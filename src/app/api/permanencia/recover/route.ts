@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
   const resend = new Resend(resendKey)
 
-  await resend.emails.send({
+  const { error: sendError } = await resend.emails.send({
     from: "Legassi <noreply@legassi.es>",
     to: email,
     subject: "Tu acceso al Clasificador de documentos",
@@ -109,6 +109,11 @@ export async function POST(req: NextRequest) {
 </html>
     `.trim(),
   })
+
+  if (sendError) {
+    console.error("[recover] Resend error:", sendError)
+    return NextResponse.json({ error: "Error al enviar el correo: " + sendError.message }, { status: 500 })
+  }
 
   return NextResponse.json({ ok: true })
 }
