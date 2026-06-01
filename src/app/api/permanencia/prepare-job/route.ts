@@ -3,7 +3,7 @@ import { createServerClient } from "@/lib/supabase"
 import { isValidEmail, normalizeEmail, isSamePerson } from "@/lib/clasificador-utils"
 
 // ─── Limits (same as before — validated here without needing file bytes) ─────
-const MAX_FILES_SERVER = 35
+const MAX_FILES_SERVER = 50
 const MAX_FILE_BYTES   = 10 * 1024 * 1024  // 10 MB per file
 const MAX_TOTAL_BYTES  = 50 * 1024 * 1024  // 50 MB total
 const ALLOWED_MIMES    = new Set(["application/pdf", "image/jpeg", "image/png"])

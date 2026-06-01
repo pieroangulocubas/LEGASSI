@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const post = await adminCreatePost(body)
     return NextResponse.json(post, { status: 201 })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Error"
+    const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? "Error al guardar"
     return NextResponse.json({ error: msg }, { status: 400 })
   }
 }

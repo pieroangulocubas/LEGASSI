@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await adminUpdatePost(id, allowed)
     return NextResponse.json({ ok: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Error"
+    const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? "Error al guardar"
     return NextResponse.json({ error: msg }, { status: 400 })
   }
 }
@@ -41,7 +41,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await adminDeletePost(id)
     return NextResponse.json({ ok: true })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Error"
+    const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? "Error al eliminar"
     return NextResponse.json({ error: msg }, { status: 400 })
   }
 }
