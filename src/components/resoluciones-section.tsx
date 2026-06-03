@@ -76,7 +76,7 @@ export function ResolucionesFavorablesSection() {
         {/* Header */}
         <div className="flex items-end justify-between mb-10">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Casos reales</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-primary mb-2">Casos reales</p>
             <h2 className="text-section font-heading font-bold tracking-tight">
               Nuestras últimas{" "}
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">

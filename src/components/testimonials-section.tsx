@@ -116,7 +116,7 @@ export function TestimonialsSection() {
   return (
     <section
       id="testimonios"
-      className="relative py-24 overflow-hidden bg-gradient-to-b from-background via-muted/10 to-background"
+      className="relative py-16 sm:py-20 overflow-hidden bg-gradient-to-b from-background via-muted/10 to-background"
     >
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div className="absolute top-10 left-1/3 w-96 h-96 bg-primary/5 rounded-full blur-[120px]" />
@@ -125,7 +125,7 @@ export function TestimonialsSection() {
 
       <div className="container relative z-10 mx-auto px-6 sm:px-10 lg:px-16">
         <div className="text-center mb-14">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Testimonios</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-primary mb-2">Testimonios</p>
           <h2 className="text-section font-heading font-bold tracking-tight">
             Lo que dicen nuestros{" "}
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">clientes</span>
