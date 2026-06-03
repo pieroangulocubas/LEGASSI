@@ -7,10 +7,10 @@ import { FileSearch, CalendarClock, FileSpreadsheet, Building2, ScrollText, MapP
 const availableTools = [
   {
     icon: FileSearch,
-    tag: "Regularización Extraordinaria",
-    title: "Clasificador de documentos de permanencia",
+    tag: "Regularización Extraordinaria 2026",
+    title: "PermanencIA",
     description:
-      "Sube tus documentos, los analizamos y los clasificamos por meses. Detecta cuáles son válidos y genera tu expediente en PDF listo para presentar.",
+      "Sube tus documentos y analizamos si cubren los 5 meses de permanencia ininterrumpida exigidos por el Real Decreto 316/2026. Clasificación por meses, detección de huecos y expediente en PDF listo para presentar.",
     href: "/herramientas/permanencia",
   },
 ]
@@ -61,7 +61,7 @@ export function ToolsSection() {
   }
 
   return (
-    <section id="herramientas" className="relative py-24 overflow-hidden">
+    <section id="herramientas" className="relative py-16 sm:py-20 overflow-hidden">
       {/* Dark gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.03] via-primary/5 to-secondary/5" aria-hidden="true" />
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">

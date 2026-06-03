@@ -95,7 +95,7 @@ export function ServicesSection() {
   return (
     <section
       id="servicios"
-      className="relative py-24 overflow-hidden bg-gradient-to-b from-background via-muted/15 to-background"
+      className="relative py-16 sm:py-20 overflow-hidden bg-gradient-to-b from-background via-muted/15 to-background"
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute top-20 -left-32 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[120px]" />
@@ -106,7 +106,7 @@ export function ServicesSection() {
 
         {/* Header */}
         <div className="mb-14">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-2">Qué hacemos</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-primary mb-2">Qué hacemos</p>
           <h2 className="text-section font-heading font-bold tracking-tight">
             Servicios especializados en{" "}
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -141,7 +141,7 @@ export function ServicesSection() {
                     Si llevas tiempo en España sin documentación, esta normativa excepcional te permite regularizar tu situación. Nuestros asesores expertos preparan y presentan tu expediente completo.
                   </p>
                   <div className="flex flex-wrap gap-3 mt-3">
-                    {["Evaluador de elegibilidad", "Verificador de documentos", "Checklist personalizado"].map((item) => (
+                    {["Evaluador de elegibilidad", "Verificador de pruebas de permanencia", "Checklist personalizado"].map((item) => (
                       <span key={item} className="inline-flex items-center gap-1.5 text-xs text-foreground/70">
                         <CheckCircle className="h-3.5 w-3.5 text-primary shrink-0" />
                         {item}
@@ -214,19 +214,30 @@ export function ServicesSection() {
         </div>
 
         {/* Why choose us */}
-        <div id="por-que-elegirnos" className="rounded-2xl border border-border/40 bg-muted/30 px-5 sm:px-8 py-6 sm:py-8">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">Por qué elegirnos</p>
-          <h3 className="text-xl font-heading font-bold mb-8">Lo que nos diferencia</h3>
+        <div id="por-que-elegirnos">
+          <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1.5">Por qué elegirnos</p>
+          <h3 className="font-heading font-bold text-2xl sm:text-3xl tracking-tight mb-8">Lo que nos diferencia</h3>
 
-          <div className="grid sm:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-3 gap-5">
             {differentiators.map((d, i) => (
-              <div key={i} className="flex gap-4">
-                <div className="shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/15 flex items-center justify-center">
-                  <d.icon className="h-4 w-4 text-primary" />
+              <div
+                key={i}
+                className="group relative flex flex-col gap-5 rounded-2xl border border-border bg-card px-6 py-7 hover:border-primary/30 hover:shadow-float transition-all duration-300 overflow-hidden"
+              >
+                {/* Número decorativo de fondo */}
+                <span className="absolute -top-3 -right-1 font-heading font-black text-[80px] leading-none text-primary/5 select-none pointer-events-none group-hover:text-primary/8 transition-colors">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+
+                {/* Icono */}
+                <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center group-hover:from-primary/25 transition-colors">
+                  <d.icon className="h-5 w-5 text-primary" />
                 </div>
-                <div>
-                  <p className="font-semibold text-sm mb-1">{d.title}</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{d.description}</p>
+
+                {/* Texto */}
+                <div className="relative flex flex-col gap-2 flex-1">
+                  <h4 className="font-heading font-bold text-base leading-snug">{d.title}</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed text-pretty">{d.description}</p>
                 </div>
               </div>
             ))}

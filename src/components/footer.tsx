@@ -61,9 +61,9 @@ export function Footer() {
               <li className="flex items-start gap-2">
                 <CalendarClock className="h-4 w-4 text-primary mt-0.5" />
                 <span>
-                  Lunes a viernes: 10:00 – 15:00 y 17:00 – 21:00  
+                  Lunes a viernes: 10:00 – 15:00 y 17:00 – 21:00
                   <br />
-                  Domingo: 10:00 – 14:00
+                  Sábado: 10:00 – 14:00
                 </span>
               </li>
               <li className="flex items-center gap-2">
@@ -72,15 +72,14 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-primary" />
-                <span>info@legassi.es
-                </span>
+                <span>consulta@legassi.es</span>
               </li>
               <li className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-primary mt-0.5" />
                 <span>
-                  Alicante, España
+                  Atención en toda España y en el mundo
                   <br />
-                  Atención online en toda España
+                  Punto presencial en Alicante · Enfoque online global
                 </span>
               </li>
             </ul>
