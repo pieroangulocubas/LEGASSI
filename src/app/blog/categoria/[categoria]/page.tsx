@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 import type { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
@@ -9,8 +10,6 @@ import { getPostsByCategory, CATEGORIES, TAGS, formatDate } from "@/lib/blog"
 import type { CategorySlug, TagSlug } from "@/lib/blog"
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/categories"
 import { cn } from "@/lib/utils"
-
-export const revalidate = 3600
 
 export async function generateStaticParams() {
   return (Object.keys(CATEGORIES) as CategorySlug[]).map(categoria => ({ categoria }))
@@ -78,47 +77,46 @@ export default async function CategoriaPage({ params }: { params: Promise<{ cate
 
           {/* Articles */}
           {posts.length > 0 ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
               {posts.map(post => (
                 <Link
                   key={post.id}
                   href={`/blog/${post.slug}`}
-                  className="group flex flex-col rounded-2xl overflow-hidden border border-border/50 bg-card hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
+                  className="group flex flex-col"
                 >
-                  {/* Cover */}
-                  <div className="relative aspect-[16/9]">
+                  {/* Thumbnail */}
+                  <div className="relative aspect-[16/10] overflow-hidden rounded-xl mb-3 bg-muted">
                     {post.coverImage ? (
-                      <Image src={post.coverImage} alt={post.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+                      <Image src={post.coverImage} alt={post.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
                     ) : (
                       <div className={cn("absolute inset-0 bg-gradient-to-br", colors.heroGradient)}>
                         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 30% 50%, white 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
                       </div>
                     )}
+                    {/* Tag badges overlaid */}
+                    {post.tags.length > 0 && (
+                      <div className="absolute top-2.5 right-2.5 flex flex-wrap gap-1 justify-end">
+                        {post.tags.map(tag => {
+                          const t = TAGS[tag as TagSlug]
+                          if (!t) return null
+                          return (
+                            <span key={tag} className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide", t.bg, t.text, t.border)}>
+                              {t.label}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Content */}
-                  <div className="flex flex-col flex-1 p-5 gap-3">
-                    <div className="flex flex-wrap gap-1.5">
-                      {post.tags.map(tag => {
-                        const t = TAGS[tag as TagSlug]
-                        if (!t) return null
-                        return (
-                          <span key={tag} className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide", t.bg, t.text, t.border)}>
-                            {t.label}
-                          </span>
-                        )
-                      })}
-                    </div>
-                    <h2 className="font-heading font-bold text-base leading-snug group-hover:text-primary transition-colors line-clamp-2 flex-1">
+                  {/* Text */}
+                  <div className="flex flex-col flex-1 gap-2 px-0.5">
+                    <h2 className="font-heading font-bold text-sm sm:text-base leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                       {post.title}
                     </h2>
-                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{post.excerpt}</p>
-                    <div className="flex items-center justify-between pt-2 border-t border-border/40">
-                      <span className="flex items-center gap-3 text-xs text-muted-foreground/60">
-                        <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{formatDate(post.publishedAt)}</span>
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{post.readingTimeMinutes} min</span>
-                      </span>
-                      <ArrowRight className="h-3.5 w-3.5 text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-auto pt-1">
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{post.readingTimeMinutes} min</span>
+                      <span className="flex items-center gap-1"><CalendarDays className="h-3 w-3" />{formatDate(post.publishedAt)}</span>
                     </div>
                   </div>
                 </Link>

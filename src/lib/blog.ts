@@ -48,7 +48,7 @@ export interface BlogPost {
   title: string
   excerpt: string
   category: CategorySlug
-  tags: TagSlug[]
+  tags: string[]          // includes visual TagSlug badges + free-form metadata tags
   publishedAt: string
   updatedAt?: string
   featured: boolean
@@ -100,7 +100,7 @@ function rowToPost(row: BlogPostRow): BlogPost {
     title: row.title,
     excerpt: row.excerpt,
     category: row.category as CategorySlug,
-    tags: (row.tags ?? []) as TagSlug[],
+    tags: (row.tags ?? []) as string[],
     publishedAt: row.published_at ?? row.created_at,
     updatedAt: row.updated_at !== row.published_at ? row.updated_at : undefined,
     featured: row.featured,
@@ -110,6 +110,21 @@ function rowToPost(row: BlogPostRow): BlogPost {
     likesCount: (row as unknown as Record<string, number>).likes_count ?? 0,
     viewsCount: (row as unknown as Record<string, number>).views_count ?? 0,
   }
+}
+
+// Returns the most frequent tags across posts, capped at `limit`.
+// Used to populate the sidebar tag cloud.
+export function computeTopTags(posts: BlogPost[], limit = 10): string[] {
+  const freq = new Map<string, number>()
+  for (const post of posts) {
+    for (const tag of post.tags) {
+      freq.set(tag, (freq.get(tag) ?? 0) + 1)
+    }
+  }
+  return [...freq.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([tag]) => tag)
 }
 
 export function formatDate(iso: string): string {
