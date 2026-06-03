@@ -10,6 +10,7 @@ import NextImage from "next/image"
 import { useRef, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { CATEGORIES, TAGS, type CategorySlug, type TagSlug, type BlogPostRow } from "@/lib/blog"
+import { Tag } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Bold, Italic, UnderlineIcon, Strikethrough,
@@ -41,7 +42,13 @@ export function PostEditor({ post }: PostEditorProps) {
   const [slug, setSlug] = useState(post?.slug ?? "")
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "")
   const [category, setCategory] = useState<CategorySlug>((post?.category as CategorySlug) ?? "situacion")
-  const [tags, setTags] = useState<TagSlug[]>((post?.tags ?? []) as TagSlug[])
+  const [visualTags, setVisualTags] = useState<TagSlug[]>(
+    (post?.tags ?? []).filter(t => t in TAGS) as TagSlug[]
+  )
+  const [customTags, setCustomTags] = useState<string[]>(
+    (post?.tags ?? []).filter(t => !(t in TAGS))
+  )
+  const [tagInput, setTagInput] = useState("")
   const [published, setPublished] = useState(post?.published ?? false)
   const [featured, setFeatured] = useState(post?.featured ?? false)
   const [coverImage, setCoverImage] = useState<string | null>(post?.cover_image ?? null)
@@ -72,9 +79,18 @@ export function PostEditor({ post }: PostEditorProps) {
     if (!slugManual) setSlug(slugify(value))
   }
 
-  const toggleTag = (tag: TagSlug) => {
-    setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+  const toggleVisualTag = (tag: TagSlug) => {
+    setVisualTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
   }
+
+  const addCustomTag = () => {
+    const val = tagInput.trim().toLowerCase()
+    if (!val || val in TAGS || customTags.includes(val)) { setTagInput(""); return }
+    setCustomTags(prev => [...prev, val])
+    setTagInput("")
+  }
+
+  const removeCustomTag = (tag: string) => setCustomTags(prev => prev.filter(t => t !== tag))
 
   const insertLink = useCallback(() => {
     if (!editor) return
@@ -125,7 +141,7 @@ export function PostEditor({ post }: PostEditorProps) {
         slug: slug.trim(),
         excerpt: excerpt.trim(),
         category,
-        tags,
+        tags: [...visualTags, ...customTags],
         content,
         published,
         featured,
@@ -261,14 +277,15 @@ export function PostEditor({ post }: PostEditorProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Etiquetas</label>
+            <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Etiquetas de badge</label>
+            <p className="text-[11px] text-muted-foreground mb-2">Aparecen visualmente en el card del artículo.</p>
             <div className="flex flex-col gap-2">
               {(Object.entries(TAGS) as [TagSlug, typeof TAGS[TagSlug]][]).map(([key, tag]) => (
                 <label key={key} className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={tags.includes(key)}
-                    onChange={() => toggleTag(key)}
+                    checked={visualTags.includes(key)}
+                    onChange={() => toggleVisualTag(key)}
                     className="rounded border-border"
                   />
                   <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide", tag.bg, tag.text, tag.border)}>
@@ -277,6 +294,41 @@ export function PostEditor({ post }: PostEditorProps) {
                 </label>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-1 uppercase tracking-wide">
+              <Tag className="h-3 w-3" /> Etiquetas de metadatos
+            </label>
+            <p className="text-[11px] text-muted-foreground mb-2">Metadata interna y nube de etiquetas del sidebar.</p>
+            <div className="flex gap-2 mb-2">
+              <input
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addCustomTag() } }}
+                placeholder="ej: arraigo, nie, renovación…"
+                className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <button
+                type="button"
+                onClick={addCustomTag}
+                className="px-3 py-1.5 rounded-lg bg-muted text-sm font-medium hover:bg-muted/70 transition-colors"
+              >
+                Añadir
+              </button>
+            </div>
+            {customTags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {customTags.map(tag => (
+                  <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-muted border border-border px-2.5 py-0.5 text-xs font-medium">
+                    {tag}
+                    <button type="button" onClick={() => removeCustomTag(tag)} className="text-muted-foreground hover:text-foreground transition-colors ml-0.5">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-2 pt-2 border-t border-border/40">
