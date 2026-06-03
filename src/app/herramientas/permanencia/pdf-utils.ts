@@ -546,8 +546,11 @@ async function embedPdfViaCanvas(
       // Wait for image data transfer from worker thread to complete
       await new Promise<void>((resolve) => setTimeout(resolve, 300))
 
-      // Second pass: images are now cached — renders synchronously and completely
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      // Second pass: images are now cached — renders synchronously and completely.
+      // Fill white first: PDF viewers assume white paper; canvas is transparent by default,
+      // so documents that don't draw their own background would otherwise appear blank.
+      ctx.fillStyle = "#ffffff"
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
       await page.render({ canvasContext: ctx, viewport, canvas, intent: "print" }).promise
 
       // Embed the canvas as a PNG page in the destination PDF
@@ -957,8 +960,10 @@ export async function compressPdfIfNeeded(bytes: Uint8Array): Promise<Uint8Array
       } catch { /* ignore first-pass errors */ }
       await new Promise<void>((resolve) => setTimeout(resolve, 300))
 
-      // Second pass: images now cached — renders completely
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      // Second pass: images now cached — renders completely.
+      // Fill white first: same invariant as embedPdfViaCanvas.
+      ctx.fillStyle = "#ffffff"
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
       await page.render({ canvasContext: ctx, viewport, canvas, intent: "print" }).promise
 
       const base64  = canvas.toDataURL("image/jpeg", 0.85).split(",")[1]
